@@ -43,7 +43,7 @@ xylem Rules File Specification
 First, the top level rules file has these properties:
 
 - The rules file is a YAML 1.1 compliant file
-- The rules file starts with a dictionary, the rules dict
+- The rules file contains a single dictionary, the rules dict
 
 the rules dict
 ^^^^^^^^^^^^^^
@@ -63,11 +63,11 @@ An os specific definition dict is a mapping of operating system names to os
 specific definitions. They have these properties:
 
 - It has keys which map to os_names, e.g. ubuntu, osx
-- There is a special 'any' key, 'any'
+- There is a special 'any' key, i.e. 'any_os'
 - It can have values of type dict, with os_version keys
 - It can have values of type list, a set of packages for the default installer
 - It can have values of type str, a package for the default installer
-- Values of type null or an empty list indicate no action required to resolve
+- A value of null or '[]' indicates no action is required to resolve for this os
 
 When the value is a dict, then the keys of that dict are os_version's and the
 values of that dict are os_name and os_version specific definitions for those
@@ -128,7 +128,7 @@ When the value of the os definition dict is a str, then it is converted into a
 list containing that str.
 
 Whether the value is a str converted into a list or originally a list, the list
-is expanded into an any version key, 'any_version', value pair, where the list
+is expanded into an any version ('any_version') key-value pair, where the list
 is the value. Then the processing continues as normal.
 
 For example, this snippet::
@@ -142,7 +142,7 @@ is expanded to::
       ubuntu:
         any_version: [libfoo]
 
-The above snippet is a preliminary expansion, as ``any_version: [libfoo]``
+The above snippet is a intermediate expansion, as ``any_version: [libfoo]``
 will get expanded further later.
 
 The case where no action is required, can occur when the package exists on the
@@ -157,16 +157,16 @@ specific definitions as values.
 the os_version specific definition dict
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The os_version specific definition dicts have these properties:
+The os_version specific definition dict's have these properties:
 
 - It has keys which map to os_version's for the parent os_name.
 - There can be one any_version key, i.e. 'any_version'
 - The values can be a list or str, and are converted like the os definition dict
 - The final values must be an installer specific definition dict
 
-The os_version specific definition dicts are exactly like the os_name specific
-definition dicts, except that the resulting values are installer specific
-definition dicts, and there is a wildcard key.
+The os_version specific definition dict's are exactly like the os_name specific
+definition dict's, except that the resulting values are installer specific
+definition dict's, and there is a wild card key.
 
 the 'any_version' key
 ---------------------
