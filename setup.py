@@ -15,7 +15,6 @@ setup(
     install_requires=[
         'PyYAML',
         'argparse',
-        'distribute'
     ],
     author='William Woodall',
     author_email='william@osrfoundation.org',
@@ -26,7 +25,7 @@ setup(
     classifiers=['Programming Language :: Python',
                  'License :: OSI Approved :: BSD License'],
     description="xylem is a package manager abstraction tool.",
-    long_description="xylem is a package manager agnostic dependency resolver.",
+    long_description="xylem is a package manager abstraction tool.",
     license='BSD',
     test_suite='test',
     entry_points={
