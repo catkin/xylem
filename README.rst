@@ -11,7 +11,7 @@ Code & tickets
 
 Build status: |Build Status|
 
-.. |Build Status| image:: https://secure.travis-ci.org/ros-infrastructure/xylem.png
+.. |Build Status| image:: https://api.travis-ci.org/catkin/xylem.svg?branch=master
    :target: http://travis-ci.org/ros-infrastructure/xylem
 
 +---------------+---------------------------------------------------+
