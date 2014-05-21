@@ -60,6 +60,23 @@ When you are done with develop mode you can (and should) undo it like this:
 
 That will "uninstall" the hooks into the ``PYTHONPATH`` which point to your source directory, but you should be wary that sometimes console scripts do not get removed from the bin folder.
 
+Code Style
+----------
+
+The source code of ``xylem`` aims to follow the Python `style guide
+<http://docs.python-guide.org/en/latest/writing/style>`_ and the
+:pep:`8` guidelines. In particular a line width of 79 characters is
+enforced for python code, while multiline comments or docstrings as well
+as text files should use a line width of 72.
+
+The test-suite checks that all xylem code passes the ``flake8``. On top
+of that identifer names should follow the rules layed out in :pep:`8
+#naming-conventions` and docstrings should adhere to :pep:`257`, however
+these are not automatically checked.
+
+The most important rules are readability and consistency and use of
+common sense.
+
 Testing
 -------
 
