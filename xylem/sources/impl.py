@@ -45,7 +45,7 @@ SOURCES_GROUP = 'xylem.sources'
 
 
 def get_default_source_urls():
-    """Returns the list of default source urls.
+    """Return the list of default source urls.
 
     :returns: lists of source urls keyed by spec type
     :rtype: :py:obj:`dict`(:py:obj:`str`: :py:obj:`list`(:py:obj:`str`))
@@ -58,11 +58,12 @@ def get_default_source_urls():
 
 
 def get_source_urls(prefix):
-    """Returns a list of source urls.
+    """Return a list of source urls.
 
     :param prefix: prefix on which to look for etc/xylem/sources.list.d
     :type: prefix: str
-    :returns: lists of source urls keyed by spec, or None if no configs found
+    :returns: lists of source urls keyed by spec, or None if no configs
+        found
     :rtype: :py:obj:`dict`(:py:obj:`str`: :py:obj:`list`(:py:obj:`str`))
     """
     if not prefix:
@@ -74,17 +75,18 @@ def get_source_urls(prefix):
 
 
 def load_source_lists_from_path(path):
-    """Returns a list of source urls from a given directory of source lists.
+    """Return a list of source urls from a given directory of source lists.
 
-    Only files which have the .yaml extension are processed,
-    other files, hidden files, and directories are ignored.
+    Only files which have the .yaml extension are processed, other
+    files, hidden files, and directories are ignored.
 
     :param path: directory containing source list files
     :type path: str
     :returns: lists of source urls keyed by spec type
     :rtype: :py:obj:`dict`(:py:obj:`str`: :py:obj:`list`(:py:obj:`str`))
     """
-    return _load_source_lists([os.path.join(path, s) for s in os.listdir(path)])
+    return _load_source_lists(
+        [os.path.join(path, s) for s in os.listdir(path)])
 
 
 def _load_source_lists(files):
@@ -103,7 +105,7 @@ def _load_source_lists(files):
 
 
 def parse_list_file(file_path):
-    """Parses a given list file and returns a list of source urls.
+    """Parse a given list file and returns a list of source urls.
 
     :param file_path: path to file containing a list of source urls
     :type file_path: str
@@ -115,7 +117,7 @@ def parse_list_file(file_path):
 
 
 def parse_list(data, file_path='<string>'):
-    """Parses a given list of urls and returns them as a list of source urls.
+    """Parse a given list of urls and returns them as a list of source urls.
 
     :param data: string containing a list of source urls
     :type data: str
@@ -137,9 +139,9 @@ def parse_list(data, file_path='<string>'):
         if hasattr(exc, 'problem_mark'):
             mark = exc.problem_mark.line
             col = exc.problem_mark.column
-            error(fmt("Invalid YAML in source list file '{0}' at '{1}': \n@|"
-                      .format(file_path, '{0}:{1}'.format(mark + 1, col + 1))) +
-                  str(exc))
+            error(fmt(
+                "Invalid YAML in source list file '{0}' at '{1}:{2}': \n@|"
+                .format(file_path, mark + 1, col + 1)) + str(exc))
         else:
             error(fmt("Invalid YAML in source list file '{0}': \n@|"
                       .format(file_path)) + str(exc))

@@ -31,9 +31,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""
-Provides common utility functions for xylem.
-"""
+"""Provides common utility functions for xylem."""
 
 from __future__ import print_function
 
@@ -168,6 +166,6 @@ def pdb_hook():
 
 
 def create_temporary_directory(prefix_dir=None):
-    """Creates a temporary directory and returns its location"""
+    """Create a temporary directory and return its location."""
     from tempfile import mkdtemp
     return mkdtemp(prefix='bloom_', dir=prefix_dir)

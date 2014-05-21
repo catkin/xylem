@@ -47,6 +47,7 @@ enable_ANSI_colors()
 
 
 def enable_debug(state=True):
+    """En- or disable printing debug output to console."""
     global _debug
     _debug = state
 
@@ -55,6 +56,11 @@ enable_debug('XYLEM_DEBUG' in os.environ)
 
 
 def debug(msg, file=None, *args, **kwargs):
+    """Print debug to console or file.
+
+    Works like :py:obj:`print` and optionally uses terminal colors. Can
+    be enabled or disabled with :func:`enable_debug`.
+    """
     file = file if file is not None else sys.stdout
     global _debug
     msg = str(msg)
@@ -65,6 +71,10 @@ def debug(msg, file=None, *args, **kwargs):
 
 
 def info(msg, file=None, *args, **kwargs):
+    """Print info to console or file.
+
+    Works like :py:obj:`print` and optionally uses terminal colors.
+    """
     file = file if file is not None else sys.stdout
     msg = str(msg)
     print(msg, file=file, *args, **kwargs)
@@ -72,6 +82,10 @@ def info(msg, file=None, *args, **kwargs):
 
 
 def warning(msg, file=None, *args, **kwargs):
+    """Print warning to console or file.
+
+    Works like :py:obj:`print` and optionally uses terminal colors.
+    """
     file = file if file is not None else sys.stdout
     msg = str(msg)
     msg = ansi('yellowf') + msg + ansi('reset')
@@ -80,6 +94,10 @@ def warning(msg, file=None, *args, **kwargs):
 
 
 def error(msg, file=None, exit=False, *args, **kwargs):
+    """Print error statement and optionally exit.
+
+    Works like :py:obj:`print` and optionally uses terminal colors.
+    """
     file = file if file is not None else sys.stdout
     msg = str(msg)
     msg = ansi('redf') + ansi('boldon') + msg + ansi('reset')
