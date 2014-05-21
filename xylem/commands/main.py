@@ -81,7 +81,7 @@ def create_subparsers(parser, cmds):
         title='commands',
         metavar=metavar,
         description='Call `xylem <command> -h` for help on a specific '
-        'command.',
+                    'command.',
         dest='cmd'
     )
     for desc in descs:
