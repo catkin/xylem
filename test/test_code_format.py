@@ -1,12 +1,15 @@
-import pep8
+import flake8.engine
 import os
 
 
-def test_pep8_conformance():
-    """Test source code for PEP8 conformance"""
-    pep8style = pep8.StyleGuide(max_line_length=120)
-    report = pep8style.options.report
+def test_flake8():
+    """Test source code for pyFlakes and PEP8 conformance"""
+    flake8style = flake8.engine.get_style_guide()
+    report = flake8style.options.report
     report.start()
-    pep8style.input_dir(os.path.join('xylem'))
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    flake8style.input_dir(os.path.join(this_dir, '..', 'xylem'))
     report.stop()
-    assert report.total_errors == 0, "Found '{0}' code style errors (and warnings).".format(report.total_errors)
+    assert report.total_errors == 0, \
+        ("Found '{0}' code style errors (and warnings)."
+         .format(report.total_errors))
