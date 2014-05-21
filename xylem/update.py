@@ -49,8 +49,8 @@ from xylem.log_utils import debug
 from xylem.log_utils import error
 from xylem.log_utils import info
 
-from xylem.sources.impl import get_default_source_urls
-from xylem.sources.impl import get_source_urls
+from xylem.sources import get_default_source_urls
+from xylem.sources import get_source_urls
 
 from xylem.specs import get_spec_parser
 
