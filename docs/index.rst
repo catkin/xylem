@@ -16,6 +16,9 @@ Contents:
    :maxdepth: 2
 
    design
+   spec
+   xylem_api
+   apidoc/xylem
 
 Installing from Source
 ----------------------
