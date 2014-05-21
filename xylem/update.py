@@ -33,9 +33,9 @@
 
 """Implements the update functionality.
 
-This includes the functions to collect and process source files. Part of this
-process is to load and run the spec parser, which are given by name in the
-source files.
+This includes the functions to collect and process source files. Part of
+this process is to load and run the spec parser, which are given by name
+in the source files.
 """
 
 from __future__ import print_function
@@ -56,16 +56,17 @@ from xylem.specs import get_spec_parser
 
 
 def load_url(url, retry=2, retry_period=1, timeout=10):
-    """Loads a given url with retries, retry_periods, and timeouts
+    """Load a given url with retries, retry_periods, and timeouts.
 
-    Based on https://github.com/ros-infrastructure/rosdistro/blob/master/src/rosdistro/loader.py
+    Based on https://github.com/ros-infrastructure/rosdistro/blob/\
+master/src/rosdistro/loader.py
 
     :param url: URL to load and return contents of
     :type url: str
     :param retry: number of times to retry the url on 503 or timeout
     :type retry: int
     :param retry_period: time to wait between retries in seconds
-    :type: retry_period: float
+    :type retry_period: float
     :param timeout: timeout for opening the URL in seconds
     :type timeout: float
     """
@@ -92,10 +93,10 @@ def load_url(url, retry=2, retry_period=1, timeout=10):
 
 
 def verify_rules(rules, spec):
-    """Verifies that a set of rules are valid for internal storage.
+    """Verify that a set of rules are valid for internal storage.
 
-    :param rules: set of nested dictionaries which is the internal DB format
-    :type rules: dict
+    :param dict rules: set of nested dictionaries which is the internal
+        DB format
     """
     if not isinstance(rules, dict):
         raise ValueError(
@@ -109,14 +110,13 @@ def verify_rules(rules, spec):
 
 
 def handle_spec_urls(spec, urls):
-    """Loades a given spec parser by spec name and processed all urls
+    """Load a given spec parser by spec name and processed all urls.
 
     Returns a list of new rules from parsed urls
 
-    :param spec: name of a spec parser to load
-    :type spec: str
+    :param str spec: name of a spec parser to load
     :param urls: list of urls to load for the given spec parser
-    :type urls: :py:obj:`list`(:py:obj:`str`)
+    :type urls: :py:obj:`list` of :py:obj:`str`
     """
     new_rules = {}
     spec_parser = get_spec_parser(spec)
@@ -140,15 +140,17 @@ def handle_spec_urls(spec, urls):
 
 
 def update(prefix=None, dry_run=False):
-    """Updates the xylem cache.
+    """Update the xylem cache.
 
-    If the prefix is set then the source lists are searched for in the prefix.
-    If the prefix is not set (None) or the source lists are not found in the
-    prefix, then the default, builtin source list is used.
+    If the prefix is set then the source lists are searched for in the
+    prefix. If the prefix is not set (None) or the source lists are not
+    found in the prefix, then the default, builtin source list is used.
 
-    :param prefix: The config and cache prefix, usually '/' or someother prefix
+    :param prefix: The config and cache prefix, usually '/' or someother
+        prefix
     :type prefix: :py:obj:`str` or :py:obj:`None`
-    :param dry_run: If True, then no actual action is taken, only pretend to
+    :param dry_run: If True, then no actual action is taken, only
+        pretend to
     :type dry_run: bool
     """
     sources_gen = get_source_urls(prefix)

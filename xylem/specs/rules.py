@@ -31,8 +31,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import print_function
-
 """This module implements parsing and validating of rules spec files.
 
 Note: These xylem rules files are compatible with rosdep's files.
@@ -54,37 +52,41 @@ specific operating systems and package managers.
 The rules dict has these properties:
 
 - The keys of the rules dict are package manager agnostic xylem keys
-- The values of the rules dict must be a dictionaries also, os definition dicts
+- The values of the rules dict must be a dictionaries also, os
+  definition dicts
 
 the os specific definition dict
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An os specific definition dict is a mapping of operating system names to os
-specific definitions. They have these properties:
+An os specific definition dict is a mapping of operating system names to
+os specific definitions. They have these properties:
 
 - It has keys which map to os_names, e.g. ubuntu, osx
 - There is a special 'any' key, i.e. 'any_os'
 - It can have values of type dict, with os_version keys
-- It can have values of type list, a set of packages for the default installer
+- It can have values of type list, a set of packages for the default
+  installer
 - It can have values of type str, a package for the default installer
-- A value of null or '[]' indicates no action is required to resolve for this os
+- A value of null or '[]' indicates no action is required to resolve for
+  this os
 
-When the value is a dict, then the keys of that dict are os_version's and the
-values of that dict are os_name and os_version specific definitions for those
-xylem keys.
+When the value is a dict, then the keys of that dict are os_version's
+and the values of that dict are os_name and os_version specific
+definitions for those xylem keys.
 
 the 'any_os' key
 ----------------
 
-The 'any_os' key for the os specific definition dict can be used to indicate
-that the following definition matches any operating systems. This is useful for
-situations like the pip installer, which works on most operating systems,
-but is not specific to any one operating system. When the 'any_os' key is used,
-then the installer must be specified explicitly, i.e. no default key is used.
-Conversely, if the 'any_os' key is used, then the 'any_version' key must be
-used for the os_version as well, which makes sense because it doesn't make
-sense to have a definition which matches all operating systems but only a
-specific operating system version.
+The 'any_os' key for the os specific definition dict can be used to
+indicate that the following definition matches any operating systems.
+This is useful for situations like the pip installer, which works on
+most operating systems, but is not specific to any one operating system.
+When the 'any_os' key is used, then the installer must be specified
+explicitly, i.e. no default key is used. Conversely, if the 'any_os' key
+is used, then the 'any_version' key must be used for the os_version as
+well, which makes sense because it doesn't make sense to have a
+definition which matches all operating systems but only a specific
+operating system version.
 
 For example, consider this rule snippet::
 
@@ -124,12 +126,12 @@ You can imagine the logic to implement this behavior as such::
 list and string expansion into os_version's any_version
 -------------------------------------------------------
 
-When the value of the os definition dict is a str, then it is converted into a
-list containing that str.
+When the value of the os definition dict is a str, then it is converted
+into a list containing that str.
 
-Whether the value is a str converted into a list or originally a list, the list
-is expanded into an any version ('any_version') key-value pair, where the list
-is the value. Then the processing continues as normal.
+Whether the value is a str converted into a list or originally a list,
+the list is expanded into an any version ('any_version') key-value pair,
+where the list is the value. Then the processing continues as normal.
 
 For example, this snippet::
 
@@ -142,17 +144,17 @@ is expanded to::
       ubuntu:
         any_version: [libfoo]
 
-The above snippet is a intermediate expansion, as ``any_version: [libfoo]``
-will get expanded further later.
+The above snippet is a intermediate expansion, as ``any_version:
+[libfoo]`` will get expanded further later.
 
-The case where no action is required, can occur when the package exists on the
-system by default. For example, on OS X many times the software package comes
-with OS X and no action is required for it to be resolved. This is represented
-with an empty list or null.
+The case where no action is required, can occur when the package exists
+on the system by default. For example, on OS X many times the software
+package comes with OS X and no action is required for it to be resolved.
+This is represented with an empty list or null.
 
-Whether originally a dict or expanded to a dict from a list, the resulting
-os specific definition dict always has os_names for keys and os_version
-specific definitions as values.
+Whether originally a dict or expanded to a dict from a list, the
+resulting os specific definition dict always has os_names for keys and
+os_version specific definitions as values.
 
 the os_version specific definition dict
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -161,44 +163,46 @@ The os_version specific definition dict's have these properties:
 
 - It has keys which map to os_version's for the parent os_name.
 - There can be one any_version key, i.e. 'any_version'
-- The values can be a list or str, and are converted like the os definition dict
+- The values can be a list or str, and are converted like the os
+  definition dict
 - The final values must be an installer specific definition dict
 
-The os_version specific definition dict's are exactly like the os_name specific
-definition dict's, except that the resulting values are installer specific
-definition dict's, and there is a wild card key.
+The os_version specific definition dict's are exactly like the os_name
+specific definition dict's, except that the resulting values are
+installer specific definition dict's, and there is a wild card key.
 
 the 'any_version' key
 ---------------------
 
-The any_version key, 'any_version', indicates that the value, which is an
-installer specific definition dict, applies to all os_version's which do not
-have an explicit definition. For example, consider this snippet::
+The any_version key, 'any_version', indicates that the value, which is
+an installer specific definition dict, applies to all os_version's which
+do not have an explicit definition. For example, consider this snippet::
 
     foo:
       ubuntu:
         lucid: [libfoo-1.8]
         any_version: [libfoo]
 
-The above snippet will provide ``libfoo-1.8`` if you ask xylem to resolve
-``foo`` for ``ubuntu:lucid``, but will return ``libfoo`` for any other version
-of ``ubuntu``, e.g. for ``ubuntu:precise`` xylem will resolve it as ``libfoo``.
+The above snippet will provide ``libfoo-1.8`` if you ask xylem to
+resolve ``foo`` for ``ubuntu:lucid``, but will return ``libfoo`` for any
+other version of ``ubuntu``, e.g. for ``ubuntu:precise`` xylem will
+resolve it as ``libfoo``.
 
 the installer specific definition dict
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The installer specific definition dict has keys for installers, e.g. ``apt``,
-``pip``, or ``homebrew``. The installer specific definition dict is similar to
-the os_version specific definition dict except the default_installer key
-is interpreted differently.
+The installer specific definition dict has keys for installers, e.g.
+``apt``, ``pip``, or ``homebrew``. The installer specific definition
+dict is similar to the os_version specific definition dict except the
+default_installer key is interpreted differently.
 
 the 'default_installer' key
 ---------------------------
 
-When the default installer key, 'default_installer', is used in the installer
-specific definition dict, that indicates that the following definition is for
-the *default* installer for that operating system. This key cannot be used
-under the `any_os` key.
+When the default installer key, 'default_installer', is used in the
+installer specific definition dict, that indicates that the following
+definition is for the *default* installer for that operating system.
+This key cannot be used under the `any_os` key.
 
 
 Examples
@@ -257,6 +261,8 @@ Which expands to::
             packages: [libbaz]
 """
 
+from __future__ import print_function
+
 import yaml
 
 from xylem.specs import SpecParsingError
@@ -279,7 +285,8 @@ def expand_definition(definition):
 
 
 def expand_installer_definition(installer_dict):
-    if type(installer_dict) not in [str, list, dict] and installer_dict is not None:
+    if type(installer_dict) not in [str, list, dict] and \
+            installer_dict is not None:
         raise ValueError("Invalid installer specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(installer_dict)))
@@ -297,7 +304,8 @@ def expand_installer_definition(installer_dict):
 
 
 def expand_os_version_definition(version_dict):
-    if type(version_dict) not in [str, list, dict] and version_dict is not None:
+    if type(version_dict) not in [str, list, dict] and \
+            version_dict is not None:
         raise ValueError("Invalid os version specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(version_dict)))

@@ -39,7 +39,9 @@ SPECS_GROUP = 'xylem.specs'
 
 
 class SpecParsingError(ValueError):
-    """Raised when an invalid spec element is encountered while parsing"""
+
+    """Raised when an invalid spec element is encountered while parsing."""
+
     def __init__(self, msg, related_snippet=None):
         if related_snippet:
             msg += "\n\n" + str(related_snippet)
@@ -47,7 +49,7 @@ class SpecParsingError(ValueError):
 
 
 def list_spec_parsers():
-    """Lists available spec parsers, by name.
+    """List available spec parsers, by name.
 
     :returns: list of spec parsers by name
     :rtype: :py:obj:`list`(:py:obj:`str`)
@@ -59,7 +61,7 @@ def list_spec_parsers():
 
 
 def get_spec_parser(name):
-    """Returns a spec parser of a given name, or None if it is not found.
+    """Return a spec parser of a given name, or None if it is not found.
 
     :param name: name of the requested spec parser
     :type name: str

@@ -46,10 +46,10 @@ from xylem.util import handle_global_arguments
 DESCRIPTION = """\
 Updates the xylem cache according to the source config files.
 
-If no source config files are found under the current XYLEM_PREFIX,
-at <prefix>/etc/xylem/sources.list.d, then the default, internal source configs
-are used. The cache is always stored under the XYLEM_PREFIX in the
-<prefix>/var/caches/xylem directory.
+If no source config files are found under the current XYLEM_PREFIX, at
+<prefix>/etc/xylem/sources.list.d, then the default, internal source
+configs are used. The cache is always stored under the XYLEM_PREFIX in
+the <prefix>/var/caches/xylem directory.
 """
 
 
