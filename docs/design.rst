@@ -10,8 +10,8 @@ to updating ``rosdep``?
 
 ``rosdep`` was originally designed for use with ``rosbuild`` and both
 code and command line interface are structured for that purpose. The
-notion of stacks, packages and manifests where where ``rosdep`` keys
-were defined at a stack level is deeply baked into the design. Later
+notion of stacks, packages and manifests where ``rosdep`` keys were
+defined at a stack level is deeply baked into the design. Later
 adaptations to work with ``catkin`` were bolted on to that design in a
 suboptimal way and in became increasingly hard to extend ``rosdep`` with
 new features. Thus, ``rosdep`` has **a lot of unused or overly
@@ -151,7 +151,7 @@ found `further blow <Improvements over rosdep_>`_.
 - support multiple resolution alternatives on the same platform with
   sensible defaults as well as user-configurable arbitration between
   them (e.g. macports vs homebrew, apt vs pip) [`details <Alternative
-  resolutions_>_`]
+  resolutions_>`_]
 - configure source/cache location and supply working cache with
   installation [`details <Sources and cache location_>`_]
 - configure package manager plugins from config/cli (e.g. whether to use
@@ -333,8 +333,8 @@ to specify dependencies for convenient installation.
     e.g. ``xylem install --frontend=ros desktop_full
     --rosdistro=hydro``, ``xylem install --ros --from-path src``,
   + or the frontends register command line options that are unique, e.g.
-    ``xylem install --rospkg desktop_full``, ``xylem install --ros-from-
-    path .``,
+    ``xylem install --rospkg desktop_full``,
+    ``xylem install --ros-from-path .``,
   + or ``xylem`` can work some magic to find out which frontend the user
     desires, i.e. it determines if the input from the positional command
     line arguments consists of keys, directories, or ROS-packages. For
@@ -405,7 +405,9 @@ following cases that might come as new source plugins:
   control precedence if the entries are ordered within the file)?
 
   One can imagine a source files to look like this (not sure if this is
-  correct YAML, but the idea should be clear)::
+  correct YAML, but the idea should be clear):
+
+  .. code-block:: yaml
 
       # Overriding rules with highest precedence, but with legacy format
       - format: rules
@@ -458,7 +460,7 @@ These are the core commands:
 
 - ``install`` to install packages
 
-  + options: ``--reinstalll``, ``--simulate``, ``--skip-keys``,
+  + options: ``--reinstall``, ``--simulate``, ``--skip-keys``,
     ``--default-yes``, ``--continue-on-error``, ``--specified-only``
     (would this mean to not resolve dependencies on xylem level, or also
     stop possible dependency resolution of package manager, if that is
