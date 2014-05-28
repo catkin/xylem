@@ -121,7 +121,13 @@ Building the Documentation
 --------------------------
 
 In order to build the docs you will need to first install `Sphinx <http
-://sphinx-doc.org/>`_.
+://sphinx-doc.org/>`_. We use the `Read the Docs Sphinx Theme
+<https://github.com/snide/sphinx_rtd_theme>`_, which you can install
+with:
+
+.. code-block:: bash
+
+    $ sudo pip install sphinx_rtd_theme
 
 You can build the documentation by invoking the Sphinx provided make
 target in the ``docs`` folder:
