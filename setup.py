@@ -38,6 +38,11 @@ setup(
         ],
         'xylem.specs': [
             'rules = xylem.specs.rules:rules_spec_parser'
+        ],
+        'xylem.os': [
+            'debian = xylem.os_support.plugins:Debian',
+            'ubuntu = xylem.os_support.plugins:Ubuntu',
+            'osx    = xylem.os_support.plugins:OSX'
         ]
     }
 )
