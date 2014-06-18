@@ -41,7 +41,7 @@ import shutil
 import sys
 import tempfile
 
-from StringIO import StringIO
+from six import StringIO
 
 from xylem import DEFAULT_PREFIX
 

@@ -10,7 +10,7 @@
 from __future__ import print_function
 import os.path
 
-from package_manager_installer import PackageManagerInstaller
+from .package_manager_installer import PackageManagerInstaller
 
 DESCRIPTION = """\
 This is a fake installer plugin for testing.

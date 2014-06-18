@@ -9,6 +9,7 @@
 
 import re
 import numbers
+import six
 
 
 def verify_rules_dict(rules_dict, allow_default_installer=True):
@@ -210,7 +211,7 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
     :raises ValueError: if ``identifier`` is not valid
     """
     rules_dict_keywords = {'any_os', 'any_version', 'default_installer'}
-    if not isinstance(identifier, basestring):  # allow str or unicode
+    if not isinstance(identifier, six.string_types):
         raise ValueError("Expected {0} to be of type 'str', but got '{1}'".
                          format(kind, type(identifier)))
     if identifier in rules_dict_keywords - set(allow_keywords):
@@ -449,7 +450,7 @@ def remove_rule_for_all_os(os_dict, installer_name):
     :param dict os_dict: os dict to be manipulated
     :param str installer_name: name of installer to be removed
     """
-    for os_name, version_dict in os_dict.items():
+    for os_name, version_dict in list(six.iteritems(os_dict)):
         if os_name == "any_os":
             continue
         remove_rule_for_all_versions(
@@ -470,7 +471,7 @@ def remove_rule_for_all_versions(
     :param dict os_dict: os dict to be manipulated
     :param str installer_name: name of installer to be removed
     """
-    for version, installer_dict in version_dict.items():
+    for version, installer_dict in list(six.iteritems(version_dict)):
         if retain_any_version and version == "any_version":
             continue
         if installer_name in installer_dict:

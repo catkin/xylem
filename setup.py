@@ -13,6 +13,7 @@ setup(
     },
     include_package_data=True,
     install_requires=[
+        'six',
         'PyYAML',
         'argparse',
     ],
@@ -49,3 +50,5 @@ setup(
         ]
     }
 )
+
+# TEST requires: mock

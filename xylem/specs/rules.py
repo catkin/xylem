@@ -267,8 +267,6 @@ Which expands to::
 
 from __future__ import print_function
 
-from types import NoneType
-
 import yaml
 
 from xylem.specs import SpecParsingError
@@ -310,7 +308,7 @@ def expand_installer_definition(installer_dict):
 
 
 def expand_os_version_definition(os_name, version_dict):
-    if not isinstance(version_dict, (str, list, dict, NoneType)):
+    if not isinstance(version_dict, (str, list, dict, type(None))):
         raise ValueError("Invalid os version specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(version_dict)))
