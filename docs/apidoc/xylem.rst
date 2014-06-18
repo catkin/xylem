@@ -7,11 +7,21 @@ Subpackages
 .. toctree::
 
     xylem.commands
+    xylem.installers
+    xylem.os_support
     xylem.sources
     xylem.specs
 
 Submodules
 ----------
+
+xylem.exception module
+----------------------
+
+.. automodule:: xylem.exception
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 xylem.log_utils module
 ----------------------

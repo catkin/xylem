@@ -41,15 +41,29 @@ from xylem.terminal_color import enable_ANSI_colors
 
 _ansi = {}
 _debug = False
+_verbose = False
 
 # Default to ansi colors on
 enable_ANSI_colors()
+
+
+def enable_verbose(state=True):
+    """En- or disable printing verbose output to console."""
+    global _verbose
+    _verbose = state
+
+
+def is_verbose():
+    """Return true if xylem is set to verbose console output."""
+    global _verbose
+    return _verbose
 
 
 def enable_debug(state=True):
     """En- or disable printing debug output to console."""
     global _debug
     _debug = state
+
 
 # Default to debug off or on if in the environment
 enable_debug('XYLEM_DEBUG' in os.environ)

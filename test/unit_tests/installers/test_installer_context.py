@@ -1,7 +1,7 @@
 from xylem.installers import InstallerContext
 import unittest
 
-from pprint import pprint
+# TODO: Use mock to replace the functions loading the plugins
 
 
 class InstallerContextTestCase(unittest.TestCase):

@@ -1,10 +1,11 @@
 """
-Fake installer for testing.
+%s
 
-See ``DESCRIPTION``
+:var INSTALL_LOCATION: the installation folder
+:var description: description of the installer plugin to be referenced
+    by the according entry point
 """
 
-# TODO: proper symbol reference in above docstring.
 
 from __future__ import print_function
 import os.path
@@ -18,15 +19,20 @@ It is able to install any package and 'installs'/'removes' packages by
 touching/removing files in a folder.
 """
 
-# pretend we are apt so we get the resolutions from the existing rosdep
-# when overriding os with ubuntu for testing
+__doc__ %= format(DESCRIPTION)
+
+
 FAKE_INSTALLER_PLUGIN = 'fake'
+"""Name of the fake installer plugin."""
+
 FAKE_INSTALLER = 'apt'
+"""Name of the fake installer. Pretend it is called 'apt' so we get the
+resolutions from the existing rosdep rules when overriding os with
+Ubuntu for testing."""
 
-# TODO: howto docstrings for global variables?
-
-# Folder in which the installer 'installs' packages
 INSTALL_LOCATION = 'fake-installer'
+"""Install folder where the installed packages are 'installed' by touching
+files. Can be relative (to the cwd of xylem invocation) or absolute."""
 
 
 def get_installer_filename(resolved_item):

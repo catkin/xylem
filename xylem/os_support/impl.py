@@ -6,17 +6,29 @@ from xylem.log_utils import warning
 from xylem.exception import InvalidPluginError
 
 # TODO: Document the description of how OS plugins look like (maybe in
-# module docstring?)
+#       module docstring?)
+
+# COMMENT: @wjwwood: This is good to describe, minimally, in the module
+#          docstring, however, the details on how to write one and what
+#          all the ramifications and such are can go in a high level
+#          document in the developer docs.
 OS_GROUP = 'xylem.os'
+
+
+# TODO: for installers and os, verfiy that the names used are valid and
+# are not any of the special values like any_os, any_version,
+# default_installer etc
 
 
 def load_os_plugin(entry_point):
     """Load OS plugin from entry point.
 
     :param entry_point: entry point object from `pkg_resources`
+    :raises InvalidPluginError: if the plugin is not valid
     """
     obj = entry_point.load()
     if not issubclass(obj, OS):
+        # TODO: put this test in separate `verify_os_plugin` function
         raise InvalidPluginError(
             "Entry point '{0}' does not describe valid OS plugin. OS "
             "plugins need to be classes derived from `os_support.OS`.".
@@ -66,6 +78,12 @@ class UnsupportedOSError(Exception):
     pass
 
 
+# TODO: Should we enforce explicit inheritance from OS (during plugin
+# loading), or should we allow duct typing?
+
+# TODO: Should @properties be preferred to all those `get_name` like
+# methods?
+
 class OS(object):
 
     # TODO: does it make sense to have a default installer that is
@@ -83,8 +101,8 @@ class OS(object):
     code name.
 
     Operating systems can name their default installer and furthermore
-    list additional applicable installer names, each with a number > 0
-    as priority (higher number take precedence).
+    list additional applicable installer names, each with a number as
+    priority (higher number take precedence).
     """
 
     def is_os(self):
@@ -128,7 +146,7 @@ class OS(object):
 
         :param str installer_name: name of installer in question
         :return: priority of this installer if the os defines it, else None
-        :rtype: number > 0 or None
+        :rtype: number or None
         """
         raise NotImplementedError()
 
@@ -138,6 +156,7 @@ class OS(object):
         :rtype: str
         """
         raise NotImplementedError()
+        # Note: should we remove the default package manager all together?
 
 
 class OverrideOS(OS):
@@ -226,6 +245,10 @@ class OSSupport(object):
             if name == os.get_name():
                 return os
         return None
+
+    def get_default_installer_names(self):
+        return {os.get_name(): os.get_default_installer_name()
+                for os in self.get_os_plugins()}
 
     def override_os(self, name, version):
         os = self.get_os_plugin(name)

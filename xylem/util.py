@@ -45,7 +45,7 @@ from StringIO import StringIO
 
 from xylem import DEFAULT_PREFIX
 
-from xylem.log_utils import enable_debug
+from xylem.log_utils import enable_debug, enable_verbose
 from xylem.terminal_color import disable_ANSI_colors
 
 
@@ -108,6 +108,8 @@ command line options below.""")
         action='store_true', default=False)
     add('--version', action='version', version=__version__,
         help="prints the xylem version")
+    add('--verbose', action='store_true', default=False,
+        help="verbose console output")
     add('--no-color', action='store_true', default=False,
         dest='no_color', help=argparse.SUPPRESS)
     add('-p', '--prefix', metavar='XYLEM_PREFIX', default=DEFAULT_PREFIX,
@@ -122,9 +124,12 @@ def handle_global_arguments(args):
     global _pdb
     enable_debug(args.debug or 'XYLEM_DEBUG' in os.environ)
     _pdb = args.pdb
+    if args.verbose:
+        enable_verbose()
     if args.no_color:
         disable_ANSI_colors()
     if 'XYLEM_PREFIX' not in os.environ:
+        # FIXME: arg should overwrite env var
         os.environ['XYLEM_PREFIX'] = args.prefix
 
 

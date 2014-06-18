@@ -4,10 +4,13 @@ import pkg_resources
 
 from xylem.os_support import OSSupport
 from xylem.exception import InvalidPluginError
-from xylem.log_utils import info, warning
+from xylem.log_utils import info, warning, is_verbose
 
 
 INSTALLER_GROUP = "xylem.installers"
+
+
+# TODO: split out verify installer plugin function
 
 
 def load_installer_plugin(entry_point):
@@ -19,7 +22,8 @@ def load_installer_plugin(entry_point):
     if not (isinstance(obj, dict) and
             isinstance(obj.get('plugin_name'), str) and
             isinstance(obj.get('description'), str) and
-            issubclass(obj.get('installer'), Installer)):
+            issubclass(obj.get('installer'), Installer)):   # TODO: this or
+                                                            # duck type
         raise InvalidPluginError(
             "Entry point '{0}' does not describe valid Installer "
             "plugin.  Installer plugins need to be dictionaries with "
@@ -63,11 +67,7 @@ class InstallerContext(object):
     manage the current OS and installers to be used.
     """
 
-    def __init__(self, verbose=False):
-
-        # TODO: find more general way to propagate such common settings
-        # from the top level script down to every module
-        self.verbose = verbose
+    def __init__(self):
 
         self.os_support = OSSupport()
         self.installer_plugins = get_installer_plugin_list()
@@ -75,9 +75,6 @@ class InstallerContext(object):
         self.default_installer_name = None
         self.installers = []
         self.installer_priorities = {}
-
-    def set_verbose(self, verbose):
-        self.verbose = verbose
 
     def set_os_override(self, os_name, os_version):
         """
@@ -88,7 +85,7 @@ class InstallerContext(object):
         :param str os_version: OS version value to use
         :raises UnsupportedOsError: if os override was invalid
         """
-        if self.verbose:
+        if is_verbose():
             info("overriding OS to [%s:%s]" % (os_name, os_version))
         self.os_support.override_os(os_name, os_version)
 
@@ -142,14 +139,15 @@ class InstallerContext(object):
             priority = None  # TODO: read user config here
             priority = priority or os.get_installer_priority(inst_name)
             priority = priority or inst.get_priority_for_os(os_name)
-            if priority:
+            if priority is not None:
                 self.installers.append(inst)
                 self.installer_priorities[inst_name] = priority
 
         if self.default_installer_name not in self.get_installer_names():
+            # TODO: Maybe use custom exception class?
             raise RuntimeError(
-                "Default installer {0} does not appear in configured "
-                "installers {1}".format(
+                "Default installer '{0}' does not appear in configured "
+                "installers '{1}'".format(
                     self.default_installer_name,
                     self.get_installer_names()))
 
@@ -233,6 +231,6 @@ class Installer(object):
         installer does not want to declare itself for this OS, None is
         returned.
 
-        :rtype: number > 0 or None
+        :rtype: number or None
         """
         return None

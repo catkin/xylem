@@ -43,6 +43,9 @@ setup(
             'debian = xylem.os_support.plugins:Debian',
             'ubuntu = xylem.os_support.plugins:Ubuntu',
             'osx    = xylem.os_support.plugins:OSX'
+        ],
+        'xylem.installers': [
+            'fake = xylem.installers.fake:description'
         ]
     }
 )

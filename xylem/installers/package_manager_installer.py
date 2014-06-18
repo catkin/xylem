@@ -5,6 +5,11 @@ from xylem.exception import InvalidDataError
 
 class PackageManagerInstaller(Installer):
 
+    # FIXME: 'supports_depends' is misnomer, since it can get confused
+    # with the assertion that the package manger supports dependency
+    # resolution, which is somewhat antithetical to the rules definition
+    # supporting dependencies
+
     """Base class from a variety of package manager installers.
 
     General form of a package manager :class:`Installer` implementation

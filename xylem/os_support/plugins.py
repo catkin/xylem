@@ -7,20 +7,28 @@ from .os_detect import OS_DEBIAN, OS_OSX, OS_UBUNTU, OsDetect
 # general we do _not_ assume that the corresponding installer code can
 # be referenced from within the os plugins (they might live in
 # independent plugins)
+# COMMENT: In short: no, no coupling between installers and os_support
 
 
-class DetectorOS(OS):
+class OSBase(OS):
 
     """OS plugin base class for builtin plugins.
 
+    This is an internal base class used for the plugins shipped with
+    xylem, which use the :mod:`os_detect` module. In general,
+    external plugins would want to derive from
+    :class:`OS` directly.
+
     Derived classes should fill in the following member variables:
-    - names: list of names
-    - detect: Detector object supporting `is_os()`, `get_version()` and
-      `get_codename()`
-    - use_codename: boolean to decide if numbered version or codename
-      should be used
-    - installer_priorities: dict of installer_name => priority
-    - default_installer_name: name of the desired default installer
+
+    :ivar list(str) names: list of names
+    :ivar detect: Detector object supporting ``is_os()``,
+        ``get_version()`` and ``get_codename()``
+    :ivar bool use_codename: boolean to decide if numbered version or
+        codename should be used
+    :ivar dict installer_priorities: dict of installer_name => priority
+    :ivar str default_installer_name: name of the desired default
+        installer
     """
 
     def __init__(self):
@@ -65,7 +73,7 @@ class DetectorOS(OS):
         return self.default_installer_name
 
 
-class Debian(DetectorOS):
+class Debian(OSBase):
 
     def __init__(self):
         super(Debian, self).__init__()
@@ -86,7 +94,7 @@ class Ubuntu(Debian):
         self.detect = OsDetect().get_detector(OS_UBUNTU)
 
 
-class OSX(DetectorOS):
+class OSX(OSBase):
 
     def __init__(self):
         super(OSX, self).__init__()
