@@ -25,7 +25,7 @@ Contents:
    design
    spec
    xylem_api
-   apidoc/xylem
+   apidoc/modules
 
 Installing from Source
 ----------------------

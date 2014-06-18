@@ -261,7 +261,13 @@ Which expands to::
             packages: [libbaz]
 """
 
+# TODO: Update doc: for any_os only allow any_version
+# TODO: Update doc: for any_os disallow default_installer
+
+
 from __future__ import print_function
+
+from types import NoneType
 
 import yaml
 
@@ -303,9 +309,8 @@ def expand_installer_definition(installer_dict):
     return installer_dict
 
 
-def expand_os_version_definition(version_dict):
-    if type(version_dict) not in [str, list, dict] and \
-            version_dict is not None:
+def expand_os_version_definition(os_name, version_dict):
+    if not isinstance(version_dict, (str, list, dict, NoneType)):
         raise ValueError("Invalid os version specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(version_dict)))
@@ -317,34 +322,42 @@ def expand_os_version_definition(version_dict):
     if isinstance(version_dict, list):
         # Convert to an any_version dict
         version_dict = {'any_version': version_dict}
+    if os_name == "any_os":
+        if "any_version" in version_dict:
+            if not len(version_dict) == 1:
+                raise ValueError(
+                    "'any_os' entry may only have 'any_version' version keys, "
+                    "but got '{0}'".format(version_dict.keys()))
+        else:
+            # Interpret as installer_dict
+            version_dict = {"any_version": version_dict}
     for name, installer_dict in version_dict.items():
         version_dict[name] = expand_installer_definition(installer_dict)
     return version_dict
 
 
 def expand_os_definition(os_dict):
-    if type(os_dict) not in [str, list, dict] and os_dict is not None:
-        raise ValueError("Invalid os specific definition, expected dict, "
-                         "list, string, or null but got '{0}'"
-                         .format(type(os_dict)))
-    if os_dict is None:
-        os_dict = []
-    if isinstance(os_dict, str):
-        # Up convert the str to a list
-        os_dict = [os_dict]
-    if isinstance(os_dict, list):
-        # Convert to an any_version dict
-        os_dict = {'any_version': os_dict}
+    if not isinstance(os_dict, dict):
+        raise ValueError(
+            "Invalid os specific definition, expected dict but got '{0}'".
+            format(type(os_dict)))
     for os_name, version_dict in os_dict.items():
-        os_dict[os_name] = expand_os_version_definition(version_dict)
+        os_dict[os_name] = expand_os_version_definition(os_name, version_dict)
     return os_dict
+
+# TODO: for `any_os`, interpret dictionaries that are not `any_version`
+# as installers
+
+# `ubuntu: pip: [foo]` does not work and needs any_version. Should rule
+# expansion make use of known installers/os_versions, or not? If not, it
+# should at least use loaded installers to detect potential errors.
 
 
 def expand_rules(rules):
     if not isinstance(rules, dict):
         raise ValueError("Invalid rules set, expected dict got '{0}'"
                          .format(type(rules)))
-    for xylem_key, os_dict in dict(rules).items():
+    for xylem_key, os_dict in rules.items():
         # Store the (possibly) updated os_dict
         try:
             rules[xylem_key] = expand_os_definition(os_dict)

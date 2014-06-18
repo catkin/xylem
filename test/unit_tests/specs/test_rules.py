@@ -12,6 +12,8 @@ bar:
   ubuntu:
     lucid: libbar-1.2
     any_version: libbar
+  any_os:
+    pip: bar
 baz:
   any_os:
     any_version:
@@ -37,6 +39,10 @@ bar:
     any_version:
       default_installer:
         packages: [libbar]
+  any_os:
+    any_version:
+      pip:
+        packages: [bar]
 baz:
   any_os:
     any_version:
@@ -57,3 +63,14 @@ def test_rules_expansion():
         print("expected:")
         pprint(expected1)
     assert result == expected1
+
+
+def test_rules_expansion_idempotent():
+    expanded = expand_rules(test1)
+    result = expand_rules(expanded)
+    if result != expanded:
+        print("result:")
+        pprint(result)
+        print("expected:")
+        pprint(expanded)
+    assert result == expanded

@@ -51,6 +51,8 @@ from xylem.log_utils import info
 
 from xylem.sources import get_default_source_urls
 from xylem.sources import get_source_urls
+from xylem.sources import merge_rules
+from xylem.sources import verify_rules_dict
 
 from xylem.specs import get_spec_parser
 
@@ -98,27 +100,19 @@ def verify_rules(rules, spec):
     :param dict rules: set of nested dictionaries which is the internal
         DB format
     """
-    if not isinstance(rules, dict):
-        raise ValueError(
-            "Invalid rules from '{0}' spec, expected a dict but got '{1}'"
-            .format(spec, type(rules)))
-    for xkey, os_dict in rules.items():
-        if not isinstance(rules, dict):
-            raise ValueError(
-                "Invalid rules from '{0}' spec, expected a dict but got '{1}'"
-                .format(spec, type(rules)))
+    verify_rules_dict(rules)
 
 
 def handle_spec_urls(spec, urls):
     """Load a given spec parser by spec name and processed all urls.
 
-    Returns a list of new rules from parsed urls
+    Return a list of new rules dicts from parsed urls.
 
     :param str spec: name of a spec parser to load
     :param urls: list of urls to load for the given spec parser
     :type urls: :py:obj:`list` of :py:obj:`str`
     """
-    new_rules = {}
+    rules_dict_list = []
     spec_parser = get_spec_parser(spec)
     if spec_parser is None:
         error("Failed to load spec parser for '{0}' spec, skipping."
@@ -130,13 +124,13 @@ def handle_spec_urls(spec, urls):
             data = load_url(url)
             rules = spec_parser(data)
             verify_rules(rules, spec)
-            new_rules.update(rules)
+            rules_dict_list.append(rules)
         except Exception as exc:
             debug(traceback.format_exc())
             error("Error: failed to load or parse rule file:")
             error_lines = [s.rstrip() for s in ('  ' + str(exc)).splitlines()]
             info('\n  '.join(error_lines))
-    return new_rules
+    return rules_dict_list
 
 
 def update(prefix=None, dry_run=False):
@@ -154,7 +148,7 @@ def update(prefix=None, dry_run=False):
     :type dry_run: bool
     """
     sources_gen = get_source_urls(prefix)
-    rules_dict = {}
+    rules_dict_list = []
     if sources_gen is None:
         if prefix is not None:
             debug("No configs found in prefix '{0}', using default sources."
@@ -165,6 +159,9 @@ def update(prefix=None, dry_run=False):
             info("Processing '{0}'...".format(source_list_file))
             for spec_dict in list_of_spec_dicts:
                 for spec, urls in spec_dict.items():
-                    rules_dict.update(handle_spec_urls(spec, urls))
+                    rules_dict_list.extend(handle_spec_urls(spec, urls))
     from pprint import pprint
-    pprint(rules_dict)
+    # Merging here is just a temporary debugging hack:
+    from xylem.os_support import OSSupport
+    o = OSSupport()
+    pprint(merge_rules(rules_dict_list, o.get_default_installer_names()))
