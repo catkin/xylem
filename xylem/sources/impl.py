@@ -66,12 +66,12 @@ def get_source_urls(prefix):
         found
     :rtype: :py:obj:`dict`(:py:obj:`str`: :py:obj:`list`(:py:obj:`str`))
     """
-    if not prefix:
-        return None
-    source_list_path = os.path.join(prefix, 'etc', 'xylem', 'sources.list.d')
-    if not os.path.exists(source_list_path):
-        return get_default_source_urls()
-    return None
+    if prefix:
+        source_list_path = os.path.join(
+            prefix, 'etc', 'xylem', 'sources.list.d')
+        if os.path.exists(source_list_path):
+            return load_source_lists_from_path(source_list_path)
+    return get_default_source_urls()
 
 
 def load_source_lists_from_path(path):

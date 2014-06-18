@@ -112,9 +112,10 @@ command line options below.""")
         help="verbose console output")
     add('--no-color', action='store_true', default=False,
         dest='no_color', help=argparse.SUPPRESS)
-    add('-p', '--prefix', metavar='XYLEM_PREFIX', default=DEFAULT_PREFIX,
+    add('-p', '--prefix', metavar='XYLEM_PREFIX',
+        default=os.environ.get('XYLEM_PREFIX', DEFAULT_PREFIX),
         help="Sets the prefix for finding configs and caches "
-             "(overridden by XYLEM_PREFIX environment variable)")
+             "(default is overridden by XYLEM_PREFIX environment variable)")
     return parser
 
 _pdb = False
@@ -128,9 +129,6 @@ def handle_global_arguments(args):
         enable_verbose()
     if args.no_color:
         disable_ANSI_colors()
-    if 'XYLEM_PREFIX' not in os.environ:
-        # FIXME: arg should overwrite env var
-        os.environ['XYLEM_PREFIX'] = args.prefix
 
 
 def print_exc(exc):

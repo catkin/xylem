@@ -68,7 +68,7 @@ def main(args=None):
         args = parser.parse_args()
         handle_global_arguments(args)
     try:
-        update(dry_run=args.dry_run)
+        update(prefix=args.prefix, dry_run=args.dry_run)
     except (KeyboardInterrupt, EOFError):
         info('')
         sys.exit(1)
