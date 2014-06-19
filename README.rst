@@ -9,17 +9,22 @@ A tool for resolving dependencies in a platform agnostic way.
 Code & tickets
 --------------
 
-Build status: |Build Status|
-
-.. |Build Status| image:: https://api.travis-ci.org/catkin/xylem.svg?branch=master
-   :target: http://travis-ci.org/ros-infrastructure/xylem
+.. image:: https://api.travis-ci.org/catkin/xylem.svg?branch=master
+   :target: http://travis-ci.org/catkin/xylem
+.. image:: https://coveralls.io/repos/catkin/xylem/badge.png
+   :target: https://coveralls.io/r/catkin/xylem
+..
+  .. image:: https://pypip.in/v/xylem/badge.png
+   :target: https://crate.io/packages/xylem/
+  .. image:: https://pypip.in/d/xylem/badge.png
+   :target: https://crate.io/packages/xylem/
 
 +---------------+---------------------------------------------------+
 | xylem         | http://ros.org/wiki/xylem                         |
 +---------------+---------------------------------------------------+
-| Issues        | http://github.com/ros-infrastructure/xylem/issues |
+| Issues        | http://github.com/catkin/xylem/issues             |
 +---------------+---------------------------------------------------+
-| Documentation | http://ros-infrastructure.github.com/xylem/doc    |
+| Documentation | http://catkin.github.com/xylem/doc                |
 +---------------+---------------------------------------------------+
 
 
