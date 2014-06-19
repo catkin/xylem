@@ -1,4 +1,3 @@
-
 # -*- coding: UTF-8 -*-
 
 # TODO: Add module docstring, explaining the structure of (expanded)

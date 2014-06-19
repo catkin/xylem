@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 import yaml
 
 from pprint import pprint
@@ -19,6 +21,11 @@ baz:
     any_version:
         pip: [baz]
   ubuntu: [libbaz]
+unicöde:
+  fedorä:
+    schröndinger’s:
+      füü:
+        [baß]
 """)
 
 expected1 = yaml.load("""
@@ -52,6 +59,11 @@ baz:
     any_version:
       default_installer:
         packages: [libbaz]
+unicöde:
+  fedorä:
+    schröndinger’s:
+      füü:
+        packages: [baß]
 """)
 
 

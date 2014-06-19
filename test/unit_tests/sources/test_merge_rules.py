@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 """Unit tests for rules dict merging."""
 
 import yaml
@@ -34,16 +36,16 @@ def _parse_rules(rules_str):
 def test_merge_rules():
     """Test merging rules dicts: General tests."""
     rules1 = _parse_rules("""
-    baz:
+    baß:
         any_os:
-            pip: [baz]
+            pip: [baß]
     """)
 
     rules2 = _parse_rules("""
-    foo:
+    füü:
         osx:
             any_version:
-                homebrew: [foo]
+                homebrew: [füü]
     bar:
         osx:
             mavericks:
@@ -51,18 +53,18 @@ def test_merge_rules():
     """)
 
     rules3 = _parse_rules("""
-    baz:
+    baß:
         ubuntu:
             raring:
-                my-installer: [baz]
-            quantal: [baz-2]
+                my-installer: [baß]
+            quantal: [baß-2]
     """)
 
     rules4 = _parse_rules("""
-    foo:
+    füü:
         osx:
             any_version:
-                macports: [foo]
+                macports: [füü]
     bar:
         osx:
             any_version:
@@ -71,16 +73,16 @@ def test_merge_rules():
     """)
 
     rules5 = _parse_rules("""
-    baz:
-        ubuntu: [baz]
+    baß:
+        ubuntu: [baß]
     """)
 
     expected1 = _parse_rules("""
-    foo:
+    füü:
         osx:
             any_version:
-                homebrew: [foo]
-                macports: [foo]
+                homebrew: [füü]
+                macports: [füü]
     bar:
         osx:
             mavericks:
@@ -88,24 +90,24 @@ def test_merge_rules():
             any_version:
                 macports: [bar]
                 fink: [bar]
-    baz:
+    baß:
         any_os:
-            pip: [baz]
+            pip: [baß]
         ubuntu:
             any_version:
-                apt: [baz]
+                apt: [baß]
             raring:
-                my-installer: [baz]
+                my-installer: [baß]
             quantal:
-                apt: [baz-2]
+                apt: [baß-2]
     """)
 
     expected2 = _parse_rules("""
-    foo:
+    füü:
         osx:
             any_version:
-                homebrew: [foo]
-                macports: [foo]
+                homebrew: [füü]
+                macports: [füü]
     bar:
         osx:
             mavericks:
@@ -113,15 +115,15 @@ def test_merge_rules():
             any_version:
                 macports: [bar]
                 fink: [bar]
-    baz:
+    baß:
         any_os:
             any_version:
-                pip: [baz]
+                pip: [baß]
         ubuntu:
             any_version:
-                apt: [baz]
+                apt: [baß]
             raring:
-                my-installer: [baz]
+                my-installer: [baß]
     """)
 
     _do_merge_test([rules1, rules2, rules3, rules4, rules5], expected1)
@@ -134,34 +136,34 @@ def test_merge_rules():
 def test_merge_rules_any_os_any_version():
     """Test merging rules dicts: any_os overwrites any_version."""
     rules1 = _parse_rules("""
-        foo:
+        füü:
             any_os:
                 any_version:
-                    bar: [foo]
+                    bar: [füü]
         """)
 
     rules2 = _parse_rules("""
-        foo:
+        füü:
             ubuntu:
                 any_version:
-                    bar: [foo-2]
+                    bar: [füü-2]
         """)
 
     expected1 = _parse_rules("""
-        foo:
+        füü:
             any_os:
                 any_version:
-                    bar: [foo]
+                    bar: [füü]
         """)
 
     expected2 = _parse_rules("""
-        foo:
+        füü:
             any_os:
                 any_version:
-                    bar: [foo]
+                    bar: [füü]
             ubuntu:
                 any_version:
-                    bar: [foo-2]
+                    bar: [füü-2]
         """)
 
     _do_merge_test([rules1, rules2], expected1)
@@ -171,15 +173,15 @@ def test_merge_rules_any_os_any_version():
 def test_merge_rules_filters_installers():
     """Test merging rules dicts: unknown os names are fileterd out."""
     rules1 = _parse_rules("""
-        foo:
+        füü:
             other_os:
-                some_version: [foo]
+                some_version: [füü]
         """)
 
     rules2 = _parse_rules("""
-        foo:
+        füü:
             any_os:
-                bar: [foo]
+                bar: [füü]
         bar:
             osx:
                 any_version:
@@ -187,17 +189,17 @@ def test_merge_rules_filters_installers():
             other_os:
                 any_version:
                     bar: [bar]
-        baz:
+        baß:
             other_os:
                 any_version:
-                    bar: [baz]
+                    bar: [baß]
         """)
 
     expected = _parse_rules("""
-        foo:
+        füü:
             any_os:
                 any_version:
-                    bar: [foo]
+                    bar: [füü]
         bar:
             osx:
                 any_version:
