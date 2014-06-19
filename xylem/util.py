@@ -171,4 +171,4 @@ def pdb_hook():
 def create_temporary_directory(prefix_dir=None):
     """Create a temporary directory and return its location."""
     from tempfile import mkdtemp
-    return mkdtemp(prefix='bloom_', dir=prefix_dir)
+    return mkdtemp(prefix='xylem_', dir=prefix_dir)

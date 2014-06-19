@@ -2,6 +2,9 @@
 
 from setuptools import setup, find_packages
 
+# see: http://reinout.vanrees.org/weblog/2009/12/17/managing-dependencies.html
+tests_require = ['nose', 'flake8', 'mock', 'coverage']
+
 setup(
     name='xylem',
     version='0.1.0',
@@ -17,14 +20,33 @@ setup(
         'PyYAML',
         'argparse',
     ],
-    author='William Woodall',
-    author_email='william@osrfoundation.org',
-    maintainer='William Woodall',
-    maintainer_email='william@osrfoundation.org',
-    url='http://www.ros.org/wiki/xylem',
+    tests_require=tests_require,
+    extras_require={'test': tests_require},
+    author='Nikolaus Demmel',
+    author_email='nikolaus@nikolaus-demmel.de',
+    maintainer='Nikolaus Demmel',
+    maintainer_email='nikolaus@nikolaus-demmel.de',
+    url='https://github.com/catkin/xylem',
     keywords=['caktin', 'bloom', 'package manager'],
-    classifiers=['Programming Language :: Python',
-                 'License :: OSI Approved :: BSD License'],
+    classifiers=[
+        'Development Status :: 2 - Pre-Alpha'
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Natural Language :: English',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
+        'Topic :: Software Development',
+        'Topic :: System :: Installation/Setup'
+    ],
     description="xylem is a package manager abstraction tool.",
     long_description="xylem is a package manager abstraction tool.",
     license='BSD',
@@ -50,5 +72,3 @@ setup(
         ]
     }
 )
-
-# TEST requires: mock
