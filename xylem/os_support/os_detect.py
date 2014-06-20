@@ -46,7 +46,7 @@ class OsNotDetected(Exception):
     """
     pass
 
-class OsDetector:
+class OsDetector(object):
     """
     Generic API for detecting a specific OS.
     """
@@ -363,7 +363,7 @@ class Windows(OsDetector):
             return platform.release()
         raise OsNotDetected('called in incorrect OS')
 
-class OsDetect:
+class OsDetect(object):
     """
     This class will iterate over registered classes to lookup the
     active OS and version
