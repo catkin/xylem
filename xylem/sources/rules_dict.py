@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 # -*- coding: UTF-8 -*-
 
 # TODO: Add module docstring, explaining the structure of (expanded)
@@ -216,10 +217,10 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
     if identifier in rules_dict_keywords - set(allow_keywords):
         raise ValueError("{0} is disallowed keyword '{1}'.".
                          format(kind, identifier))
-    if not re.match(u'(?u)^[\w.’+-]+$', identifier):
+    if not re.match('(?u)^[\w.’+-]+$', identifier):
         raise ValueError(
-            u"{0} '{1}' has disallowed characters. Allowed are: alphanumeric, "
-            u"dash, dot, underscore.".format(kind, identifier))
+            "{0} '{1}' has disallowed characters. Allowed are: alphanumeric, "
+            "dash, dot, underscore.".format(kind, identifier))
 
 
 # FIXME: find all locations where identifiers are formated and make sure

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 from . import Installer
 from xylem.exception import InvalidDataError

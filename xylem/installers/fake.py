@@ -8,9 +8,11 @@
 
 
 from __future__ import print_function
+from __future__ import unicode_literals
 import os.path
 
 from .package_manager_installer import PackageManagerInstaller
+from six.moves import filter
 
 DESCRIPTION = """\
 This is a fake installer plugin for testing.

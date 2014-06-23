@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from .impl import OS
 from .os_detect import OS_DEBIAN, OS_OSX, OS_UBUNTU, OsDetect
 

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from .impl import get_spec_parser
 from .impl import list_spec_parsers
 from .impl import SpecParsingError

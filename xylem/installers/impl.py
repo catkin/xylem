@@ -1,10 +1,13 @@
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import pkg_resources
 
 from xylem.os_support import OSSupport
 from xylem.exception import InvalidPluginError
 from xylem.log_utils import info, warning, is_verbose
+from six.moves import map
+from six.moves import zip
 
 
 INSTALLER_GROUP = "xylem.installers"

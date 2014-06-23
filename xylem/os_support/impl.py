@@ -1,9 +1,12 @@
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import pkg_resources
 
 from xylem.log_utils import warning
 from xylem.exception import InvalidPluginError
+from six.moves import map
+from six.moves import zip
 
 # TODO: Document the description of how OS plugins look like (maybe in
 #       module docstring?)
