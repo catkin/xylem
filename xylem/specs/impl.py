@@ -36,7 +36,7 @@ from __future__ import unicode_literals
 
 import pkg_resources
 
-from kitchen.text.converters import to_unicode
+from xylem.unicode import to_str
 
 SPECS_GROUP = 'xylem.specs'
 
@@ -47,7 +47,7 @@ class SpecParsingError(ValueError):
 
     def __init__(self, msg, related_snippet=None):
         if related_snippet:
-            msg += "\n\n" + to_unicode(related_snippet)
+            msg += "\n\n" + to_str(related_snippet)
         ValueError.__init__(self, msg)
 
 

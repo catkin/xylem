@@ -37,7 +37,8 @@ from __future__ import unicode_literals
 import os
 import sys
 
-from kitchen.text.converters import to_unicode, to_bytes
+from xylem.unicode import to_str
+from xylem.unicode import to_bytes
 
 from xylem.terminal_color import ansi
 from xylem.terminal_color import enable_ANSI_colors
@@ -88,7 +89,7 @@ def debug(msg, file=None, *args, **kwargs):
     """
     file = file if file is not None else sys.stdout
     global _debug
-    msg = to_unicode(msg)
+    msg = to_str(msg)
     msg = ansi('greenf') + msg + ansi('reset')
     if is_debug():
         print(to_bytes(msg), file=file, *args, **kwargs)
@@ -103,7 +104,7 @@ def info(msg, file=None, *args, **kwargs):
     printing.
     """
     file = file if file is not None else sys.stdout
-    msg = to_unicode(msg)
+    msg = to_str(msg)
     print(to_bytes(msg), file=file, *args, **kwargs)
     return msg
 
@@ -117,7 +118,7 @@ def warning(msg, file=None, *args, **kwargs):
     :func:`enable_debug`.
     """
     file = file if file is not None else sys.stdout
-    msg = to_unicode(msg)
+    msg = to_str(msg)
     msg = ansi('yellowf') + msg + ansi('reset')
     print(to_bytes(msg), file=file, *args, **kwargs)
     return msg
@@ -131,7 +132,7 @@ def error(msg, file=None, exit=False, *args, **kwargs):
     printing.
     """
     file = file if file is not None else sys.stdout
-    msg = to_unicode(msg)
+    msg = to_str(msg)
     msg = ansi('redf') + ansi('boldon') + msg + ansi('reset')
     if exit:
         sys.exit(to_bytes(msg))

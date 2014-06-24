@@ -48,6 +48,7 @@ from six import StringIO
 
 from xylem import DEFAULT_PREFIX
 
+from xylem.unicode import to_str
 from xylem.log_utils import enable_debug, enable_verbose
 from xylem.terminal_color import disable_ANSI_colors
 
@@ -97,12 +98,6 @@ class temporary_directory(object):
             os.chdir(self.original_cwd)
 
 
-text = six.text_type
-"""Helper for converting to text in py2 and py3.
-
-Equivalent to ``unicode`` in py2 and ``str`` in py3."""
-
-
 def raise_from(exc_type, exc_args, from_exc):
     """Raise new exception directly caused by ``from_exc``.
 
@@ -111,9 +106,9 @@ def raise_from(exc_type, exc_args, from_exc):
     the arguments of ``from_exc`` as well as the stack trace.
     """
     if six.PY2:
-        exc_args = text(exc_args)
+        exc_args = to_str(exc_args)
         exc_args += "\nCAUSED BY:\n"
-        exc_args += text(from_exc)
+        exc_args += to_str(from_exc)
         # we need to use `exec` else py3 throws syntax error
         exec("raise exc_type, exc_type(exc_args), sys.exc_info()[2]")
     else:

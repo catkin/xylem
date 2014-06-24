@@ -41,8 +41,9 @@ import yaml
 
 from xylem.log_utils import error
 
-from kitchen.text.converters import to_unicode
 from xylem.terminal_color import fmt
+from xylem.util import load_yaml
+from xylem.unicode import to_str
 
 SOURCES_GROUP = 'xylem.sources'
 
@@ -113,8 +114,7 @@ def parse_list_file(file_path):
     """
     with open(file_path, 'r') as f:
         data = f.read()
-        unicode_data = to_unicode(data)
-        return parse_list(unicode_data, file_path)
+        return parse_list(to_str(data), file_path)
 
 
 def parse_list(data, file_path='<string>'):
@@ -134,17 +134,15 @@ def parse_list(data, file_path='<string>'):
                              .format(type(sources_dict)))
     except ValueError as exc:
         error("Failed to load source list file '{0}': {1}"
-              .format(file_path, to_unicode(exc)))
-        return {}
+              .format(file_path, to_str(exc)))
     except yaml.YAMLError as exc:
         if hasattr(exc, 'problem_mark'):
             mark = exc.problem_mark.line
             col = exc.problem_mark.column
             error(fmt(
                 "Invalid YAML in source list file '{0}' at '{1}:{2}': \n@|"
-                .format(file_path, mark + 1, col + 1)) + to_unicode(exc))
+                .format(file_path, mark + 1, col + 1)) + to_str(exc))
         else:
             error(fmt("Invalid YAML in source list file '{0}': \n@|"
-        return {}
-                      .format(file_path)) + to_unicode(exc))
+                      .format(file_path)) + to_str(exc))
     return sources_dict

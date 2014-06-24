@@ -273,17 +273,18 @@ import yaml
 from xylem.specs import SpecParsingError
 
 from xylem.util import load_yaml
-from xylem.util import text
+
+from xylem.unicode import text_type
 
 
 def expand_definition(definition):
-    if not isinstance(definition, (text, list, dict, type(None))):
+    if not isinstance(definition, (text_type, list, dict, type(None))):
         raise ValueError("Invalid installer specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(definition)))
     if definition is None:
         definition = []
-    if isinstance(definition, text):
+    if isinstance(definition, text_type):
         # Up convert the str to a list
         definition = [definition]
     if isinstance(definition, list):
@@ -293,13 +294,13 @@ def expand_definition(definition):
 
 
 def expand_installer_definition(installer_dict):
-    if not isinstance(installer_dict, (text, list, dict, type(None))):
+    if not isinstance(installer_dict, (text_type, list, dict, type(None))):
         raise ValueError("Invalid installer specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(installer_dict)))
     if installer_dict is None:
         installer_dict = []
-    if isinstance(installer_dict, text):
+    if isinstance(installer_dict, text_type):
         # Up convert the str to a list
         installer_dict = [installer_dict]
     if isinstance(installer_dict, list):
@@ -311,13 +312,13 @@ def expand_installer_definition(installer_dict):
 
 
 def expand_os_version_definition(os_name, version_dict):
-    if not isinstance(version_dict, (text, list, dict, type(None))):
+    if not isinstance(version_dict, (text_type, list, dict, type(None))):
         raise ValueError("Invalid os version specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(version_dict)))
     if version_dict is None:
         version_dict = []
-    if isinstance(version_dict, text):
+    if isinstance(version_dict, text_type):
         # Up convert the str to a list
         version_dict = [version_dict]
     if isinstance(version_dict, list):

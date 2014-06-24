@@ -13,7 +13,8 @@ import numbers
 import six
 
 from xylem.util import raise_from
-from xylem.util import text
+
+from xylem.unicode import text_type
 
 
 def verify_rules_dict(rules_dict, allow_default_installer=True):
@@ -133,7 +134,7 @@ def verify_installer_rule(installer_rule):
         raise ValueError("Expected installer rule of type 'dict', but got "
                          "'{0}'.".format(type(installer_rule)))
     for key, value in installer_rule.items():
-        if not isinstance(key, text):
+        if not isinstance(key, text_type):
             raise ValueError("Expected installer rule to have keys of text"
                              " type, but got '{0}'.".format(type(key)))
         # The contents of the installer rule is specific to the
@@ -205,7 +206,7 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
     :raises ValueError: if ``identifier`` is not valid
     """
     rules_dict_keywords = {'any_os', 'any_version', 'default_installer'}
-    if not isinstance(identifier, text):
+    if not isinstance(identifier, text_type):
         raise ValueError("Expected {0} to be text type, but got '{1}'".
                          format(kind, type(identifier)))
     if identifier in rules_dict_keywords - set(allow_keywords):

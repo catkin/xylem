@@ -47,9 +47,9 @@ import traceback
 import urllib2
 import cgi
 
-from kitchen.text.converters import to_unicode
-
 from xylem.util import raise_from
+
+from xylem.unicode import to_str
 
 from xylem.log_utils import debug
 from xylem.log_utils import error
@@ -100,7 +100,7 @@ master/src/rosdistro/loader.py
     _, params = cgi.parse_header(req.headers.get('Content-Type', ''))
     encoding = params.get('charset', 'utf-8')
     data = req.read()
-    return to_unicode(data, encoding=encoding)
+    return to_str(data, encoding=encoding)
 
 
 def verify_rules(rules, spec):
@@ -137,7 +137,7 @@ def handle_spec_urls(spec, urls):
         except Exception as exc:
             debug(traceback.format_exc())
             error("Error: failed to load or parse rule file:")
-            error_lines = [s.rstrip() for s in ('  ' + to_unicode(exc))
+            error_lines = [s.rstrip() for s in ('  ' + to_str(exc))
                            .splitlines()]
             info('\n  '.join(error_lines))
     return rules_dict_list
