@@ -1,5 +1,8 @@
+from __future__ import print_function
+from __future__ import unicode_literals
 from xylem.installers import InstallerContext
 import unittest
+from six.moves import map
 
 # TODO: Use mock to replace the functions loading the plugins
 

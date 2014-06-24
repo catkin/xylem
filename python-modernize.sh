@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-python-modernize exception.py xylem --future-unicode
+python-modernize xylem test --future-unicode

@@ -1,6 +1,8 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 
 """Unit tests for rules dict merging."""
+
+from __future__ import unicode_literals
 
 import yaml
 
