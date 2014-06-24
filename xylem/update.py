@@ -47,6 +47,8 @@ import traceback
 import urllib2
 import cgi
 
+from kitchen.text.converters import to_unicode
+
 from xylem.util import raise_from
 
 from xylem.log_utils import debug
@@ -75,6 +77,7 @@ master/src/rosdistro/loader.py
     :type retry_period: float
     :param timeout: timeout for opening the URL in seconds
     :type timeout: float
+    :rtype: str
     """
     retry = max(retry, 0)  # negative retry count causes infinite loop
     while True:
@@ -96,7 +99,8 @@ master/src/rosdistro/loader.py
             break
     _, params = cgi.parse_header(req.headers.get('Content-Type', ''))
     encoding = params.get('charset', 'utf-8')
-    return req.read().decode(encoding)
+    data = req.read()
+    return to_unicode(data, encoding=encoding)
 
 
 def verify_rules(rules, spec):
@@ -133,7 +137,8 @@ def handle_spec_urls(spec, urls):
         except Exception as exc:
             debug(traceback.format_exc())
             error("Error: failed to load or parse rule file:")
-            error_lines = [s.rstrip() for s in ('  ' + str(exc)).splitlines()]
+            error_lines = [s.rstrip() for s in ('  ' + to_unicode(exc))
+                           .splitlines()]
             info('\n  '.join(error_lines))
     return rules_dict_list
 

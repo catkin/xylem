@@ -262,10 +262,6 @@ def merge_rules(rules_dict_list, default_installers):
                 combined_os_dict = copy_os_dict(
                     new_os_dict, default_installers)
                 if combined_os_dict:
-                    # print("new os dict")
-                    # print(new_os_dict)
-                    # print("copied")
-                    # print(combined_os_dict)
                     combined_rules[xylem_key] = combined_os_dict
             else:
                 merge_os_dict(
@@ -298,16 +294,9 @@ def merge_os_dict(new_os_dict, combined_os_dict, default_installers):
         if os not in default_installers:
             continue
         if os not in combined_os_dict:
-            # print("new os")
-            # print(os)
             combined_os_dict[os] = copy_version_dict(
                 new_version_dict, default_installers[os])
-            # print(combined_os_dict[os])
         else:
-            # print("existing os")
-            # print(os)
-            # print(combined_os_dict[os])
-            # print(new_version_dict)
             merge_version_dict(
                 new_version_dict, combined_os_dict[os], default_installers[os])
 

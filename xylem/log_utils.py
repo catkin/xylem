@@ -37,6 +37,8 @@ from __future__ import unicode_literals
 import os
 import sys
 
+from kitchen.text.converters import to_unicode, to_bytes
+
 from xylem.terminal_color import ansi
 from xylem.terminal_color import enable_ANSI_colors
 
@@ -66,6 +68,12 @@ def enable_debug(state=True):
     _debug = state
 
 
+def is_debug():
+    """Return true if xylem is set to debug console output."""
+    global _debug
+    return _debug
+
+
 # Default to debug off or on if in the environment
 enable_debug('XYLEM_DEBUG' in os.environ)
 
@@ -73,50 +81,59 @@ enable_debug('XYLEM_DEBUG' in os.environ)
 def debug(msg, file=None, *args, **kwargs):
     """Print debug to console or file.
 
-    Works like :py:obj:`print` and optionally uses terminal colors. Can
-    be enabled or disabled with :func:`enable_debug`.
+    Works like :func:`print`, optionally uses terminal colors and
+    tries to handle unicode correctly by encoding to ``utf-8`` before
+    printing. Can be enabled or disabled with
+    :func:`enable_debug`.
     """
     file = file if file is not None else sys.stdout
     global _debug
-    msg = str(msg)
+    msg = to_unicode(msg)
     msg = ansi('greenf') + msg + ansi('reset')
-    if _debug:
-        print(msg, file=file, *args, **kwargs)
+    if is_debug():
+        print(to_bytes(msg), file=file, *args, **kwargs)
     return msg
 
 
 def info(msg, file=None, *args, **kwargs):
     """Print info to console or file.
 
-    Works like :py:obj:`print` and optionally uses terminal colors.
+    Works like :func:`print`, optionally uses terminal colors and
+    tries to handle unicode correctly by encoding to ``utf-8`` before
+    printing.
     """
     file = file if file is not None else sys.stdout
-    msg = str(msg)
-    print(msg, file=file, *args, **kwargs)
+    msg = to_unicode(msg)
+    print(to_bytes(msg), file=file, *args, **kwargs)
     return msg
 
 
 def warning(msg, file=None, *args, **kwargs):
     """Print warning to console or file.
 
-    Works like :py:obj:`print` and optionally uses terminal colors.
+    Works like :func:`print`, optionally uses terminal colors and
+    tries to handle unicode correctly by encoding to ``utf-8`` before
+    printing. Can be enabled or disabled with
+    :func:`enable_debug`.
     """
     file = file if file is not None else sys.stdout
-    msg = str(msg)
+    msg = to_unicode(msg)
     msg = ansi('yellowf') + msg + ansi('reset')
-    print(msg, file=file, *args, **kwargs)
+    print(to_bytes(msg), file=file, *args, **kwargs)
     return msg
 
 
 def error(msg, file=None, exit=False, *args, **kwargs):
     """Print error statement and optionally exit.
 
-    Works like :py:obj:`print` and optionally uses terminal colors.
+    Works like :func:`print`, optionally uses terminal colors and
+    tries to handle unicode correctly by encoding to ``utf-8`` before
+    printing.
     """
     file = file if file is not None else sys.stdout
-    msg = str(msg)
+    msg = to_unicode(msg)
     msg = ansi('redf') + ansi('boldon') + msg + ansi('reset')
     if exit:
-        sys.exit(msg)
-    print(msg, file=file, *args, **kwargs)
+        sys.exit(to_bytes(msg))
+    print(to_bytes(msg), file=file, *args, **kwargs)
     return msg

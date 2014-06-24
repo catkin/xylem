@@ -40,6 +40,8 @@ import pkg_resources
 import yaml
 
 from xylem.log_utils import error
+
+from kitchen.text.converters import to_unicode
 from xylem.terminal_color import fmt
 
 SOURCES_GROUP = 'xylem.sources'
@@ -92,15 +94,11 @@ def load_source_lists_from_path(path):
 
 def _load_source_lists(files):
     for file_path in files:
-        print(file_path)
         if file_path.startswith('.'):
-            print('.')
             continue
         if not file_path.endswith('.yaml'):
-            print('.yaml')
             continue
         if not os.path.isfile(file_path):
-            print('isfile')
             continue
         yield parse_list_file(file_path)
 
@@ -114,7 +112,9 @@ def parse_list_file(file_path):
     :rtype: :py:obj:`dict`(:py:obj:`str`: :py:obj:`list`(:py:obj:`str`))
     """
     with open(file_path, 'r') as f:
-        return parse_list(f.read(), file_path)
+        data = f.read()
+        unicode_data = to_unicode(data)
+        return parse_list(unicode_data, file_path)
 
 
 def parse_list(data, file_path='<string>'):
@@ -128,13 +128,13 @@ def parse_list(data, file_path='<string>'):
     """
     sources_dict = {}
     try:
-        sources_dict[file_path] = yaml.load(data)
+        sources_dict[file_path] = load_yaml(data)
         if not isinstance(sources_dict, dict):
             raise ValueError("Invalid source list expected dict got '{0}'"
                              .format(type(sources_dict)))
     except ValueError as exc:
         error("Failed to load source list file '{0}': {1}"
-              .format(file_path, str(exc)))
+              .format(file_path, to_unicode(exc)))
         return {}
     except yaml.YAMLError as exc:
         if hasattr(exc, 'problem_mark'):
@@ -142,9 +142,9 @@ def parse_list(data, file_path='<string>'):
             col = exc.problem_mark.column
             error(fmt(
                 "Invalid YAML in source list file '{0}' at '{1}:{2}': \n@|"
-                .format(file_path, mark + 1, col + 1)) + str(exc))
+                .format(file_path, mark + 1, col + 1)) + to_unicode(exc))
         else:
             error(fmt("Invalid YAML in source list file '{0}': \n@|"
-                      .format(file_path)) + str(exc))
         return {}
+                      .format(file_path)) + to_unicode(exc))
     return sources_dict
