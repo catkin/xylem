@@ -272,15 +272,18 @@ import yaml
 
 from xylem.specs import SpecParsingError
 
+from xylem.util import load_yaml
+from xylem.util import text
+
 
 def expand_definition(definition):
-    if type(definition) not in [str, list, dict] and definition is not None:
+    if not isinstance(definition, (text, list, dict, type(None))):
         raise ValueError("Invalid installer specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(definition)))
     if definition is None:
         definition = []
-    if isinstance(definition, str):
+    if isinstance(definition, text):
         # Up convert the str to a list
         definition = [definition]
     if isinstance(definition, list):
@@ -290,14 +293,13 @@ def expand_definition(definition):
 
 
 def expand_installer_definition(installer_dict):
-    if type(installer_dict) not in [str, list, dict] and \
-            installer_dict is not None:
+    if not isinstance(installer_dict, (text, list, dict, type(None))):
         raise ValueError("Invalid installer specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(installer_dict)))
     if installer_dict is None:
         installer_dict = []
-    if isinstance(installer_dict, str):
+    if isinstance(installer_dict, text):
         # Up convert the str to a list
         installer_dict = [installer_dict]
     if isinstance(installer_dict, list):
@@ -309,13 +311,13 @@ def expand_installer_definition(installer_dict):
 
 
 def expand_os_version_definition(os_name, version_dict):
-    if not isinstance(version_dict, (str, list, dict, type(None))):
+    if not isinstance(version_dict, (text, list, dict, type(None))):
         raise ValueError("Invalid os version specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(version_dict)))
     if version_dict is None:
         version_dict = []
-    if isinstance(version_dict, str):
+    if isinstance(version_dict, text):
         # Up convert the str to a list
         version_dict = [version_dict]
     if isinstance(version_dict, list):
@@ -368,6 +370,6 @@ def expand_rules(rules):
 
 
 def rules_spec_parser(data):
-    rules = yaml.load(data)
+    rules = load_yaml(data)
     rules = expand_rules(rules)
     return rules

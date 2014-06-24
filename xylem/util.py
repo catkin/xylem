@@ -41,6 +41,8 @@ import os
 import shutil
 import sys
 import tempfile
+import six
+import yaml
 
 from six import StringIO
 
@@ -95,6 +97,33 @@ class temporary_directory(object):
             os.chdir(self.original_cwd)
 
 
+text = six.text_type
+"""Helper for converting to text in py2 and py3.
+
+Equivalent to ``unicode`` in py2 and ``str`` in py3."""
+
+
+def raise_from(exc_type, exc_args, from_exc):
+    """Raise new exception directly caused by ``from_exc``.
+
+    On py3, this is equivalent to ``raise exc_type(exc_args) from
+    from_exc`` and on py2 the messages are composed manually to retain
+    the arguments of ``from_exc`` as well as the stack trace.
+    """
+    if six.PY2:
+        exc_args = text(exc_args)
+        exc_args += "\nCAUSED BY:\n"
+        exc_args += text(from_exc)
+        # we need to use `exec` else py3 throws syntax error
+        exec("raise exc_type, exc_type(exc_args), sys.exc_info()[2]")
+    else:
+        # the following is a py2-syntax-correct equivalent of
+        # `raise exc_type(exc_args) from from_exc`
+        exc = exc_type(exc_args)
+        exc.__cause__ = from_exc
+        raise exc
+
+
 def add_global_arguments(parser):
     from xylem import __version__
     group = parser.add_argument_group('global', description="""\
@@ -131,6 +160,9 @@ def handle_global_arguments(args):
     if args.no_color:
         disable_ANSI_colors()
 
+
+# TODO: document this soft dependency on pygments, and also add unit
+# test for printing exceptions with and without pygments
 
 def print_exc(exc):
     exc_str = ''.join(exc)
@@ -173,3 +205,24 @@ def create_temporary_directory(prefix_dir=None):
     """Create a temporary directory and return its location."""
     from tempfile import mkdtemp
     return mkdtemp(prefix='xylem_', dir=prefix_dir)
+
+
+def construct_yaml_str(self, node):
+    # Override the default string handling function
+    # to always return unicode objects
+    return self.construct_scalar(node)
+
+
+yaml.Loader.add_constructor('tag:yaml.org,2002:str', construct_yaml_str)
+yaml.SafeLoader.add_constructor('tag:yaml.org,2002:str', construct_yaml_str)
+
+
+# use this utility function throughout to make sure the custom
+# constructors for unicode handling are loaded
+def load_yaml(data):
+    """Parse a unicode string containing yaml.
+
+    This calls ``yaml.load(data)`` but makes sure unicode is handled correctly.
+
+    :raises yaml.YAMLError: if parsing fails"""
+    return yaml.load(data)

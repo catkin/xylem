@@ -1,5 +1,4 @@
-from __future__ import unicode_literals
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 
 # TODO: Add module docstring, explaining the structure of (expanded)
 # rules dicts, including terminology (rules dict, os dict, version dict,
@@ -7,9 +6,14 @@ from __future__ import unicode_literals
 # default_installer), and merging algorithm of rules files. See
 # specs/rules.py docstring and https://github.com/catkin/xylem/issues/9
 
+from __future__ import unicode_literals
+
 import re
 import numbers
 import six
+
+from xylem.util import raise_from
+from xylem.util import text
 
 
 def verify_rules_dict(rules_dict, allow_default_installer=True):
@@ -27,15 +31,14 @@ def verify_rules_dict(rules_dict, allow_default_installer=True):
         try:
             verify_xylem_key(xylem_key)
         except ValueError as e:
-            e.message = "Expected rules dict to have xylem keys as keys, " \
-                        "but got error: " + e.message
-            raise
+            raise_from(ValueError, "Expected rules dict to have xylem keys as "
+                       "keys.", e)
         try:
             verify_os_dict(os_dict)
         except ValueError as e:
-            e.message = "Expected rules dict to have valid os dicts as " \
-                        "values, but for key '{0}' got error: ". \
-                        format(xylem_key) + e.message
+            raise_from(ValueError, "Expected rules dict to have valid os "
+                       "dicts as values, but got error for key '{0}'.".
+                       format(xylem_key), e)
             raise
 
 
@@ -54,17 +57,15 @@ def verify_os_dict(os_dict, allow_default_installer=True):
         try:
             verify_os_name(os_name)
         except ValueError as e:
-            e.message = "Expected os dict to have os names as keys, " \
-                        "but got error: " + e.message
-            raise
+            raise_from(ValueError, "Expected os dict to have os names as "
+                       "keys.", e)
         try:
             def_inst = allow_default_installer and os_name != 'any_os'
             verify_version_dict(version_dict, allow_default_installer=def_inst)
         except ValueError as e:
-            e.message = "Expected os dict to have valid version dicts as " \
-                        "values, but for os '{0}' got error: ". \
-                        format(os_name) + e.message
-            raise
+            raise_from(ValueError, "Expected os dict to have valid version "
+                       "dicts as values, but got error for os '{0}'.".
+                       format(os_name), e)
 
 
 def verify_version_dict(version_dict, allow_default_installer=True):
@@ -83,16 +84,14 @@ def verify_version_dict(version_dict, allow_default_installer=True):
         try:
             verify_os_version(os_version)
         except ValueError as e:
-            e.message = "Expected version dict to have os versions as keys, " \
-                        "but got error: " + e.message
-            raise
+            raise_from(ValueError, "Expected version dict to have os versions "
+                       "as keys.", e)
         try:
             verify_installer_dict(installer_dict, allow_default_installer)
         except ValueError as e:
-            e.message = "Expected version dict to have valid installer " \
-                        "dicts as values, but for version '{0}' got error: ". \
-                        format(os_version) + e.message
-            raise
+            raise_from(ValueError, "Expected version dict to have valid "
+                       "installer dicts as values, but got error for version "
+                       "'{0}'.".format(os_version), e)
 
 
 def verify_installer_dict(installer_dict, allow_default_installer=True):
@@ -114,15 +113,14 @@ def verify_installer_dict(installer_dict, allow_default_installer=True):
         try:
             verify_installer_name(installer_name)
         except ValueError as e:
-            e.message = "Expected installer dict to have installer names as " \
-                        "keys, but got error: " + e.message
-            raise
+            raise_from(ValueError, "Expected installer dict to have installer "
+                       "names as keys.", e)
         try:
             verify_installer_rule(installer_rule)
         except ValueError as e:
-            e.message = "Expected installer dict to have installer rules as" \
-                        "values, but got error: " + e.message
-            raise
+            raise_from(ValueError, "Expected installer dict to have installer "
+                       "rules as values, but got error for installer '{0}.".
+                       format(installer_name), e)
 
 
 def verify_installer_rule(installer_rule):
@@ -135,9 +133,9 @@ def verify_installer_rule(installer_rule):
         raise ValueError("Expected installer rule of type 'dict', but got "
                          "'{0}'.".format(type(installer_rule)))
     for key, value in installer_rule.items():
-        if not isinstance(key, str):
-            raise ValueError("Expected installer rule to have keys of type "
-                             "'str', but got '{0}'.".format(type(key)))
+        if not isinstance(key, text):
+            raise ValueError("Expected installer rule to have keys of text"
+                             " type, but got '{0}'.".format(type(key)))
         # The contents of the installer rule is specific to the
         # according installer plugin, but we check for a few common keys here
         if key == "packages":
@@ -154,18 +152,14 @@ def verify_installer_rule(installer_rule):
                 for xylem_key in value:
                     verify_xylem_key(xylem_key)
             except ValueError as e:
-                e.message = "Expected 'depends' entry of installer rule to " \
-                            "be list of xylem keys, but got error: " + \
-                            e.message
-                raise
+                raise_from(ValueError, "Expected 'depends' entry of installer "
+                           "rule to be list of xylem keys.", e)
         if key == "priority":
             try:
                 verify_installer_priority(value)
             except ValueError as e:
-                e.message = "Expected 'priority' entry of installer rule to " \
-                            "be installer priority, but got error:" + \
-                            e.message
-                raise
+                raise_from(ValueError, "Expected 'priority' entry of "
+                           "installer rule to be installer priority.", e)
 
 
 def verify_xylem_key(xylem_key):
@@ -211,8 +205,8 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
     :raises ValueError: if ``identifier`` is not valid
     """
     rules_dict_keywords = {'any_os', 'any_version', 'default_installer'}
-    if not isinstance(identifier, six.string_types):
-        raise ValueError("Expected {0} to be of type 'str', but got '{1}'".
+    if not isinstance(identifier, text):
+        raise ValueError("Expected {0} to be text type, but got '{1}'".
                          format(kind, type(identifier)))
     if identifier in rules_dict_keywords - set(allow_keywords):
         raise ValueError("{0} is disallowed keyword '{1}'.".
@@ -221,10 +215,6 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
         raise ValueError(
             "{0} '{1}' has disallowed characters. Allowed are: alphanumeric, "
             "dash, dot, underscore.".format(kind, identifier))
-
-
-# FIXME: find all locations where identifiers are formated and make sure
-# unicode is handled
 
 
 def verify_installer_priority(priority):

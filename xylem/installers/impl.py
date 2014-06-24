@@ -6,8 +6,8 @@ import pkg_resources
 from xylem.os_support import OSSupport
 from xylem.exception import InvalidPluginError
 from xylem.log_utils import info, warning, is_verbose
+from xylem.util import text
 from six.moves import map
-from six.moves import zip
 
 
 INSTALLER_GROUP = "xylem.installers"
@@ -23,8 +23,8 @@ def load_installer_plugin(entry_point):
     """
     obj = entry_point.load()
     if not (isinstance(obj, dict) and
-            isinstance(obj.get('plugin_name'), str) and
-            isinstance(obj.get('description'), str) and
+            isinstance(obj.get('plugin_name'), text) and
+            isinstance(obj.get('description'), text) and
             issubclass(obj.get('installer'), Installer)):   # TODO: this or
                                                             # duck type
         raise InvalidPluginError(

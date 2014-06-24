@@ -45,6 +45,9 @@ import socket
 import time
 import traceback
 import urllib2
+import cgi
+
+from xylem.util import raise_from
 
 from xylem.log_utils import debug
 from xylem.log_utils import error
@@ -73,26 +76,27 @@ master/src/rosdistro/loader.py
     :param timeout: timeout for opening the URL in seconds
     :type timeout: float
     """
-    try:
-        fh = urllib2.urlopen(url, timeout=timeout)
-    except urllib2.HTTPError as e:
-        if e.code == 503 and retry:
-            time.sleep(retry_period)
-            return load_url(url,
-                            retry=retry - 1,
-                            retry_period=retry_period,
-                            timeout=timeout)
-        e.msg += ' (%s)' % url
-        raise
-    except urllib2.URLError as e:
-        if isinstance(e.reason, socket.timeout) and retry:
-            time.sleep(retry_period)
-            return load_url(url,
-                            retry=retry - 1,
-                            retry_period=retry_period,
-                            timeout=timeout)
-        raise urllib2.URLError(str(e) + ' (%s)' % url)
-    return fh.read()
+    retry = max(retry, 0)  # negative retry count causes infinite loop
+    while True:
+        try:
+            req = urllib2.urlopen(url, timeout=timeout)
+        except urllib2.HTTPError as e:
+            if e.code == 503 and retry:
+                retry -= 1
+                time.sleep(retry_period)
+            else:
+                raise_from(IOError, "Failed to load url '{0}'.".format(url), e)
+        except urllib2.URLError as e:
+            if isinstance(e.reason, socket.timeout) and retry:
+                retry -= 1
+                time.sleep(retry_period)
+            else:
+                raise_from(IOError, "Failed to load url '{0}'.".format(url), e)
+        else:
+            break
+    _, params = cgi.parse_header(req.headers.get('Content-Type', ''))
+    encoding = params.get('charset', 'utf-8')
+    return req.read().decode(encoding)
 
 
 def verify_rules(rules, spec):
