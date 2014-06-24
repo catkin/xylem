@@ -14,7 +14,7 @@ import six
 
 from xylem.util import raise_from
 
-from xylem.unicode import text_type
+from xylem.text import text_type
 
 
 def verify_rules_dict(rules_dict, allow_default_installer=True):

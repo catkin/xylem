@@ -274,7 +274,7 @@ from xylem.specs import SpecParsingError
 
 from xylem.util import load_yaml
 
-from xylem.unicode import text_type
+from xylem.text import text_type
 
 
 def expand_definition(definition):

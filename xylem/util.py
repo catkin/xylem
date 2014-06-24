@@ -48,7 +48,7 @@ from six import StringIO
 
 from xylem import DEFAULT_PREFIX
 
-from xylem.unicode import to_str
+from xylem.text import to_str
 from xylem.log_utils import enable_debug, enable_verbose
 from xylem.terminal_color import disable_ANSI_colors
 

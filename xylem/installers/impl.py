@@ -6,7 +6,7 @@ import pkg_resources
 from xylem.os_support import OSSupport
 from xylem.exception import InvalidPluginError
 from xylem.log_utils import info, warning, is_verbose
-from xylem.unicode import text_type
+from xylem.text import text_type
 from six.moves import map
 
 

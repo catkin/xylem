@@ -49,7 +49,7 @@ import cgi
 
 from xylem.util import raise_from
 
-from xylem.unicode import to_str
+from xylem.text import to_str
 
 from xylem.log_utils import debug
 from xylem.log_utils import error

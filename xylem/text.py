@@ -1,4 +1,10 @@
+"""Utility module for dealing with unicode/str/bytes in a uniform way.
 
+This has been inspired by parts of the ``kitchen`` package, which is not
+py3 compatible to date.
+"""
+
+from __future__ import unicode_literals
 
 import six
 
@@ -13,6 +19,7 @@ def to_str(obj, encoding='utf-8', errors='replace'):
     elif isinstance(obj, six.binary_type):
         return obj.decode(encoding=encoding, errors=errors)
     else:
+        # TODO: possibly add some error handling here if needed
         return six.text_type(obj, encoding=encoding, errors=errors)
 
 
@@ -23,4 +30,5 @@ def to_bytes(obj, encoding='utf-8', errors='replace'):
     if isinstance(obj, six.binary_type):
         return obj
     else:
+        # TODO: possible add some error handling here if needed
         return six.binary_type(obj, encoding=encoding, errors=errors)

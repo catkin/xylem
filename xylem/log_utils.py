@@ -37,8 +37,8 @@ from __future__ import unicode_literals
 import os
 import sys
 
-from xylem.unicode import to_str
-from xylem.unicode import to_bytes
+from xylem.text import to_str
+from xylem.text import to_bytes
 
 from xylem.terminal_color import ansi
 from xylem.terminal_color import enable_ANSI_colors
