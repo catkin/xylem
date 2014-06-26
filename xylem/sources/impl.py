@@ -43,7 +43,7 @@ from xylem.log_utils import error
 
 from xylem.terminal_color import fmt
 from xylem.util import load_yaml
-from xylem.text import to_str
+from xylem.text_utils import to_str
 
 SOURCES_GROUP = 'xylem.sources'
 

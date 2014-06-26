@@ -36,7 +36,7 @@ from __future__ import unicode_literals
 
 import pkg_resources
 
-from xylem.text import to_str
+from ..text_utils import to_str
 
 SPECS_GROUP = 'xylem.specs'
 
