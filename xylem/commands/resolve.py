@@ -38,24 +38,21 @@ import sys
 
 from xylem.log_utils import info
 
-from xylem.update import update
+from xylem.resolve import resolve
 
 from xylem.util import add_global_arguments
 from xylem.util import handle_global_arguments
 
 DESCRIPTION = """\
-Updates the xylem cache according to the source config files.
-
-If no source config files are found under the current XYLEM_PREFIX, at
-<prefix>/etc/xylem/sources.list.d, then the default, internal source
-configs are used. The cache is always stored under the XYLEM_PREFIX in
-the <prefix>/var/caches/xylem directory.
+Resolve a xylem key.
 """
 
 
 def prepare_arguments(parser):
-    parser.add_argument('-n', '--dry-run', action='store_true', default=False,
-                        help="Shows affect of an update only")
+    parser.add_argument('xylem_key', nargs="+")
+    parser.add_argument(
+        '--os',
+        help="Override detected operating system with os:version pair.")
 
 
 def main(args=None):
@@ -68,7 +65,13 @@ def main(args=None):
         args = parser.parse_args()
         handle_global_arguments(args)
     try:
-        update(prefix=args.prefix, dry_run=args.dry_run)
+        os_override = None
+        if args.os:
+            os_override = tuple(args.os.split(":"))
+        for key in args.xylem_key:
+            resolution = resolve(
+                key, prefix=args.prefix, os_override=os_override)
+            info("Resolution for '{0}': {1}".format(key, resolution))
     except (KeyboardInterrupt, EOFError):
         info('')
         sys.exit(1)
@@ -76,7 +79,7 @@ def main(args=None):
 
 # This describes this command to the loader
 definition = dict(
-    title='update',
+    title='resolve',
     description=DESCRIPTION,
     main=main,
     prepare_arguments=prepare_arguments

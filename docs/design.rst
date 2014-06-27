@@ -92,7 +92,7 @@ The ways in which ``rosdep`` is currently tied to ROS are:
 - Frontend input, for example by scanning a directory for ROS packages
   and checking / installing their dependencies.
 - Extracting resolution rules from ``rosdistro`` information.
-- API access from tools like ``catkin`` or ``bloom``.
+- API access from tools like ``catkin``, ``bloom`` or ``catkin_lint``.
 - Use of other ROS specific packages, e.g. ``rospkg.os_detect``.
 
 
@@ -306,6 +306,8 @@ Additional functionality is optional (these are ideas):
 - how is support for optional features formalized in the code?
 - if new package managers can be added as plugins, then they need to be
   able to register themselves for specific or all operating systems
+- See http://www.ros.org/reps/rep-0112.html and
+  http://www.ros.org/reps/rep-0111.html
 
 
 Frontend input
@@ -372,6 +374,9 @@ following cases that might come as new source plugins:
 
 **Notes:**
 
+- Discuss considered possibility of ``source plugins`` that defines the
+  format / structure of the source files, albeit we have for now decided
+  against it.
 - Do we only support the *cache* model for sources, where a static rules
   database is built with the ``update`` command, but no new information
   is generated upon key resolution? This implies that rules sources that
@@ -405,27 +410,29 @@ following cases that might come as new source plugins:
   control precedence if the entries are ordered within the file)?
 
   One can imagine a source files to look like this (not sure if this is
-  correct YAML, but the idea should be clear):
+  correct YAML, but the idea should be clear): It is a list of
+  dictionaries. Each dictionary has exactly one entry. The key of this
+  entry specifies the rules plugin to be used. The value can be
+  arbitrary yaml that is specific to the rules plugin. For example for
+  the default spec parser plugin, the value would simply be the url to
+  be loaded. For rosdistro it might be a dictionary with the (optional)
+  'rosdistro_url' and possibly other arguments.
 
   .. code-block:: yaml
 
       # Overriding rules with highest precedence, but with legacy format
-      - format: rules
-        sources:
-          - 'some/special/rules.yaml'
+      - rules: 'some/special/rules.yaml'
       # Latest rules in new format
-      - format: rules2
-        sources:
-          - 'latest/rules/using/new/rules/format/base.yaml'
+      - rules2: 'latest/rules/using/new/rules/format/base.yaml'
       # Existing rules in legacy format
-      - format: rules
-        sources:
-          - 'https://github.com/ros/rosdistro/raw/master/rosdep/base.yaml'
-          - 'https://github.com/ros/rosdistro/raw/master/rosdep/python.yaml'
-          - 'https://github.com/ros/rosdistro/raw/master/rosdep/ruby.yaml'
+      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/base.yaml'
+      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/python.yaml'
+      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/ruby.yaml'
       # this entry for the rosdistro rules plugin has no URLs, but is
         present to mark it as least-precedent
-      - format: rosdistro
+      - rosdistro:
+          rosdistro_url: 'https://github.com/ros/rosdistro...'
+          some_more_optional_arguments: '...'
 
 - Do we support rules plugins that do not have an entry in any sources
   file (like ``rosdistro``), or do we force all plugins to have at least
@@ -458,7 +465,8 @@ These are the core commands:
     files. Possibly add a ``clean`` command, that wipes the cache
     completely.
 
-- ``install`` to install packages
+- ``install`` to install packages (resolve + dependencies + installer
+  prerequisites checking)
 
   + options: ``--reinstall``, ``--simulate``, ``--skip-keys``,
     ``--default-yes``, ``--continue-on-error``, ``--specified-only``
@@ -471,10 +479,10 @@ These are the core commands:
   + options: ``--skip-keys``, ``--continue-on-error``, ``--specified-
     only``
 
-- ``init`` to initialize config file and ``sources.list.d`` (possibly in
-  custom location according to ``XYLEM_PREFIX``). By default the built-
-  in default sources / config is copied to the new location. Is a no-op
-  with warning if sources / config is present.
+- ``init-config`` to initialize config file, ``sources.list.d`` and
+  cache (possibly in custom location according to ``XYLEM_PREFIX``). By
+  default the built- in default sources / config is copied to the new
+  location. Is a no-op with warning if sources / config is present.
 
   options:
 
@@ -495,14 +503,25 @@ vs apt) highlighting the one that would be chosen with ``install``. It
 should also be possible to determine where these resolutions come from,
 e.g. which source files.
 
-- ``resolve``
+- ``resolve`` -> resolve a key for os/version; no dependency resolution
+  / prerequisites checking
 - ``where-defined``
+
+Maybe something to query/change the configuration:
+
+- ``config`` with the following arguments:
+
+  + ``--list-plugins`` to list all installed plugins (of all kinds)
+  + ``--list-sources`` list information about all sources that would be
+    considered during update
 
 **Notes:**
 
 - we might want to steal the alias mechanism from ``catkin_tools``, but
   that is maybe low priority, since ``xylem`` command invocations would
   be much less frequent than ``catkin build`` invocations.
+- there should be some options that tell the user why some key is needed
+  and why it was resolved the way it was resolved
 
 
 Improvements over rosdep
@@ -550,7 +569,10 @@ We propose the following solution:
   (overwritten by a command line option, maybe ``--config-prefix`` or
   ``-c``). By default an empty prefix is assumed.
 - The cache will live in ``<prefix>/var/cache/xylem`` and the sources in
-  ``<prefix>/etc/xylem/sources.d/``
+  ``<prefix>/etc/xylem/sources.d/``. I.e. the default system wide
+  cache/source location is ``/var/cache/xylem`` /
+  ``/etc/xylem/sources.d``, but the user can configure it to locally be
+  e.g. ``~/.xylem/var/cache/xylem`` / ``.xylem/etc/xylem/sources.d``.
 - A xylem installation comes bundled with default source files and
   default cache files. However, in particular the cache is not installed
   into the ``/var/cache`` location directly.
@@ -619,6 +641,14 @@ However, what we suggest addresses some of the remaining issues:
   connectivity?
 - Maybe the system wide settings file is also affected by
   ``XYLEM_PREFIX``, i.e. lives in ``<prefix>/etc/xylem/config``?
+- When using a user-local cache, locations like
+  ``~/.xylem/var/cache/xylem`` / ``.xylem/etc/xylem/sources.d`` are
+  somewhat suboptimal. If we want something like ``~/.xylem/cache`` /
+  ``.xylem/sources.d``, we would likely need separate ``XYLEM_SOURCES``
+  and ``XYLEM_CACHE`` environment variables instead of or alternative to
+  ``XYLEM_PREFIX``.
+- Additional default sources could also be realized as plugins, which
+  provide source files as well as pickled cache files.
 
 
 Settings and command line arguments
@@ -778,6 +808,10 @@ beneficial.
   + pip: `<https://pip.pypa.io/en/latest/user_guide.html#requirements-
     files>`_, `<http://pythonhosted.org/setuptools/setuptools.html
     #declaring-dependencies>`_
+  + python versions:
+
+    * http://legacy.python.org/dev/peps/pep-0386/
+    * http://pythonhosted.org//kitchen/api-versioning.html
 
 - interesting blog about abstract vs concrete dependencies in python
   `<https://caremad.io/blog/setup-vs-requirement/>`_
@@ -825,7 +859,7 @@ and comprehensible description]
   + concrete examples:
     * apt: ppa installed
     * source installer: tools installed (gcc etc)
-    * brew: homebrew installed, Tap tapped
+    * brew: homebrew installed, Tap tapped, brew --prefix on PATH
     * pip: pip installed
 
 
@@ -862,12 +896,30 @@ Random points
   their solution for ideas for xylem.
 - continue on error option for ``install``
 - authority on rules and versions
+- restriction on the characters used in xylem keys, os names, installer
+  names, version strings: alphanumeric, period, dash, underscore. Is
+  this too restrictive? Reserved names such as any_os, any_version,
+  default_installer...
+- for the rosdistro plugin, there should be a more meaningful error
+  message when an operating system is not supported (it should not just
+  be "key not resolved", nor should it simply try to install non-
+  existent packages (and fail) like it does now on homebrew)
+- before releasing, carefully consider security and ability for plugins
+  to override completely what is installed from sources
 
+- consider migration path ros-package -> system dependencies (in light
+  of xylem supporting multiple ros distros)
+  http://answers.ros.org/question/173773/depend-on-opencv-in-hydro/
+
+- Look at Chef cookbook
+  http://answers.ros.org/question/174507/is-there-interest-in-maintaining-chef-cookbooks-for-ros/
 
 Terminology
 -----------
 
 [TODO: Define terms]
+
+-> fix terminology around backend; use ``installer plugin``, ``rules plugin``
 
 - xylem key
 - key database
@@ -878,7 +930,13 @@ Terminology
 - installer
 - installer context
 - package -> pm package
-- rules file
+- rules dict, os dict, version dict, installer dict, installer rule
+- rules database (contains merged rules dict)
+- rules source (entry in sources file, contains spec plugin name and
+  data, typically url, must should have unique identifier)
+- cache -> version, datetime, must be reproducible for the unique
+  identifier
+
 
 
 

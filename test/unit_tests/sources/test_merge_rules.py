@@ -9,7 +9,8 @@ import yaml
 from pprint import pprint
 
 from xylem.specs.rules import expand_rules
-from xylem.sources import merge_rules, verify_rules_dict
+from xylem.sources.rules_dict import merge_rules
+from xylem.sources.rules_dict import verify_rules_dict
 
 
 _default_installers = {

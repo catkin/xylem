@@ -17,6 +17,46 @@ from xylem.util import raise_from
 from xylem.text_utils import text_type
 
 
+def lookup_rules(rules_dict,
+                 xylem_key,
+                 os_name,
+                 os_version,
+                 default_installer):
+    """Lookup rules for xylem key in rules dict.
+
+    Given a key/os/version triple, lookup the installer rules in a rules
+    dict. The rules from possible 'any_os' and 'any_version' entries are
+    considered.
+
+    :param dict rules_dict: rules dictionary to lookup xylem key in
+    :param str xylem_key: key to look up
+    :param str os_name: os name to look up
+    :param str os_version: os version to look up
+    :returns: installer dict of merged rules (including any_os/any_version)
+    :rtype: dict
+    """
+
+    # print("Lookup {0} for {1}:{2} ({3})".
+    #       format(xylem_key, os_name, os_version, default_installer))
+
+    os_dict = rules_dict.get(xylem_key, {})
+    version_dict = os_dict.get(os_name, {})
+    any_os_installer_dict = os_dict.get('any_os', {}).get('any_version', {})
+    any_version_installer_dict = version_dict.get('any_version', {})
+    specific_installer_dict = version_dict.get(os_version, {})
+
+    # TODO: merge the other way round
+    combined_dict = {}
+    merge_installer_dict(any_os_installer_dict,
+                         combined_dict, default_installer)
+    merge_installer_dict(any_version_installer_dict,
+                         combined_dict, default_installer)
+    merge_installer_dict(specific_installer_dict,
+                         combined_dict, default_installer)
+
+    return combined_dict
+
+
 def verify_rules_dict(rules_dict, allow_default_installer=True):
     """Verify that an expanded rules dict has valid structure.
 
@@ -205,13 +245,20 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
         for this identifier
     :raises ValueError: if ``identifier`` is not valid
     """
-    rules_dict_keywords = {'any_os', 'any_version', 'default_installer'}
+    rules_dict_keywords = {'any_os', 'any_version', 'default_installer',
+                           'unset_installers'}
+    # FIXME: implement this whitelist differently (specific to where it
+    #        might occur)
+    rules_dict_whitelist = {'mountain lion'}
+    # NOTE: 'unset_installers' is reserved for future use, not yet implemented.
     if not isinstance(identifier, text_type):
         raise ValueError("Expected {0} to be text type, but got '{1}'".
                          format(kind, type(identifier)))
     if identifier in rules_dict_keywords - set(allow_keywords):
         raise ValueError("{0} is disallowed keyword '{1}'.".
                          format(kind, identifier))
+    if identifier in rules_dict_whitelist:
+        return
     if not re.match('(?u)^[\w.’+-]+$', identifier):
         raise ValueError(
             "{0} '{1}' has disallowed characters. Allowed are: alphanumeric, "
@@ -226,6 +273,10 @@ def verify_installer_priority(priority):
     if not isinstance(priority, numbers.Real):
         raise ValueError("Expected installer priority to be a real number, "
                          "but got '{0}'.".format(priority))
+
+
+# TODO: change order of merge to start with highest priority. Change
+# naming accordingly.
 
 
 def merge_rules(rules_dict_list, default_installers):

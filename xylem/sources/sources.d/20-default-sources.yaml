@@ -1,0 +1,9 @@
+
+# OS Specific first
+- rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/osx-homebrew.yaml'
+- rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/gentoo.yaml'
+# Then generic
+#- fake-parser: 'some-foo-indentifier'
+- rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/base.yaml'
+- rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/python.yaml'
+- rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/ruby.yaml'

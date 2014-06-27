@@ -11,7 +11,7 @@ setup(
     packages=find_packages(exclude=['test']),
     package_data={
         'xylem.sources': [
-            'xylem/sources/sources.list.d/*'
+            'xylem/sources/sources.d/*'
         ]
     },
     include_package_data=True,
@@ -57,10 +57,11 @@ setup(
             'xylem-update = xylem.commands.update:main'
         ],
         'xylem.commands': [
-            'update = xylem.commands.update:description'
+            'update = xylem.commands.update:definition',
+            'resolve = xylem.commands.resolve:definition'
         ],
         'xylem.specs': [
-            'rules = xylem.specs.rules:rules_spec_parser'
+            'rules = xylem.specs.rules:definition'
         ],
         'xylem.os': [
             'debian = xylem.os_support.plugins:Debian',
@@ -68,7 +69,7 @@ setup(
             'osx    = xylem.os_support.plugins:OSX'
         ],
         'xylem.installers': [
-            'fake = xylem.installers.fake:description'
+            'fake = xylem.installers.fake:definition'
         ]
     }
 )

@@ -46,11 +46,10 @@ import yaml
 
 from six import StringIO
 
-from xylem import DEFAULT_PREFIX
-
-from xylem.log_utils import enable_debug, enable_verbose
-from xylem.terminal_color import disable_ANSI_colors
+from . import DEFAULT_PREFIX
 from .text_utils import to_str
+from .log_utils import enable_debug, enable_verbose
+from .terminal_color import disable_ANSI_colors
 
 
 class change_directory(object):
@@ -108,7 +107,7 @@ def raise_from(exc_type, exc_args, from_exc):
     if six.PY2:
         exc_args = to_str(exc_args)
         exc_args += "\nCAUSED BY:\n"
-        exc_args += to_str(from_exc)
+        exc_args += to_str(type(from_exc)) + ": " + to_str(from_exc)
         # we need to use `exec` else py3 throws syntax error
         exec("raise exc_type, exc_type(exc_args), sys.exc_info()[2]")
     else:
@@ -122,10 +121,10 @@ def raise_from(exc_type, exc_args, from_exc):
 def add_global_arguments(parser):
     from xylem import __version__
     group = parser.add_argument_group('global', description="""\
-The XYLEM_PREFIX environment variable sets the path under which xylem operates
-on source configurations and caches. If set, the XYLEM_DEBUG environment
-variable enables debug messages. These environment variables override the
-command line options below.""")
+The XYLEM_PREFIX environment variable sets the path under which xylem
+operates on source configurations and caches, which can be overwritten
+by the --prefix argument. If set, the XYLEM_DEBUG environment variable
+enables debug messages.""")
     add = group.add_argument
     add('-d', '--debug', help='enable debug messages',
         action='store_true', default=False)
@@ -133,14 +132,15 @@ command line options below.""")
         action='store_true', default=False)
     add('--version', action='version', version=__version__,
         help="prints the xylem version")
-    add('--verbose', action='store_true', default=False,
+    add('-v', '--verbose', action='store_true', default=False,
         help="verbose console output")
     add('--no-color', action='store_true', default=False,
         dest='no_color', help=argparse.SUPPRESS)
     add('-p', '--prefix', metavar='XYLEM_PREFIX',
         default=os.environ.get('XYLEM_PREFIX', DEFAULT_PREFIX),
-        help="Sets the prefix for finding configs and caches "
-             "(default is overridden by XYLEM_PREFIX environment variable)")
+        help="Sets the prefix for finding configs and caches. "
+             "The default is either '/' or, if set, the XYLEM_PREFIX "
+             "environment variable.")
     return parser
 
 _pdb = False
@@ -150,6 +150,7 @@ def handle_global_arguments(args):
     global _pdb
     enable_debug(args.debug or 'XYLEM_DEBUG' in os.environ)
     _pdb = args.pdb
+    args.prefix = os.path.expanduser(args.prefix)
     if args.verbose:
         enable_verbose()
     if args.no_color:
@@ -159,8 +160,8 @@ def handle_global_arguments(args):
 # TODO: document this soft dependency on pygments, and also add unit
 # test for printing exceptions with and without pygments
 
-def print_exc(exc):
-    exc_str = ''.join(exc)
+def print_exc(formated_exc):
+    exc_str = ''.join(formated_exc)
     try:
         from pygments import highlight
         from pygments.lexers import PythonTracebackLexer
@@ -218,6 +219,8 @@ def load_yaml(data):
     """Parse a unicode string containing yaml.
 
     This calls ``yaml.load(data)`` but makes sure unicode is handled correctly.
+
+    See :func:`yaml.load`.
 
     :raises yaml.YAMLError: if parsing fails"""
     return yaml.load(data)

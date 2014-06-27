@@ -42,6 +42,7 @@ First, the top level rules file has these properties:
 
 - The rules file is a YAML 1.1 compliant file
 - The rules file contains a single dictionary, the rules dict
+- The rules file may be empty, being interpreted as an empty dict
 
 the rules dict
 ^^^^^^^^^^^^^^
@@ -264,17 +265,87 @@ Which expands to::
 # TODO: Update doc: for any_os only allow any_version
 # TODO: Update doc: for any_os disallow default_installer
 
-
-from __future__ import print_function
 from __future__ import unicode_literals
 
 import yaml
 
-from xylem.specs import SpecParsingError
+from ..sources.rules_dict import verify_rules_dict
+from ..sources.rules_dict import lookup_rules
+from .impl import Spec
+from ..util import load_yaml
+from ..text_utils import text_type
+from ..text_utils import to_str
+from ..load_url import load_url
 
-from xylem.util import load_yaml
 
-from xylem.text_utils import text_type
+DESCRIPTION = """\
+The rules spec downloads and expands rules files.
+"""
+
+
+class RulesSpec(Spec):
+
+    """Rules file spec.
+
+    ``arguments`` are the url of the rules file.
+
+    ``data`` is the expanded rules dict.
+    """
+
+    @property
+    def name(self):
+        return "rules"
+
+    @property
+    def version(self):
+        return 1
+
+    def unique_id(self, arguments):
+        return arguments
+
+    def load_data(self, arguments):
+        # TODO: Can we fast-fail if there is no connectivity (instead of
+        # doing the retries)? How to find out if there is no internet
+        # connection in general (as opposed to the resources not being
+        # accessible)?
+        data = load_url(arguments)
+        rules = load_yaml(data)
+        rules = expand_rules(rules)
+        return rules
+
+    def verify_arguments(self, arguments):
+        if not isinstance(arguments, text_type):
+            raise ValueError(
+                "Expected string (URL) as arguments for 'rules' spec, "
+                "but got '{0}' of type '{1}'.".
+                format(arguments, to_str(type(arguments))))
+
+    def verify_data(self, data, arguments):
+        return verify_rules_dict(data)
+
+    def is_data_outdated(self, data, arguments, data_load_time):
+        # TODO: actual sensible implementation here
+        return True
+
+    def lookup(self, data, xylem_key, installer_context):
+        os, version = installer_context.get_os_name_and_version()
+        default_installer = installer_context.get_default_installer()
+        # FIXME: pass default installer
+        return lookup_rules(data, xylem_key, os, version, default_installer)
+
+
+# TODO: The following code needs to be looked over and naming of
+# functions/variables/parameters be
+
+# TODO: what is the right abstraction here?
+class SpecParsingError(ValueError):
+
+    """Raised when an invalid spec element is encountered while parsing."""
+
+    def __init__(self, msg, related_snippet=None):
+        if related_snippet:
+            msg += "\n\n" + to_str(related_snippet)
+        ValueError.__init__(self, msg)
 
 
 def expand_definition(definition):
@@ -331,7 +402,7 @@ def expand_os_version_definition(os_name, version_dict):
                     "'any_os' entry may only have 'any_version' version keys, "
                     "but got '{0}'".format(version_dict.keys()))
         else:
-            # Interpret as installer_dict
+            # Interpret as installer dict
             version_dict = {"any_version": version_dict}
     for name, installer_dict in version_dict.items():
         version_dict[name] = expand_installer_definition(installer_dict)
@@ -347,15 +418,10 @@ def expand_os_definition(os_dict):
         os_dict[os_name] = expand_os_version_definition(os_name, version_dict)
     return os_dict
 
-# TODO: for `any_os`, interpret dictionaries that are not `any_version`
-# as installers
-
-# `ubuntu: pip: [foo]` does not work and needs any_version. Should rule
-# expansion make use of known installers/os_versions, or not? If not, it
-# should at least use loaded installers to detect potential errors.
-
 
 def expand_rules(rules):
+    if rules is None:
+        rules = {}
     if not isinstance(rules, dict):
         raise ValueError("Invalid rules set, expected dict got '{0}'"
                          .format(type(rules)))
@@ -370,7 +436,9 @@ def expand_rules(rules):
     return rules
 
 
-def rules_spec_parser(data):
-    rules = load_yaml(data)
-    rules = expand_rules(rules)
-    return rules
+# definition for plugin loader
+definition = dict(
+    plugin_name='rules',
+    description=DESCRIPTION,
+    spec=RulesSpec
+)

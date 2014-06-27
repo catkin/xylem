@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from __future__ import unicode_literals
 
 import pkg_resources
@@ -61,6 +61,10 @@ def get_installer_plugin_list():
             plugin_list.append(installer_class())
     return plugin_list
 
+
+# TODO: can we allow OSX to change the default resolutions based on
+# whether homebrew is installed or not? Now the resolution does depend
+# on the system state...
 
 class InstallerContext(object):
 
@@ -158,6 +162,9 @@ class InstallerContext(object):
         # default) has not been registered and possibly issue warning
 
 
+# TODO: is 'resolved' the same as 'installer rule', or can it be a
+# processed 'installer rule' also?
+
 class Installer(object):
 
     """Installer class that custom installer plugins derive from.
@@ -189,6 +196,7 @@ class Installer(object):
             on the local system
         """
         raise NotImplementedError('subclasses must implement')
+        # TODO: generalize this as 'prerequisites' abstraction
 
     def get_install_command(self, resolved, interactive=True, reinstall=False):
         """Get command line invocations to install list of items.

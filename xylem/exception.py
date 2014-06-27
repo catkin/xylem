@@ -1,7 +1,11 @@
 """Exception classes for error handling xylem."""
 
-from __future__ import print_function
+
 from __future__ import unicode_literals
+
+
+# TODO: Do we keep _all_ exceptions here or just the ones that are used
+# by multiple submodules?
 
 
 class InvalidDataError(Exception):
@@ -27,11 +31,11 @@ class InvalidPluginError(Exception):
 #         return self.message
 
 
-# class DownloadFailure(Exception):
+class DownloadFailure(Exception):
 
-#     """Failure downloading sources list data for I/O or other reasons."""
+    """Failure downloading data for I/O or other reasons."""
 
-#     pass
+    pass
 
 
 # class InstallFailed(Exception):

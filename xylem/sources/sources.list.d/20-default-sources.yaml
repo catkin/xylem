@@ -1,8 +1,0 @@
-- rules:
-    # OS Specific first
-    - 'https://github.com/ros/rosdistro/raw/master/rosdep/osx-homebrew.yaml'
-    - 'https://github.com/ros/rosdistro/raw/master/rosdep/gentoo.yaml'
-    # Then generic
-    - 'https://github.com/ros/rosdistro/raw/master/rosdep/base.yaml'
-    - 'https://github.com/ros/rosdistro/raw/master/rosdep/python.yaml'
-    - 'https://github.com/ros/rosdistro/raw/master/rosdep/ruby.yaml'

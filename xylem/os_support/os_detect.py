@@ -6,7 +6,7 @@ Linux distributions.
 # NOTE: almost unchanged copy from `rospkg`, so disable pyflakes for now
 # flake8: noqa
 
-from __future__ import print_function
+
 from __future__ import unicode_literals
 
 import os

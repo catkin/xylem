@@ -6,8 +6,6 @@
     by the according entry point
 """
 
-
-from __future__ import print_function
 from __future__ import unicode_literals
 import os.path
 
@@ -72,7 +70,7 @@ class FakeInstaller(PackageManagerInstaller):
 
 
 # This describes this installer to the plugin loader
-description = dict(
+definition = dict(
     plugin_name=FAKE_INSTALLER_PLUGIN,
     description=DESCRIPTION,
     installer=FakeInstaller

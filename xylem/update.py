@@ -31,6 +31,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# TODO: update docstrings
+
 """Implements the update functionality.
 
 This includes the functions to collect and process source files. Part of
@@ -38,109 +40,44 @@ this process is to load and run the spec parser, which are given by name
 in the source files.
 """
 
-from __future__ import print_function
 from __future__ import unicode_literals
 
-import socket
-import time
-import traceback
-import urllib2
-import cgi
-
-from xylem.util import raise_from
-
-from xylem.text_utils import to_str
-
-from xylem.log_utils import debug
-from xylem.log_utils import error
-from xylem.log_utils import info
-
-from xylem.sources import get_default_source_urls
-from xylem.sources import get_source_urls
-from xylem.sources import merge_rules
-from xylem.sources import verify_rules_dict
-
-from xylem.specs import get_spec_parser
+from .sources import SourcesContext
+from .sources import RulesDatabase
 
 
-def load_url(url, retry=2, retry_period=1, timeout=10):
-    """Load a given url with retries, retry_periods, and timeouts.
+# TODO: remove handle_spec_urls (move some logic into the accoring
+# method in Rules database)
 
-    Based on https://github.com/ros-infrastructure/rosdistro/blob/\
-master/src/rosdistro/loader.py
+# def handle_spec_urls(spec, urls):
+#     """Load a given spec parser by spec name and processed all urls.
 
-    :param url: URL to load and return contents of
-    :type url: str
-    :param retry: number of times to retry the url on 503 or timeout
-    :type retry: int
-    :param retry_period: time to wait between retries in seconds
-    :type retry_period: float
-    :param timeout: timeout for opening the URL in seconds
-    :type timeout: float
-    :rtype: str
-    """
-    retry = max(retry, 0)  # negative retry count causes infinite loop
-    while True:
-        try:
-            req = urllib2.urlopen(url, timeout=timeout)
-        except urllib2.HTTPError as e:
-            if e.code == 503 and retry:
-                retry -= 1
-                time.sleep(retry_period)
-            else:
-                raise_from(IOError, "Failed to load url '{0}'.".format(url), e)
-        except urllib2.URLError as e:
-            if isinstance(e.reason, socket.timeout) and retry:
-                retry -= 1
-                time.sleep(retry_period)
-            else:
-                raise_from(IOError, "Failed to load url '{0}'.".format(url), e)
-        else:
-            break
-    _, params = cgi.parse_header(req.headers.get('Content-Type', ''))
-    encoding = params.get('charset', 'utf-8')
-    data = req.read()
-    return to_str(data, encoding=encoding)
+#     Return a list of new rules dicts from parsed urls.
 
-
-def verify_rules(rules, spec):
-    """Verify that a set of rules are valid for internal storage.
-
-    :param dict rules: set of nested dictionaries which is the internal
-        DB format
-    """
-    verify_rules_dict(rules)
-
-
-def handle_spec_urls(spec, urls):
-    """Load a given spec parser by spec name and processed all urls.
-
-    Return a list of new rules dicts from parsed urls.
-
-    :param str spec: name of a spec parser to load
-    :param urls: list of urls to load for the given spec parser
-    :type urls: :py:obj:`list` of :py:obj:`str`
-    """
-    rules_dict_list = []
-    spec_parser = get_spec_parser(spec)
-    if spec_parser is None:
-        error("Failed to load spec parser for '{0}' spec, skipping."
-              .format(spec))
-        return {}
-    for url in urls:
-        info("Hit {0}".format(url))
-        try:
-            data = load_url(url)
-            rules = spec_parser(data)
-            verify_rules(rules, spec)
-            rules_dict_list.append(rules)
-        except Exception as exc:
-            debug(traceback.format_exc())
-            error("Error: failed to load or parse rule file:")
-            error_lines = [s.rstrip() for s in ('  ' + to_str(exc))
-                           .splitlines()]
-            info('\n  '.join(error_lines))
-    return rules_dict_list
+#     :param str spec: name of a spec parser to load
+#     :param urls: list of urls to load for the given spec parser
+#     :type urls: :py:obj:`list` of :py:obj:`str`
+#     """
+#     rules_dict_list = []
+#     spec_parser = get_spec_parser(spec)
+#     if spec_parser is None:
+#         error("Failed to load spec parser for '{0}' spec, skipping."
+#               .format(spec))
+#         return {}
+#     for url in urls:
+#         info("Hit {0}".format(url))
+#         try:
+#             data = load_url(url)
+#             rules = spec_parser(data)
+#             verify_rules(rules, spec)
+#             rules_dict_list.append(rules)
+#         except Exception as exc:
+#             debug(traceback.format_exc())
+#             error("Error: failed to load or parse rule file:")
+#             error_lines = [s.rstrip() for s in ('  ' + to_str(exc))
+#                            .splitlines()]
+#             info('\n  '.join(error_lines))
+#     return rules_dict_list
 
 
 def update(prefix=None, dry_run=False):
@@ -157,21 +94,10 @@ def update(prefix=None, dry_run=False):
         pretend to
     :type dry_run: bool
     """
-    sources_gen = get_source_urls(prefix)
-    rules_dict_list = []
-    if sources_gen is None:
-        if prefix is not None:
-            debug("No configs found in prefix '{0}', using default sources."
-                  .format(prefix))
-        sources_gen = get_default_source_urls()
-    for source_list_dict in sources_gen:
-        for source_list_file, list_of_spec_dicts in source_list_dict.items():
-            info("Processing '{0}'...".format(source_list_file))
-            for spec_dict in list_of_spec_dicts:
-                for spec, urls in spec_dict.items():
-                    rules_dict_list.extend(handle_spec_urls(spec, urls))
-    from pprint import pprint
-    # Merging here is just a temporary debugging hack:
-    from xylem.os_support import OSSupport
-    o = OSSupport()
-    pprint(merge_rules(rules_dict_list, o.get_default_installer_names()))
+    sources_context = SourcesContext(prefix=prefix)
+    sources_context.ensure_cache_dir()
+    database = RulesDatabase(sources_context)
+    database.print_info = True
+    # support partial update of local sources even without connectivity:
+    database.raise_on_error = False
+    database.update()
