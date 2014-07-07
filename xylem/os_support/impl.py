@@ -80,10 +80,12 @@ class UnsupportedOSError(Exception):
 
 
 # TODO: Should we enforce explicit inheritance from OS (during plugin
-# loading), or should we allow duct typing?
+# loading), or should we allow duck typing? COMMENT: We will use ABC for
+# now.
 
 # TODO: Should @properties be preferred to all those `get_name` like
-# methods?
+# methods? COMMENT: Properties should be nicer and are more idiomatic
+# python. Change to use those.
 
 class OS(object):
 

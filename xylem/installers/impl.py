@@ -70,8 +70,9 @@ class InstallerContext(object):
 
     """:class:`InstallerContext` manages the context of execution for xylem.
 
-    It combines OS detector, installer plugins and user settings to
-    manage the current OS and installers to be used.
+    It combines OS plugins, installer plugins and user settings to
+    manage the current OS, installers to be used including their
+    priorities.
     """
 
     # TODO: Make parameters for passing os/version pair more uniform
@@ -98,9 +99,9 @@ class InstallerContext(object):
             self.setup_installers()
 
     def set_os_override(self, os_tuple):
-        """
-        Override the OS detector with *os_name* and *os_version*.  See
-        :meth:`InstallerContext.detect_os`.
+        """Override the OS detector with *os_name* and *os_version*.
+
+        See :meth:`InstallerContext.detect_os`.
 
         :param (str,str) os_name: OS (name,version) tuple to use
         :raises UnsupportedOsError: if os override was invalid
@@ -133,21 +134,39 @@ class InstallerContext(object):
         return "%s:%s" % self.get_os_tuple()
 
     def get_default_installer_name(self):
+        """Get name of default installer for current os.
+
+        :meth:`setup_installers` needs to be called beforehand.
+        """
         return self.os_support.get_current_os().get_default_installer_name()
 
     def get_installer_names(self):
+        """Get all configured installers for current os.
+
+        :meth:`setup_installers` needs to be called beforehand.
+        """
         return map(lambda i: i.get_name(), self.installers)
 
     def get_installer(self, name):
+        """Get installer object by name."""
         for inst in self.installers:
             if inst.get_name() == name:
                 return inst
         return None
 
     def get_installer_priority(self, name):
+        """Get configured priority for specific installer and current os.
+
+        :meth:`setup_installers` needs to be called beforehand.
+        """
         return self.installer_priorities.get(name, None)
 
     def setup_installers(self):
+        """For current os, setup configured installers.
+
+        Installers are set up with their priorities for the current os
+        and based on user config, os plugins and installer plugins.
+        """
         os = self.os_support.get_current_os()
         os_name, os_version = os.get_tuple()
 

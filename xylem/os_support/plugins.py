@@ -79,8 +79,13 @@ class Debian(OSBase):
         self.use_codename = True
         self.default_installer_name = "apt"
         self.installer_priorities["apt"] = 90
-        self.installer_priorities["gem"] = 50
-        self.installer_priorities["pip"] = 50
+
+        # Debian packages ruby and python packages in APT. gem and pip
+        # can still be used because the installer plugins register
+        # themselves for all OSs
+
+        # self.installer_priorities["gem"] = 50
+        # self.installer_priorities["pip"] = 50
 
 
 class Ubuntu(Debian):

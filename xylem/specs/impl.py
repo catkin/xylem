@@ -129,7 +129,7 @@ class Spec(six.with_metaclass(abc.ABCMeta, PluginBase)):
     # needs' 'depends' 'depends-on' etc
 
     @abc.abstractmethod
-    def keys(self, installer_context):
+    def keys(self, data, installer_context):
         """Return list of keys defined for current os/version."""
 
 

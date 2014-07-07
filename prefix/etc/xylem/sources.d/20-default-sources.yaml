@@ -1,0 +1,4 @@
+- rules: 'file:/Users/demmeln/work/rosdistro/rosdep/osx-homebrew.yaml'
+- rules: 'file:/Users/demmeln/work/rosdistro/rosdep/base.yaml'
+- rules: 'file:/Users/demmeln/work/rosdistro/rosdep/python.yaml'
+- rules: 'file:/Users/demmeln/work/rosdistro/rosdep/ruby.yaml'

@@ -69,6 +69,7 @@ def prepare_arguments(parser):
         help="Show priority of installer.")
     add('--show-default-installer', action="store_true",
         help="Show installer even if it is the default installer.")
+    # TODO: add 'show-depends' option
 
 
 # TODO: move this to os_support package

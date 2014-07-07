@@ -58,7 +58,7 @@ considers the following building blocks.
     (e.g. APT, PIP, Homebrew), but also for example the ``source`` installer.
   + `frontend input <Frontend input_>`_ of keys (e.g. directly from the
     command line or by parsing a directory of ROS packages)
-  + `rules specifications <Rules specifications_>`_ (e.g. rules files or
+  + `rules specification <Rules specification_>`_ (e.g. rules files or
     released ROS packages from ``rosdistro``)
   + `default sources <Default sources_>`_ (e.g. additional default rules
     files from robot vendors)
@@ -238,8 +238,11 @@ Operating system support includes:
   preference
 
 OS plugins are derived from :class:`xylem.os_support.OS` and
-:class:`xylem.os_support.OSSupport` manages the list of os plugins
-as well as the current (possibly overridden) os.
+:class:`xylem.os_support.OSSupport` manages the list of os plugins as
+well as the current (possibly overridden) os.
+:class:`xylem.os_support.OSSupport` is high-level API, but not
+necessarily used directly, but rather inside
+:class:`xylem.installers.InstallerContext`
 
 .. image:: graphs/os_support.png
 
@@ -280,7 +283,6 @@ as well as the current (possibly overridden) os.
 Installers
 ~~~~~~~~~~
 
-
 The supported installers are defined as plugins such that support for
 new installers can be added by external Python packages. Installers
 typically represent support for a specific package manager like APT, but
@@ -290,7 +292,36 @@ functionality an installer needs to provide is:
 - check if specific packages are installed
 - install packages
 
-Additional functionality is optional (these are ideas):
+Installer plugins are derived from :class:`Installer
+<xylem.installers.Installer>`. The list of known installer plugins is
+managed by a high-level API context object, the :class:`InstallerContext
+<xylem.installers.InstallerContext>`. The
+:class:`InstallerContext <xylem.installers.InstallerContext>` uses
+:class:`OSDetect <xylem.os_support.OSDetect>` to manage the
+detected/overridden OS.
+
+:meth:`setup_installers() <xylem.installers.InstallerContext.setup_installers>`
+uses information from user configuration, os plugins and installer
+plugins to prepare the list of installers for the current os, their
+priorities, as well as the default installer.
+The idea is that information about which installer is used when multiple
+possible resolutions exist can come from different sources. In the
+default case, OS plugins specify which installers are used on that
+plugin (including a order of preference through priorities and a default
+installer). On top of that platform independent installer plugins can
+declare to be used on specific OSs (e.g. all OSs). This allows to write
+new installer plugins (e.g. for ``go get``) that are available on
+platforms without touching the os plugins. Lastly, the user config can
+override all of that (available installers as well as their priorities).
+
+.. image:: graphs/installers.png
+
+The following are ideas for additional functionality of installer
+plugins. It is not quite clear how they are formalized in code. Maybe
+just methods that may be defined (duck typing or ABC mixin style). Some
+of these (like support for options) can be done transparently (as is
+done for homebrew in rosdep), but some require interaction with other
+components (e.g. uninstall, native reinstall, versions).
 
 - support uninstall
 
@@ -298,21 +329,22 @@ Additional functionality is optional (these are ideas):
 
 - support native reinstall
 
-  + is using the pm's native reinstall command as opposed to
-    uninstall+install ever needed?
+  + Use the pm's native reinstall command as opposed to
+    uninstall+install
+  + *Nikolaus*: is this ever useful?
 
 - support to attempt install without dependencies
 
   + this would be needed for a ``specified-only`` option to the
     ``install`` command.
-  + not sure if we need this at all.
+  + *Nikolaus*: not sure if we need this at all.
 
 - support package versions
 
   + check which version of package is installed
   + check if installed package is outdated
   + upgrade installed package to latest version
-  + install specific version of package
+  + (install specific version of package)
 
 - support cache update
 
@@ -323,7 +355,7 @@ Additional functionality is optional (these are ideas):
 - support options
 
   + some package managers additional options supplied when installing a
-    package (homebrew, gentoo (use flags)?)
+    package (homebrew, gentoo (use-flags)?)
   + pass correct options to installer
   + check if options for installed package satisfy the requested options
     (e.g. they are superset)
@@ -333,13 +365,16 @@ Additional functionality is optional (these are ideas):
   + list all package manager dependencies of specific packages
   + the idea is that we let the package manager install the dependencies
     and only issue the install command for the necessary leafs
-  + do we need this?
+  + *Nikolaus*: do we need this?
 
 **Notes:**
 
-- how is support for optional features formalized in the code?
-- if new package managers can be added as plugins, then they need to be
-  able to register themselves for specific or all operating systems
+- We need to allow the configuration to completely disable installers
+  (for specific os), e.g. disable macports on OS X (in favour of
+  homebrew).
+- Can we change the default resolution on OS X based on which of PM
+  (macports, homebrew) is installed? With that the resolution depends on
+  the system state, which is maybe not so nice.
 - See http://www.ros.org/reps/rep-0112.html and
   http://www.ros.org/reps/rep-0111.html
 
@@ -356,7 +391,7 @@ to specify dependencies for convenient installation.
 
 **Notes:**
 
-- I'm not sure how exactly this would look.
+- *Nikolaus*: I'm not sure yet how exactly those plugins would look.
 - Implementing these as new command verbs gives ultimate flexibility,
   but on the other hand it makes much more sense if the standard
   commands like ``install`` or ``check`` can be extended. E.g. ROS
@@ -377,9 +412,11 @@ to specify dependencies for convenient installation.
     directories is checks if they contain ROS packages with
     ``package.xml`` files or ``.xylem`` files. There is an order on
     which frontend takes precedence, which can be overwritten by
-    explicitly specifying the frontend. This last alternative might make
-    for the best *just works* user experience, but needs to be carefully
-    thought through in order to not appear confusing.
+    explicitly specifying the frontend.
+
+  + *Nikolaus*: This last alternative might make for the best *just
+    works* user experience, but needs to be carefully thought through in
+    order to not appear confusing.
 
 
 Rules specification
@@ -389,28 +426,102 @@ The ``rosdep`` model for the definition of rules is configured in source
 files (e.g. ``20-default-sources.yaml``) that contain the URLs of rules
 files (``base.yaml``). Multiple source files are considered in their
 alphabetical order. Having multiple files allows robot vendors to ship
-their own source files independently of the xylem base install.
-Possibly, rules plugins could also make use of this by shipping with
-additional default sources files. Initially, ``xylem`` will be using the
-same format, with some backwards- compatible (and already implemented)
-changes to the rules file format (``any_os``, ``any_version``). Plugins
-can define new types of sources for rules. Right now we can foresee the
-following cases that might come as new source plugins:
+their own source files independently of the base install and also allows
+to organize the base rules files (e.g. one file for all python packages
+rules). ``xylem`` will be using a similar format of source files listing
+rules files, with some (mostly) backwards- compatible (and already
+implemented) changes to the rules file format (``any_os``,
+``any_version``, see :ref:`rules-files`). ``spec`` plugins can define
+new types of specifications for rules. The source files indicate which
+spec plugin to use for each entry. Right now we can foresee the
+following cases that might come as new spec plugins:
 
 - New rules file format that is not compatible with the existing format.
 
-  + This would work in a very similar fashion to the initial plugin.
+  + This would work in a very similar fashion to the initial
+    ``RulesSpec`` spec plugin.
 
 - Rules derived from ``rosdistro``.
 
-  + This is somewhat different, since it's sources are not specified by
-    URLs but rather implicit using the ``rosdistro`` package.
+  + This rules spec uses the ``rosdistro`` package to derive rules for
+    each ROS distro.
+
+The design for the rules sources and spec plugins is as follows:
+
+.. image:: graphs/sources.png
+
+Spec plugins derive from :class:`Spec <xylem.specs.Spec>`. They define
+how rules are specified and at the core provide  ``load_data`` and
+``lookup`` methods. The plugin for rules files is :class:`RulesSpec
+<xylem.specs.rules.RulesSpec>`
+
+A :class:`SourcesContext <xylem.sources.SourcesContext>` object manages
+known spec plugins as well as the location of source and cache files
+(default: ``/etc/xylem/sources.d/`` and ``/var/cache/xylem/sources``).
+Those locations can be either configured by specifying a ``prefix`` (for
+FHS comaptible folder layout) or a ``xylem_dir`` (for layout suitable
+for in-home-folder configuration).
+
+The source files are ordered mappings of spec plugin names to arguments.
+In the case of the default :meth:`Rules <xylem.specs.Rules>` spec plugin
+the arguments are simple the rule file URL. For example:
+
+  .. code-block:: yaml
+
+      # Latest rules in new format
+      - rules2: 'files://latest/rules/using/new/rules/format/base.yaml'
+      # Existing rules in legacy format
+      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/base.yaml'
+      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/python.yaml'
+      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/ruby.yaml'
+      - rosdistro:
+          rosdistro_url: 'https://github.com/ros/rosdistro...'
+          use_ROSDISTRO_URL: yes
+          some_more_optional_arguments: '...'
+
+A :class:`RulesDatabase <xylem.sources.database.RulesDatabase>` is
+initialized given a ``SourcesContext``. It loads all source files to
+create an ordered list of :class:`RulesSource
+<xylem.sources.database.RulesSource>` objects. Each ``RulesSource``
+references the according spec plugin and arguments from the entry in the
+source file. Moreover, cache and meta data are managed by these objects.
+The data (== rules specifications) in the ``RulesDatabase`` can be
+loaded by invoking the spec plugins. Data and meta information can be
+saved to and loaded from cache. During ``lookup``, all ``RulesSource``
+objects are considered in order and the result merged. ``lookup``
+returns a dictionary mapping installers to installer rules. The
+installer priority determines which of the returned installers is
+chosen.
+
 
 **Notes:**
 
-- Discuss considered possibility of ``source plugins`` that defines the
-  format / structure of the source files, albeit we have for now decided
-  against it.
+- Should we consider allowing for the possibility of loading parsed (and
+  pickled) rules databases with the ``update`` command (for increased
+  speed of ``update``)? Here the original rules files would always be
+  specified, but a binary version can be additionally added (somewhat
+  like in homebrew all formula need to specify the source to build them,
+  but some can additionally provide the binary package as a bottle).
+
+  + *Nikolaus*: I believe it actually has little value at the moment.
+- Should rules plugins include an abstraction to tell if the database is
+  out of date (for a specific URL)? Something like comparing the last-
+  changed timestamp of the cached databased with the last-changed
+  timestamp of the online rules file. This might be used to speed up
+  ``update`` and also to determine whether to remind the user to call
+  ``update``.
+
+**Considered design questions:**
+
+- When are the different rules sourced merged (including arbitration of
+  precedence)? During update, or while loading the cache database for
+  resolution? Do we keep all possible resolutions in the database, or
+  only the one that takes highest precedence?
+- How is order of precedence defined between different rules plugins?
+  Only by the order of the rules files? Do platform support plugins play
+  a role in defining the precedence of different installers on a per-OS
+  or per-version basis? Can user settings influence the order of
+  precedence?
 - Do we only support the *cache* model for sources, where a static rules
   database is built with the ``update`` command, but no new information
   is generated upon key resolution? This implies that rules sources that
@@ -424,65 +535,22 @@ following cases that might come as new source plugins:
   some versioned format, to allow future extensions to that format. This
   is probably the same format in which ``xylem`` keeps cached the
   database.
-- Should we consider allowing for the possibility of loading parsed (and
-  pickled) rules databases with the ``update`` command (for increased
-  speed of ``update``)? Here the original rules files would always be
-  specified, but a binary version can be additionally added (somewhat
-  like in homebrew all formula need to specify the source to build them,
-  but some can additionally provide the binary package as a bottle).
-- When are the different rules sourced merged (including arbitration of
-  precedence)? During update, or while loading the cache database for
-  resolution? Do we keep all possible resolutions in the database, or
-  only the one that takes highest precedence?
-- How is order of precedence defined between different rules plugins?
-  Only by the order of the rules files? Do platform support plugins play
-  a role in defining the precedence of different installers on a per-OS
-  or per-version basis? Can user settings influence the order of
-  precedence?
-- Should the ``.list`` files be able to reference sources from multiple
-  rules source plugins within the same file (which would also allow to
-  control precedence if the entries are ordered within the file)?
 
-  One can imagine a source files to look like this (not sure if this is
-  correct YAML, but the idea should be clear): It is a list of
-  dictionaries. Each dictionary has exactly one entry. The key of this
-  entry specifies the rules plugin to be used. The value can be
-  arbitrary yaml that is specific to the rules plugin. For example for
-  the default spec parser plugin, the value would simply be the url to
-  be loaded. For rosdistro it might be a dictionary with the (optional)
-  'rosdistro_url' and possibly other arguments.
+**Not considered for now:**
 
-  .. code-block:: yaml
+- It has been considered to include ``source plugins`` that defines the
+  format / structure of the source files. We have for now decided
+  against it.
 
-      # Overriding rules with highest precedence, but with legacy format
-      - rules: 'some/special/rules.yaml'
-      # Latest rules in new format
-      - rules2: 'latest/rules/using/new/rules/format/base.yaml'
-      # Existing rules in legacy format
-      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/base.yaml'
-      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/python.yaml'
-      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/ruby.yaml'
-      # this entry for the rosdistro rules plugin has no URLs, but is
-        present to mark it as least-precedent
-      - rosdistro:
-          rosdistro_url: 'https://github.com/ros/rosdistro...'
-          some_more_optional_arguments: '...'
 
-- Do we support rules plugins that do not have an entry in any sources
-  file (like ``rosdistro``), or do we force all plugins to have at least
-  an empty entry (example file above) in order to be 'activated' upon
-  ``update``.
-- Should rules plugins include an abstraction to tell if the database is
-  out of date (for a specific URL)? Something like comparing the last-
-  changed timestamp of the cached databased with the last-changed
-  timestamp of the online rules file. This might be used to speed up
-  ``update`` and also to determine whether to remind the user to call
-  ``update``.
 Default sources
 ~~~~~~~~~~~~~~~
 
-TODO
-
+The idea with default sources plugins is that robot vendors can provide
+additional default sources including prepackaged cache such that even
+those default sources work out of the box without initial ``update``.
+How exactly this is realized is tightly related to `Sources and cache
+location`_.
 
 Commands
 ~~~~~~~~
@@ -673,6 +741,18 @@ However, what we suggest addresses some of the remaining issues:
   what to do (like debian conffile).
 - Do the API calls respect the ``XYLEM_PREFIX`` environment variable or
   need explicit setting of a ``prefix`` parameter? I think the latter.
+
+  + *Dirk:* For rosdistro we actually do the first approach -
+    the environment variable ROSDISTRO_INDEX_URL is also used for API
+    calls (if not overridden by passing a custom index url). I think
+    that approach has the advantage that any tool using rosdistro will
+    use the custom url when it is defined in the environment.
+
+    Wouldn't it be kind of unexepcted if the command line tool xylem
+    uses the prefix from the environment but a different tools like
+    bloom falls back to a different default? Then you would also lack a
+    way to override the prefix for any tool using the API (or that tool
+    would need to expose a custom way to override the prefix).
 - It was mentioned that the debian install needs to work out-of-the-box
   "without any post-installation work". Why exactly? Is post-install
   work (like calling ``init``) ok if it does not require internet
@@ -726,7 +806,7 @@ It has to be seen if and how either or both kinds of arguments can be
 injected by plugins (e.g. frontend plugins inject new arguments to all
 commands that take a list of keys as input).
 
-In particular it needs to be possible to supply arguments to the backend
+In particular it needs to be possible to supply arguments to the
 installer plugins (e.g. ``as-root`` or ``additional-arguments``, see
 `rosdep#307 <https://github.com/ros-
 infrastructure/rosdep/pull/307#issuecomment-36572637>`_). ``yaml``
@@ -746,7 +826,7 @@ reasonable to pass certain options to all installer plugins.
 Inter-key dependencies in rules files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In general, we rely on the backend package manager to install
+In general, we rely on the package manager to install
 dependencies for resolved keys. Dependencies between keys in rules files
 is at the moment only used for the interplay between homebrew and pip on
 OS X it seems. Should this be a general feature for rules to depend on
@@ -968,7 +1048,7 @@ Terminology
 - xylem key
 - key database
 - rules file
-- (backend) installer
+- installer
 - package manager
 - platform --> os/version tuple
 - installer

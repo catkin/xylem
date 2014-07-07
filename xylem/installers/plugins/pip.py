@@ -1,7 +1,7 @@
 """
 %s
 
-:var description: description of the installer plugin to be referenced
+:var definition: definition of the installer plugin to be referenced
     by the according entry point
 """
 

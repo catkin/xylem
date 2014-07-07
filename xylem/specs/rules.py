@@ -85,7 +85,7 @@ most operating systems, but is not specific to any one operating system.
 When the 'any_os' key is used, then the installer must be specified
 explicitly, i.e. no default key is used. Conversely, if the 'any_os' key
 is used, then the 'any_version' key must be used for the os_version as
-well, which makes sense because it doesn't make sense to have a
+well, because it doesn't make sense to have a
 definition which matches all operating systems but only a specific
 operating system version.
 
