@@ -13,7 +13,7 @@ code and command line interface are structured for that purpose. The
 notion of stacks, packages and manifests where ``rosdep`` keys were
 defined at a stack level is deeply baked into the design. Later
 adaptations to work with ``catkin`` were bolted on to that design in a
-suboptimal way and in became increasingly hard to extend ``rosdep`` with
+suboptimal way and it became increasingly hard to extend ``rosdep`` with
 new features. Thus, ``rosdep`` has **a lot of unused or overly
 complicated code**.
 
@@ -54,12 +54,14 @@ considers the following building blocks.
 
   + `operating system support <OS support_>`_ (e.g. Ubuntu, OS X,
     cygwin)
-  + `backend installers <Backend installers_>`_, i.e. package managers
-    (e.g. APT, PIP, Homebrew)
+  + `installers <Installers_>`_, e.g. package managers
+    (e.g. APT, PIP, Homebrew), but also for example the ``source`` installer.
   + `frontend input <Frontend input_>`_ of keys (e.g. directly from the
     command line or by parsing a directory of ROS packages)
-  + `sources of rules <Rules sources_>`_ (e.g. rules files or released
-    ROS packages from ``rosdistro``)
+  + `rules specifications <Rules specifications_>`_ (e.g. rules files or
+    released ROS packages from ``rosdistro``)
+  + `default sources <Default sources_>`_ (e.g. additional default rules
+    files from robot vendors)
   + `command verbs <Commands_>`_ (e.g. ``xylem install``, ``xylem
     update``)
 
@@ -118,7 +120,7 @@ Full backward compatibility in particular to EOL tools such as
 Consider improvements
 ~~~~~~~~~~~~~~~~~~~~~
 
-The design of ``xylem`` should consider the know limitations of
+The design of ``xylem`` should consider the known limitations of
 ``rosdep`` and improve beyond the functionality of ``rosdep``. While
 proposed enhancements possibly are not implemented right away, it should
 be ensured that future extensions allow their realization without the
@@ -163,21 +165,25 @@ found `further blow <Improvements over rosdep_>`_.
 - support automatic cache updates (integrate update with native package
   manager, cronjob, ...)
 - support virtual packages and/or ``A OR B`` logic
-- support proxies
 - support derivative operating systems (e.g. use Ubuntu rules on Ubuntu
-  derivatives if no specific rules are available)
+  derivatives if no specific rules are available) [`details <Derivative
+  operating systems_>`_]
 - warn users when ``xylem`` is out of date [`details <Notify user about
   outdated database_>`_]
 - version the rules database and force update on version changes
 - improve situation on Windows
+- support proxies for any downloads as well as for the installer
+  invocations, see `ros-infrastructure/rosdep#335`_
 
+
+.. _ros-infrastructure/rosdep#335: https://github.com/ros-infrastructure/rosdep/pull/335
 
 Anti-Goals
 ~~~~~~~~~~
 
 ``xylem`` does not aim to replace package managers or package software
 itself. While support for package-manager-less platforms can be achieved
-with backend plugins such as the source installer, it is not an
+with installer plugins such as the source installer, it is not an
 objective of xylem to systematically maintain such installation scripts.
 
 
@@ -226,26 +232,54 @@ OS support
 
 Operating system support includes:
 
-- detecting OS name, version, codename (currently in ``rospkg.os_detect``)
-- register installers, default installer, installer order of preference
-  etc with installer context (``rosdep2.installers.InstallerContext``)
+- detecting if current OS matches the OS plugin
+- detecting the current OS version (or codename)
+- specify supported installers, default installer and installer order of
+  preference
+
+OS plugins are derived from :class:`xylem.os_support.OS` and
+:class:`xylem.os_support.OSSupport` manages the list of os plugins
+as well as the current (possibly overridden) os.
+
+.. image:: graphs/os_support.png
 
 **Notes:**
 
+- At the moment OS support plugins are not able to list all versions,
+  but only ever detect the current version. The advantage is that no
+  code update is necessary for each new OS release. The disadvantage is
+  that the list of versions is not available e.g. to verify the
+  structure of rules files or to distinguish between package manager and
+  version names in rules definitions.
 
-- Should OS support be plugin at all?
-- Should are OS settings like registered installers and installer order
-  of preference always per-OS as is in ``rosdep``, or do we possibly
-  need optional per-version distinction for these?
-- What is relation between OS support plugins and installer plugins?
-  Should OS plugin register all supported installers? Should installer
-  plugin be able to register themselves for specific or all platforms?
-- consider the distinction version_type vs codename_type
-- support overriding detected OS from settings/cli
+  + *Nikolaus*: I think we should leave it like that for now.
+- For each OS plugin we have to choose if we use numbers or code names
+  to specify versions. In general we try to use version code-names if
+  possible. Version numbers have the disadvantage of being less
+  memorable and some care needs to be taken because YAML might parse
+  version numbers as floats, not strings. Codenames for some operating
+  systems have the disadvantage that they are not in alphabetical order
+  (e.g. OS X, debian), meaning the rules definition mappings in YAML are
+  not in the chronological OS version order. Moreover, without the OS
+  plugins listing the existing versions, version ranges cannot be
+  specified because the order of versions is in general unknown. One
+  might want to support shortcut notation in rules files like ``ubuntu:
+  "lucid - oneric": foo-pkg``.
+
+  + *Nikolaus*: I'm not sure what we can do about this without listing
+    the known OS versions. Even if they are known, we would need to have
+    this information for formatting and verifying rules files (order of
+    version dict).
+- Should are OS configuration like registered installers and installer
+  order of preference always per-OS as is in ``rosdep``, or do we
+  possibly need optional per-version distinction for these?
+
+  + *Nikolaus*: I believe per OS is fine for now.
 
 
-Backend installers
-~~~~~~~~~~~~~~~~~~
+Installers
+~~~~~~~~~~
+
 
 The supported installers are defined as plugins such that support for
 new installers can be added by external Python packages. Installers
@@ -348,8 +382,8 @@ to specify dependencies for convenient installation.
     thought through in order to not appear confusing.
 
 
-Rules sources
-~~~~~~~~~~~~~
+Rules specification
+~~~~~~~~~~~~~~~~~~~
 
 The ``rosdep`` model for the definition of rules is configured in source
 files (e.g. ``20-default-sources.yaml``) that contain the URLs of rules
@@ -444,6 +478,10 @@ following cases that might come as new source plugins:
   timestamp of the online rules file. This might be used to speed up
   ``update`` and also to determine whether to remind the user to call
   ``update``.
+Default sources
+~~~~~~~~~~~~~~~
+
+TODO
 
 
 Commands
@@ -730,6 +768,12 @@ fork a process on every invocation to check if database is out of date
 and inform the user that an update would be good on the next run. Maybe
 limit the update check to only fire if the database has not been updated
 for a certain amount of time (a day, a week, could be customizable).
+
+
+Derivative operating systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
 
 
 Versions in rules files
