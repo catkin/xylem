@@ -58,6 +58,7 @@ def resolve(xylem_keys, prefix=None, os_override=None, all_keys=False):
             installer = ic.get_installer(installer_name)
             resolutions = installer.resolve(rule)
 
+            # TODO: use installer instead of installer_name here?
             rules.append((priority, installer_name, resolutions))
 
         if not rules:

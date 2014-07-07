@@ -466,18 +466,18 @@ The source files are ordered mappings of spec plugin names to arguments.
 In the case of the default :meth:`Rules <xylem.specs.Rules>` spec plugin
 the arguments are simple the rule file URL. For example:
 
-  .. code-block:: yaml
+.. code-block:: yaml
 
-      # Latest rules in new format
-      - rules2: 'files://latest/rules/using/new/rules/format/base.yaml'
-      # Existing rules in legacy format
-      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/base.yaml'
-      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/python.yaml'
-      - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/ruby.yaml'
-      - rosdistro:
-          rosdistro_url: 'https://github.com/ros/rosdistro...'
-          use_ROSDISTRO_URL: yes
-          some_more_optional_arguments: '...'
+  # Latest rules in new format
+  - rules2: 'files://latest/rules/using/new/rules/format/base.yaml'
+  # Existing rules in legacy format
+  - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/base.yaml'
+  - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/python.yaml'
+  - rules: 'https://github.com/ros/rosdistro/raw/master/rosdep/ruby.yaml'
+  - rosdistro:
+      rosdistro_url: 'https://github.com/ros/rosdistro...'
+      use_ROSDISTRO_URL: yes
+      some_more_optional_arguments: '...'
 
 A :class:`RulesDatabase <xylem.sources.database.RulesDatabase>` is
 initialized given a ``SourcesContext``. It loads all source files to
@@ -493,6 +493,82 @@ returns a dictionary mapping installers to installer rules. The
 installer priority determines which of the returned installers is
 chosen.
 
+A few simplified code examples to illustrate how this all comes together:
+
+.. code-block:: python
+
+  def update(prefix=None):
+      sources_context = SourcesContext(prefix=prefix)
+      sources_context.ensure_cache_dir()
+
+      database = RulesDatabase(sources_context)
+      database.update()
+
+.. code-block:: python
+
+  def lookup(xylem_key, prefix=None, os_override=None):
+
+      sources_context = SourcesContext(prefix=prefix)
+      database = RulesDatabase(sources_context)
+      database.load_from_cache()
+
+      ic = InstallerContext(os_override=os_override)
+
+      installer_dict = database.lookup(xylem_key, ic)
+      return installer_dict
+
+.. code-block:: python
+
+  def resolve(xylem_keys, prefix=None, os_override=None, all_keys=False):
+
+      sources_context = SourcesContext(prefix=prefix)
+
+      database = RulesDatabase(sources_context)
+      database.load_from_cache()
+
+      ic = InstallerContext(os_override=os_override)
+
+      if all_keys:
+          xylem_keys = database.keys(ic)
+
+      result = []
+
+      for key in xylem_keys:
+
+          installer_dict = database.lookup(key, ic)
+
+          if not installer_dict:
+              raise LookupError("Could not find rule for xylem key '{0}' on "
+                                "'{1}'.".format(key, ic.get_os_string()))
+
+          rules = []
+          for installer_name, rule in installer_dict.items():
+              priority = ic.get_installer_priority(installer_name)
+              if priority is None:
+                  debug("Ignoring installer '{0}' for resolution of '{1}' "
+                        "because it is not registered for '{2}'".
+                        format(installer_name, key, ic.get_os_string()))
+                  continue
+              if 'priority' in rule:
+                  priority = rule['priority']
+
+              installer = ic.get_installer(installer_name)
+              resolutions = installer.resolve(rule)
+
+              rules.append((priority, installer_name, resolutions))
+
+          if not rules:
+              debug("Could not find rule for xylem key '{0}' on '{1}' for "
+                    "registered installers '{2}'. Found rules for "
+                    "installers '{3}'. Ignoring from 'all' keys.".
+                    format(key, ic.get_os_string(),
+                           ", ".join(ic.get_installer_names()),
+                           ", ".join(installer_dict.keys())))
+          else:
+              rules.sort(reverse=True)
+              result.append((key, rules))
+
+      return sorted(result)
 
 **Notes:**
 
@@ -853,7 +929,12 @@ for a certain amount of time (a day, a week, could be customizable).
 Derivative operating systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+
+OS support e.g. for Ubuntu derivatives should be able to reuse most of
+the rules for Ubuntu, but maybe overwrite certain rules. We have started
+considering this by letting OS pluings define a list of increasingly
+specific names. E.g. a `Xubuntu` os support plugin might define the
+names ``["Debain", "Ubuntu", "Xubuntu"]``.
 
 
 Versions in rules files
@@ -1042,8 +1123,6 @@ Terminology
 -----------
 
 [TODO: Define terms]
-
--> fix terminology around backend; use ``installer plugin``, ``rules plugin``
 
 - xylem key
 - key database

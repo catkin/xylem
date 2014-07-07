@@ -8,6 +8,8 @@ xylem Rules files
 
 **Notes**
 
+- Rules files compacted with this syntax can be found here:
+  https://github.com/NikolausDemmel/rosdistro/tree/xylem/rosdep
 - With the proposed rules files the following entries are not valid any
   more. ``homebrew`` is interpreted as a version of osx and ``packages``
   as the package-manager. No detection of this problem happens at the
