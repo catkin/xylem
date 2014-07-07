@@ -91,6 +91,11 @@ class OS(object):
     # not in installer_priorities? If not, check that
     # default_installer appears in installer_priorities.
 
+    # TODO: OS plugins should also specify a list of installers (not
+    # just implicitly by query for priority) in order to e.g. inform
+    # user (in debug mode) that a specified installer for the current OS
+    # is not installed.
+
     """Abstract OS plugin base class.
 
     OS plugins should define entry points as classes derived from this.
@@ -135,7 +140,7 @@ class OS(object):
         """
         raise NotImplementedError()
 
-    def get_name_and_version(self):
+    def get_tuple(self):
         """Get (name,version) tuple.
 
         :rtype: (str,str)
@@ -203,11 +208,11 @@ class OverrideOS(OS):
         return self.version
 
     def get_installer_priority(self, installer_name):
-        """Return the delegate's installer priority"""
+        """Return the delegate's installer priority."""
         return self.os.get_installer_priority(installer_name)
 
     def get_default_installer_name(self):
-        """Return the delegate's default installer"""
+        """Return the delegate's default installer."""
         return self.os.get_default_installer_name()
 
 
@@ -231,36 +236,64 @@ class OSSupport(object):
         self._os_plugin_list = get_os_plugin_list()
 
     def get_current_os(self):
+        """Return OS object of current OS.
+
+        Detect current OS if not yet detected or overridden.
+
+        :rtype: OS
+        :raises UnsupportedOSError: If OS is not set and cannot be
+            detected.
+        """
         if not self._os:
             self.detect_os()
         return self._os
 
     def get_os_plugins(self):
+        """Return list of is plugin objects."""
         return self._os_plugin_list
 
     def get_os_plugin_names(self):
+        """Return list of known/configured os names."""
         return map(lambda x: x.get_name(), self.get_os_plugins())
 
     def get_os_plugin(self, name):
+        """Return os plugin object for given os name or None if not known."""
         for os in self.get_os_plugins():
             if name == os.get_name():
                 return os
         return None
 
     def get_default_installer_names(self):
+        """Return mapping of os name to default installer for all os."""
         return {os.get_name(): os.get_default_installer_name()
                 for os in self.get_os_plugins()}
 
-    def override_os(self, name, version):
-        os = self.get_os_plugin(name)
-        if not os:
-            raise UnsupportedOSError(
-                "Did not find OS plugin {0} to be used as override.".
-                format(name))
-        else:
-            self._os = OverrideOS(os, version)
+    def override_os(self, os_tuple):
+        """Override to to (name,version) tuple.
+
+        A plugin with ``name`` must be installed.
+
+        :raises UnsupportedOSError: if specified os name is not known
+        """
+        if os_tuple:
+            name, version = os_tuple
+            os = self.get_os_plugin(name)
+            if not os:
+                raise UnsupportedOSError(
+                    "Did not find OS plugin {0} to be used as override.".
+                    format(name))
+            else:
+                self._os = OverrideOS(os, version)
 
     def detect_os(self):
+        """Detects and sets the current OS.
+
+        The first OS plugin that returns ``True`` for :meth:`OS.is_os`
+        is the detected one. If multiple os plugins would accept the
+        current OS, a warning is printed to the user.
+
+        :raises UnsupportedOSError: If no OS plugin accepts the current OS
+        """
         result = None
         for os in self.get_os_plugins():
             if os.is_os():

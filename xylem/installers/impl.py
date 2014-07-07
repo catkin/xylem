@@ -74,40 +74,66 @@ class InstallerContext(object):
     manage the current OS and installers to be used.
     """
 
-    def __init__(self):
+    # TODO: Make parameters for passing os/version pair more uniform
 
-        self.os_support = OSSupport()
+    def __init__(self, setup_installers=True, os_override=None):
+
+        if isinstance(os_override, OSSupport):
+            self.os_support = os_override
+        else:
+            self.os_support = OSSupport()
+            if os_override:
+                self.set_os_override(os_override)
+            else:
+                self.os_support.detect_os()
+                if is_verbose():
+                    info("detected OS [%s:%s]" % self.get_os_tuple())
+
         self.installer_plugins = get_installer_plugin_list()
 
-        self.default_installer_name = None
         self.installers = []
         self.installer_priorities = {}
 
-    def set_os_override(self, os_name, os_version):
+        if setup_installers:
+            self.setup_installers()
+
+    def set_os_override(self, os_tuple):
         """
         Override the OS detector with *os_name* and *os_version*.  See
         :meth:`InstallerContext.detect_os`.
 
-        :param str os_name: OS name value to use
-        :param str os_version: OS version value to use
+        :param (str,str) os_name: OS (name,version) tuple to use
         :raises UnsupportedOsError: if os override was invalid
         """
         if is_verbose():
-            info("overriding OS to [%s:%s]" % (os_name, os_version))
-        self.os_support.override_os(os_name, os_version)
+            info("overriding OS to [%s:%s]" % os_tuple)
+        self.os_support.override_os(os_tuple)
 
-    def get_os_name_and_version(self):
-        """Get the OS name and version key.
+    def get_os_tuple(self):
+        """Get the OS (name,version) tuple.
 
         Return the OS name/version tuple to use for resolution and
         installation.  This will be the detected OS name/version unless
         :meth:`InstallerContext.set_os_override()` has been called.
 
         :return: (os_name, os_version)
-        :rtype: (str, str)
+        :rtype: (str,str)
         :raises UnsupportedOsError: if OS was not detected correctly
         """
-        return self.os_support.get_current_os().get_name_and_version()
+        return self.os_support.get_current_os().get_tuple()
+
+    def get_os_string(self):
+        """Get the OS name and version as 'name:version' string.
+
+        See :meth:`get_os_tuple`
+
+        :rtype: str
+        :raises UnsupportedOsError: if OS was not detected correctly
+        """
+        return "%s:%s" % self.get_os_tuple()
+
+    def get_default_installer_name(self):
+        return self.os_support.get_current_os().get_default_installer_name()
 
     def get_installer_names(self):
         return map(lambda i: i.get_name(), self.installers)
@@ -121,17 +147,10 @@ class InstallerContext(object):
     def get_installer_priority(self, name):
         return self.installer_priorities.get(name, None)
 
-    def get_default_installer(self):
-        return self.get_installer(self.default_installer_name)
-
     def setup_installers(self):
         os = self.os_support.get_current_os()
-        os_name, os_version = os.get_name_and_version()
+        os_name, os_version = os.get_tuple()
 
-        # todo check user config for override of default installer here
-        self.default_installer_name = os.get_default_installer_name()
-
-        self.default_installer = None
         self.installers = []
         self.installer_priorities = {}
 
@@ -145,21 +164,27 @@ class InstallerContext(object):
             # installer plugin
             priority = None  # TODO: read user config here
             priority = priority or os.get_installer_priority(inst_name)
-            priority = priority or inst.get_priority_for_os(os_name)
+            priority = priority or inst.get_priority_for_os(os_name,
+                                                            os_version)
             if priority is not None:
                 self.installers.append(inst)
                 self.installer_priorities[inst_name] = priority
 
-        if self.default_installer_name not in self.get_installer_names():
+        # TODO: this can happen when installer plugin is not installed.
+        # We can still resolve, so let this happen maybe?
+#        if self.default_installer_name not in self.get_installer_names():
             # TODO: Maybe use custom exception class?
-            raise RuntimeError(
-                "Default installer '{0}' does not appear in configured "
-                "installers '{1}'".format(
-                    self.default_installer_name,
-                    self.get_installer_names()))
+#            raise RuntimeError(
+#                "Default installer '{0}' does not appear in configured "
+#                "installers '{1}'".format(
+#                    self.default_installer_name,
+#                    self.get_installer_names()))
 
         # TODO: check which of the installers defined by OS (besides
         # default) has not been registered and possibly issue warning
+
+        # TODO: allow to completely disable installers for platform in
+        # config
 
 
 # TODO: is 'resolved' the same as 'installer rule', or can it be a

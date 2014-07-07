@@ -63,10 +63,6 @@ class OSBase(OS):
         else:
             return ""
 
-    def get_name_and_version(self):
-        """Return (name,version) tuple."""
-        return self.get_name(), self.get_version()
-
     def get_installer_priority(self, installer_name):
         return self.installer_priorities.get(installer_name, None)
 
@@ -82,9 +78,9 @@ class Debian(OSBase):
         self.detect = OsDetect().get_detector(OS_DEBIAN)
         self.use_codename = True
         self.default_installer_name = "apt"
-        self.installer_priorities["apt"] = 50
-        self.installer_priorities["gem"] = 20
-        self.installer_priorities["pip"] = 20
+        self.installer_priorities["apt"] = 90
+        self.installer_priorities["gem"] = 50
+        self.installer_priorities["pip"] = 50
 
 
 class Ubuntu(Debian):
@@ -103,7 +99,7 @@ class OSX(OSBase):
         self.detect = OsDetect().get_detector(OS_OSX)
         self.use_codename = True
         self.default_installer_name = "homebrew"
-        self.installer_priorities["homebrew"] = 50
-        self.installer_priorities["macports"] = 30
-        self.installer_priorities["gem"] = 20
-        self.installer_priorities["pip"] = 20
+        self.installer_priorities["homebrew"] = 90
+        self.installer_priorities["macports"] = 90
+        self.installer_priorities["gem"] = 50
+        self.installer_priorities["pip"] = 50

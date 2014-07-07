@@ -11,9 +11,10 @@ class InstallerContextTestCase(unittest.TestCase):
 
     def test_setup_installers(self):
         ic = InstallerContext()
-        ic.set_os_override("ubuntu", "precise")
-        print(ic.get_os_name_and_version())
+        ic.set_os_override(("ubuntu", "precise"))
+        print(ic.get_os_tuple())
         print(map(lambda i: i.get_name(), ic.installer_plugins))
         ic.setup_installers()
-        assert(ic.get_default_installer().get_name() == 'apt')
-        assert(ic.get_installer_priority('apt') == 50)
+        assert(ic.get_default_installer_name() == 'apt')
+        assert(ic.get_installer(ic.get_default_installer_name()).get_name() == 'apt')
+        assert(ic.get_installer_priority('apt') == 90)

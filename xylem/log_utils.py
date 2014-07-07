@@ -105,6 +105,7 @@ def info(msg, file=None, *args, **kwargs):
     """
     file = file if file is not None else sys.stdout
     msg = to_str(msg)
+    msg = msg + ansi('reset')  # Assume that msg might contain colors
     print(to_bytes(msg), file=file, *args, **kwargs)
     return msg
 

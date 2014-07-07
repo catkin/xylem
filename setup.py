@@ -45,7 +45,7 @@ setup(
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Software Development',
-        'Topic :: System :: Installation/Setup'
+        'Topic :: System :: Installation/Setup',
     ],
     description="xylem is a package manager abstraction tool.",
     long_description="xylem is a package manager abstraction tool.",
@@ -54,22 +54,27 @@ setup(
     entry_points={
         'console_scripts': [
             'xylem = xylem.commands.main:main',
-            'xylem-update = xylem.commands.update:main'
+            'xylem-update = xylem.commands.update:main',
         ],
         'xylem.commands': [
             'update = xylem.commands.update:definition',
-            'resolve = xylem.commands.resolve:definition'
+            'resolve = xylem.commands.resolve:definition',
+            'lookup = xylem.commands.lookup:definition',
+            '_compact_rules_file = xylem.commands._compact_rules_file:definition',
         ],
         'xylem.specs': [
-            'rules = xylem.specs.rules:definition'
+            'rules = xylem.specs.rules:definition',
         ],
         'xylem.os': [
             'debian = xylem.os_support.plugins:Debian',
             'ubuntu = xylem.os_support.plugins:Ubuntu',
-            'osx    = xylem.os_support.plugins:OSX'
+            'osx    = xylem.os_support.plugins:OSX',
         ],
         'xylem.installers': [
-            'fake = xylem.installers.fake:definition'
-        ]
+            'fake = xylem.installers.plugins.fake:definition',
+            'homebrew = xylem.installers.plugins.homebrew:definition',
+            'macports = xylem.installers.plugins.macports:definition',
+            'pip = xylem.installers.plugins.pip:definition',
+        ],
     }
 )

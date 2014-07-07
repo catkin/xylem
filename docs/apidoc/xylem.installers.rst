@@ -1,16 +1,15 @@
 xylem.installers package
 ========================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    xylem.installers.plugins
+
 Submodules
 ----------
-
-xylem.installers.fake module
-----------------------------
-
-.. automodule:: xylem.installers.fake
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 xylem.installers.impl module
 ----------------------------

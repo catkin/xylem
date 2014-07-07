@@ -17,6 +17,9 @@ from xylem.util import raise_from
 from xylem.text_utils import text_type
 
 
+# TODO: move this to `specs`
+
+
 def lookup_rules(rules_dict,
                  xylem_key,
                  os_name,
@@ -32,6 +35,7 @@ def lookup_rules(rules_dict,
     :param str xylem_key: key to look up
     :param str os_name: os name to look up
     :param str os_version: os version to look up
+    :param str default_installer: name of default installer
     :returns: installer dict of merged rules (including any_os/any_version)
     :rtype: dict
     """
@@ -55,6 +59,15 @@ def lookup_rules(rules_dict,
                          combined_dict, default_installer)
 
     return combined_dict
+
+
+def has_rule_for_os(os_dict, os_name, os_version):
+    """Return True if os dict has a rule for os name/version."""
+    if 'any_os' in os_dict:
+        return True
+    if os_name in os_dict:
+        version_dict = os_dict[os_name]
+        return os_version in version_dict or 'any_version' in version_dict
 
 
 def verify_rules_dict(rules_dict, allow_default_installer=True):
@@ -107,6 +120,10 @@ def verify_os_dict(os_dict, allow_default_installer=True):
             raise_from(ValueError, "Expected os dict to have valid version "
                        "dicts as values, but got error for os '{0}'.".
                        format(os_name), e)
+
+
+# optionally pass list of installers and warn if installer name appears
+# as version
 
 
 def verify_version_dict(version_dict, allow_default_installer=True):

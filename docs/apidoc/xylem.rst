@@ -23,6 +23,14 @@ xylem.exception module
     :undoc-members:
     :show-inheritance:
 
+xylem.load_url module
+---------------------
+
+.. automodule:: xylem.load_url
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 xylem.log_utils module
 ----------------------
 
@@ -31,10 +39,42 @@ xylem.log_utils module
     :undoc-members:
     :show-inheritance:
 
+xylem.lookup module
+-------------------
+
+.. automodule:: xylem.lookup
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+xylem.plugin_utils module
+-------------------------
+
+.. automodule:: xylem.plugin_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+xylem.resolve module
+--------------------
+
+.. automodule:: xylem.resolve
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 xylem.terminal_color module
 ---------------------------
 
 .. automodule:: xylem.terminal_color
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+xylem.text_utils module
+-----------------------
+
+.. automodule:: xylem.text_utils
     :members:
     :undoc-members:
     :show-inheritance:

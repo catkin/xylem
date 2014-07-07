@@ -9,7 +9,8 @@ class PackageManagerInstaller(Installer):
     # FIXME: 'supports_depends' is misnomer, since it can get confused
     # with the assertion that the package manger supports dependency
     # resolution, which is somewhat antithetical to the rules definition
-    # supporting dependencies
+    # supporting dependencies. Do we need this flag at all? Can't we
+    # just interpret the 'depends' key for all installers?
 
     """Base class from a variety of package manager installers.
 

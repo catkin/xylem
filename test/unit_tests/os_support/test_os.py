@@ -35,7 +35,7 @@ class OSSupportTestCase(unittest.TestCase):
 
         # override invalid os
         with self.assertRaises(UnsupportedOSError):
-            o.override_os("foo", "bar")
+            o.override_os(("foo", "bar"))
 
         # fake failed detection
         o._os_plugin_list = []
@@ -67,10 +67,10 @@ class OSSupportTestCase(unittest.TestCase):
         o2 = OSSupport()
         os2 = o2.get_current_os()
 
-        print(os1.get_name_and_version())
-        print(os2.get_name_and_version())
+        print(os1.get_tuple())
+        print(os2.get_tuple())
 
-        assert(os1.get_name_and_version() == os2.get_name_and_version())
+        assert(os1.get_tuple() == os2.get_tuple())
 
     def test_detect_os(self, mock_get_os_plugin_list):
         mock_get_os_plugin_list.return_value = _os_plugin_list
@@ -88,7 +88,7 @@ class OSSupportTestCase(unittest.TestCase):
         mock_get_os_plugin_list.return_value = _os_plugin_list
 
         o = OSSupport()
-        o.override_os("ubuntu", "precise")
+        o.override_os(("ubuntu", "precise"))
         os = o.get_current_os()
         print(o.get_os_plugin_names())
         print("Override OS: {0}, {1}, {2}".format(
@@ -97,5 +97,5 @@ class OSSupportTestCase(unittest.TestCase):
         assert(os.get_names() == ["debian", "ubuntu"])
         assert(os.get_version() == "precise")
         assert(os.get_default_installer_name() == "apt")
-        assert(os.get_installer_priority("apt") == 50)
-        assert(os.get_installer_priority("pip") == 20)
+        assert(os.get_installer_priority("apt") == 90)
+        assert(os.get_installer_priority("pip") == 50)

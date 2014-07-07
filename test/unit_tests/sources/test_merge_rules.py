@@ -4,13 +4,13 @@
 
 from __future__ import unicode_literals
 
-import yaml
-
 from pprint import pprint
 
 from xylem.specs.rules import expand_rules
 from xylem.sources.rules_dict import merge_rules
 from xylem.sources.rules_dict import verify_rules_dict
+
+from xylem.util import load_yaml
 
 
 _default_installers = {
@@ -31,7 +31,7 @@ def _do_merge_test(rules_dict_list, expected):
 
 
 def _parse_rules(rules_str):
-    rules = expand_rules(yaml.load(rules_str))
+    rules = expand_rules(load_yaml(rules_str))
     verify_rules_dict(rules)
     return rules
 

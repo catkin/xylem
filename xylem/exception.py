@@ -38,6 +38,13 @@ class DownloadFailure(Exception):
     pass
 
 
+class InstallerNotAvailable(Exception):
+
+    """Failure indicating a installer is not installed."""
+
+    pass
+
+
 # class InstallFailed(Exception):
 
 #     def __init__(self, failure=None, failures=None):

@@ -128,6 +128,10 @@ class Spec(six.with_metaclass(abc.ABCMeta, PluginBase)):
     # TODO: how exactly do we support various other queries such as 'who
     # needs' 'depends' 'depends-on' etc
 
+    @abc.abstractmethod
+    def keys(self, installer_context):
+        """Return list of keys defined for current os/version."""
+
 
 def get_spec_plugin_list():
     """Return list of spec plugin objects unique by name.

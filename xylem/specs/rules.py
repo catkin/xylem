@@ -267,15 +267,16 @@ Which expands to::
 
 from __future__ import unicode_literals
 
-import yaml
-
 from ..sources.rules_dict import verify_rules_dict
 from ..sources.rules_dict import lookup_rules
+from ..sources.rules_dict import has_rule_for_os
 from .impl import Spec
 from ..util import load_yaml
+from ..util import dump_yaml
 from ..text_utils import text_type
 from ..text_utils import to_str
 from ..load_url import load_url
+from ..log_utils import error
 
 
 DESCRIPTION = """\
@@ -328,10 +329,19 @@ class RulesSpec(Spec):
         return True
 
     def lookup(self, data, xylem_key, installer_context):
-        os, version = installer_context.get_os_name_and_version()
-        default_installer = installer_context.get_default_installer()
+        os, version = installer_context.get_os_tuple()
+        default_installer_name = installer_context.get_default_installer_name()
         # FIXME: pass default installer
-        return lookup_rules(data, xylem_key, os, version, default_installer)
+        return lookup_rules(
+            data, xylem_key, os, version, default_installer_name)
+
+    def keys(self, data, installer_context):
+        result = []
+        os_name, os_version = installer_context.get_os_tuple()
+        for key, os_dict in data.items():
+            if has_rule_for_os(os_dict, os_name, os_version):
+                result.append(key)
+        return result
 
 
 # TODO: The following code needs to be looked over and naming of
@@ -348,6 +358,11 @@ class SpecParsingError(ValueError):
         ValueError.__init__(self, msg)
 
 
+# TODO: note in the docstrings that arguments are reused/modified in
+# return value
+
+# TODO: possibly change expand/compact to not share structure with the input
+
 def expand_definition(definition):
     if not isinstance(definition, (text_type, list, dict, type(None))):
         raise ValueError("Invalid installer specific definition, expected "
@@ -361,6 +376,18 @@ def expand_definition(definition):
     if isinstance(definition, list):
         # Convert to an default_installer dict
         definition = {'packages': definition}
+    if 'packages' in definition:
+        if definition['packages'] is None:
+            definition['packages'] = []
+        if isinstance(definition['packages'], text_type):
+            definition['packages'] = [definition['packages']]
+    if 'depends' in definition:
+        if definition['depends'] is None:
+            definition['depends'] = []
+        if isinstance(definition['depends'], text_type):
+            definition['depends'] = [definition['depends']]
+        if definition['depends'] == []:
+            del definition['depends']
     return definition
 
 
@@ -432,8 +459,97 @@ def expand_rules(rules):
         except ValueError as exc:
             raise SpecParsingError("Failed to expand rule for '{0}': {1}"
                                    .format(xylem_key, exc),
-                                   yaml.dump({xylem_key: os_dict}))
+                                   dump_yaml({xylem_key: os_dict}))
     return rules
+
+
+# TODO: Cleanup, error handling and docstrings for `compact...` functions
+
+
+def compact_installer_rule(rule):
+    if "packages" in rule and len(rule) == 1:
+        rule = rule["packages"]
+
+    if isinstance(rule, list):
+        if len(rule) == 0:
+            pass
+#            rule = None
+        elif len(rule) == 1:
+            pass
+#            rule = rule[0]
+
+    # TODO: copy
+    return rule
+
+
+def compact_installer_dict(installer_dict, default_installer):
+    result = {}
+
+    for installer_name, rule in installer_dict.items():
+        result[installer_name] = compact_installer_rule(rule)
+
+    if default_installer:
+        if 'default_installer' in result:
+            if default_installer in result:
+                raise ValueError(
+                    "Both 'default_installer' and default installer "" '{0}' "
+                    "in installer dict.".format(default_installer))
+            result[default_installer] = result['default_installer']
+            del result['default_installer']
+    else:
+        default_installer = 'default_installer'
+
+    if default_installer in result and len(result) == 1:
+        rule = result[default_installer]
+        if not isinstance(rule, dict):
+            result = rule
+
+    return result
+
+
+def compact_version_dict(version_dict, default_installer):
+    new_version_dict = {}
+    has_any_version = 'any_version' in version_dict
+    if has_any_version:
+        any_version_installer_dict = compact_installer_dict(
+            version_dict['any_version'], default_installer)
+        if len(version_dict) == 1 and \
+                not isinstance(any_version_installer_dict, dict):
+            return any_version_installer_dict
+        else:
+            new_version_dict['any_version'] = any_version_installer_dict
+
+    for version, installer_dict in version_dict.items():
+
+        if version != 'any_version':
+            installer_dict = compact_installer_dict(
+                installer_dict, default_installer)
+            if not (has_any_version and
+                    installer_dict == any_version_installer_dict):
+                new_version_dict[version] = installer_dict
+    return new_version_dict
+
+
+def compact_os_dict(os_dict, default_installers):
+    for os_name, version_dict in os_dict.items():
+        try:
+            if os_name == 'any_os':
+                os_dict['any_os'] = compact_installer_dict(
+                    version_dict['any_version'], None)
+            else:
+                os_dict[os_name] = compact_version_dict(
+                    version_dict, default_installers.get(os_name, None))
+        except Exception as e:
+            error("Failed to expand version dict for os {0} with error: "
+                  "{1}\n{2}".format(os_name, to_str(e), version_dict))
+            raise
+    return os_dict
+
+
+def compact_rules(rules_dict, default_installers):
+    for xylem_key, os_dict in rules_dict.items():
+        rules_dict[xylem_key] = compact_os_dict(os_dict, default_installers)
+    return rules_dict
 
 
 # definition for plugin loader

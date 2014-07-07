@@ -161,12 +161,16 @@ class RulesSource(object):
         verify_installer_dict(installer_dict, allow_default_installer=False)
         return installer_dict
 
+    def keys(self, installer_context):
+        """Return list of keys defined for current os/version."""
+        return self.spec.keys(self.data, installer_context)
+
 
 class RulesDatabase(object):
 
     def __init__(self, sources_context):
         self.sources_context = sources_context
-        self.sources = None
+        self.sources = None  # Note: assuming those have unique ids
         self.init_from_sources()
         self.print_info = False
         self.raise_on_error = True
@@ -249,11 +253,17 @@ class RulesDatabase(object):
         self.save_to_cache()
 
     def lookup(self, xylem_key, installer_context):
+        """Return rules for xylem key in current os."""
         installer_dict = {}
         # TODO: merge the other way round
         for source in reversed(self.sources):
-            # info("lookup '{0}' in source '{1}'".
-            #      format(xylem_key, source.unique_id()))
             new_rules = source.lookup(xylem_key, installer_context)
             merge_installer_dict(new_rules, installer_dict, None)
         return installer_dict
+
+    def keys(self, installer_context):
+        """Return list of keys defined for current os/version."""
+        keys = set()
+        for source in self.sources:
+            keys.update(set(source.keys(installer_context)))
+        return list(keys)

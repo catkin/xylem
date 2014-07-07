@@ -2,14 +2,14 @@
 %s
 
 :var INSTALL_LOCATION: the installation folder
-:var description: description of the installer plugin to be referenced
+:var definition: definition of the installer plugin to be referenced
     by the according entry point
 """
 
 from __future__ import unicode_literals
 import os.path
 
-from .package_manager_installer import PackageManagerInstaller
+from ..package_manager_installer import PackageManagerInstaller
 from six.moves import filter
 
 DESCRIPTION = """\
@@ -69,7 +69,7 @@ class FakeInstaller(PackageManagerInstaller):
                 item in resolved]
 
 
-# This describes this installer to the plugin loader
+# This definition the installer to the plugin loader
 definition = dict(
     plugin_name=FAKE_INSTALLER_PLUGIN,
     description=DESCRIPTION,
