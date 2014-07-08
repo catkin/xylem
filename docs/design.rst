@@ -849,11 +849,13 @@ Settings and command line arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There should be a canonical way to supply arguments to ``xylem``. We
-propose a system config file, a user config file and command line
-options. The order of precedence of arguments specified multiple times
-is::
+propose a system-wide config file, a user config file and command line
+options. The default settings might be captured on a config file that
+comes with the installation (this would also give a reference for what
+settings are available). The order of precedence of settings specified
+multiple times is::
 
-  command line > user > system
+  command line > user > system > default
 
 We use ``yaml`` syntax for the configuration files, and suggest the
 following locations:
@@ -861,10 +863,31 @@ following locations:
 - system: ``<prefix>/etc/xylem/config.yaml``
 - user: ``$HOME/.xylem.yaml``
 
-In general all options should be supported both by the CLI and the
-config files (where it makes sense). One exception is the environment
-variable ``XYLEM_PREFIX``, because this configures the location of the
-system-wide config file in the first place.
+``xylem`` tries to avoid the use of environment variables for
+configuration. However, in order to allow users of tools like bloom
+(that make use of the xylem API) to configure xylem, without having
+those tools expose and pass through xylem-specific arguments, ``xylem``
+uses the ``XYLEM_CONFIG`` environment variable to optionally point to a
+config file. There is also a CLI argument ``--config``, with the same
+effect. The CLI argument takes precedence. If a custom location for a
+``xylem`` config file is provided (via ``XYLEM_CONFIG`` or
+``--config``), user and system config files are ignored. In that case
+the order of precedence is::
+
+  command line > config file > default
+
+All command line tools as well as API calls respect the configuration
+files (either ``user > system > default`` or ``config file > default``).
+Default configuration can be achieved either by pointing
+``XYLEM_CONFIG``/``--config`` to an empty file or supplying the empty
+string instead of a path.
+
+Certain ``xylem`` plugins may respect environment variables, for example
+the rosdistro spec plugin would by default respect the
+``ROSDISTRO_INDEX_URL`` environment variable.
+
+Where it makes sense, options should be supported both by the CLI and
+config files.
 
 Command line arguments can be grouped in the following way:
 
@@ -882,11 +905,12 @@ It has to be seen if and how either or both kinds of arguments can be
 injected by plugins (e.g. frontend plugins inject new arguments to all
 commands that take a list of keys as input).
 
-In particular it needs to be possible to supply arguments to the
+It also needs to be possible to supply arguments to the
 installer plugins (e.g. ``as-root`` or ``additional-arguments``, see
 `rosdep#307 <https://github.com/ros-
-infrastructure/rosdep/pull/307#issuecomment-36572637>`_). ``yaml``
-format gives a lot of flexibility, but there should also be some
+infrastructure/rosdep/pull/307#issuecomment-36572637>`_). Such options
+may be passed down to those plugins via the ``InstallerContext``. The
+YAML format gives a lot of flexibility, but there should also be some
 conventions (not necessarily enforced) to ensure that the plugins name
 their options in a uniform way, such that it may even be possible and
 reasonable to pass certain options to all installer plugins.
