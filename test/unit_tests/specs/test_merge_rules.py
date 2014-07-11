@@ -6,9 +6,10 @@ from __future__ import unicode_literals
 
 from pprint import pprint
 
-from xylem.specs.rules import expand_rules
-from xylem.sources.rules_dict import merge_rules
-from xylem.sources.rules_dict import verify_rules_dict
+from xylem.specs.plugins.rules import expand_rules
+
+from xylem.specs.rules_dict import merge_rules
+from xylem.specs.rules_dict import verify_rules_dict
 
 from xylem.util import load_yaml
 

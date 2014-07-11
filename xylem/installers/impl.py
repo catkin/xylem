@@ -256,6 +256,9 @@ class Installer(object):
         """
         raise NotImplementedError('subclasses must implement')
 
+    # get_depends should not live here. The way to specify options
+    # should be standardized and the dependency extraction should be
+    # done beforehand.
     def get_depends(self, rule_args):
         """Get list list of dependencies on other xylem keys.
 

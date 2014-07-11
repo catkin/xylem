@@ -37,7 +37,7 @@ import argparse
 import sys
 import os
 
-from ..sources.rules_dict import verify_rules_dict
+from ..specs.rules_dict import verify_rules_dict
 
 from ..specs.rules import expand_rules
 from ..specs.rules import compact_rules

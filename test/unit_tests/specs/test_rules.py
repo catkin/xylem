@@ -5,8 +5,8 @@ from __future__ import unicode_literals
 from pprint import pprint
 from copy import deepcopy
 
-from xylem.specs.rules import expand_rules
-from xylem.specs.rules import compact_rules
+from xylem.specs.plugins.rules import expand_rules
+from xylem.specs.plugins.rules import compact_rules
 from xylem.util import load_yaml
 
 

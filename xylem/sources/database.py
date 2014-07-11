@@ -1,5 +1,6 @@
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import os
 import hashlib
@@ -14,8 +15,9 @@ from ..log_utils import info
 from ..log_utils import is_verbose
 from .impl import get_default_source_descriptions
 from .impl import get_source_descriptions
-from .rules_dict import verify_installer_dict
-from .rules_dict import merge_installer_dict
+from ..text_utils import to_str
+from ..specs.rules_dict import verify_installer_dict
+from ..specs.rules_dict import merge_installer_dict
 
 
 def _id_string(unique_id):
@@ -213,7 +215,7 @@ class RulesDatabase(object):
                 if self.raise_on_error:
                     raise
                 else:
-                    error("Failed to load source '{0}' from cache: {1}".
+                    error("Failed to load source '{0}' from cache:\n{1}".
                           format(source.unique_id(), e))
 
     def save_to_cache(self):
@@ -225,7 +227,7 @@ class RulesDatabase(object):
                 if self.raise_on_error:
                     raise
                 else:
-                    error("Failed to save source '{0}' to cache: {1}".
+                    error("Failed to save source '{0}' to cache:\n{1}".
                           format(source.unique_id(), e))
 
     def load_from_source(self):
@@ -245,12 +247,45 @@ class RulesDatabase(object):
                 if self.raise_on_error:
                     raise
                 else:
-                    error("Failed to load source '{0}': {1}".
+                    error("Failed to load source '{0}':\n{1}".
                           format(source.unique_id(), e))
 
     def update(self):
-        self.load_from_source()
-        self.save_to_cache()
+        # TODO: save exceptions if they are not raised and then for the
+        # cli command recognize permission errors and suggest to use
+        # 'sudo'
+
+        # We don't just call `load_from_source` and `save_to_cache` here
+        # since we want errors with saving for each source to happen
+        # directly after loading, not at the end.
+        origins = set()
+        for source in self.sources:
+            if source.origin not in origins:
+                origins.add(source.origin)
+                if self.print_info:
+                    info("Processing '{0}'...".format(source.origin))
+            if self.print_info:
+                info("Loading: {0} : {1}".
+                     format(source.spec.name, source.arguments))
+            try:
+                source.load_from_source()
+            except Exception as e:
+                # TODO: be more specific about which exceptions to catch here
+                if self.raise_on_error:
+                    raise
+                else:
+                    error("Failed to load source '{0}':\n{1}".
+                          format(source.unique_id(), e))
+            else:
+                try:
+                    source.save_to_cache()
+                except Exception as e:
+                    # TODO: be more specific about which exceptions to catch
+                    if self.raise_on_error:
+                        raise
+                    else:
+                        error("Failed to save source '{0}' to cache:\n{1}".
+                              format(source.unique_id(), to_str(e)))
 
     def lookup(self, xylem_key, installer_context):
         """Return rules for xylem key in current os."""

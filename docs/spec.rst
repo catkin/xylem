@@ -78,7 +78,7 @@ Notes
   + *Nikolaus*: IMHO no
 
 
-.. _verions-ranges-and-geq:
+.. _version-ranges-and-geq:
 
 any_version and version ranges
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

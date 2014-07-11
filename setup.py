@@ -63,7 +63,7 @@ setup(
             '_compact_rules_file = xylem.commands._compact_rules_file:definition',
         ],
         'xylem.specs': [
-            'rules = xylem.specs.rules:definition',
+            'rules = xylem.specs.plugins.rules:definition',
         ],
         'xylem.os': [
             'debian = xylem.os_support.plugins:Debian',

@@ -12,12 +12,9 @@ import re
 import numbers
 import six
 
-from xylem.util import raise_from
+from ..util import raise_from
 
-from xylem.text_utils import text_type
-
-
-# TODO: move this to `specs`
+from ..text_utils import text_type
 
 
 def lookup_rules(rules_dict,

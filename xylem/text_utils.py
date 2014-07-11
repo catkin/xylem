@@ -7,6 +7,7 @@ py3 compatible to date.
 from __future__ import unicode_literals
 
 import six
+import traceback
 
 
 text_type = six.text_type
@@ -20,6 +21,11 @@ def to_str(obj, encoding='utf-8', errors='replace'):
         return obj.decode(encoding, errors)
     elif isinstance(obj, type):
         return to_str(obj.__name__)
+    elif isinstance(obj, Exception):
+        string = "".join(traceback.format_exception_only(type(obj), obj))
+        if string and string[-1] == '\n':
+            string = string[:-1]
+        return string
     else:
         value = None
         if six.PY2:

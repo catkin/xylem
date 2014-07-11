@@ -136,8 +136,7 @@ found `further blow <Improvements over rosdep_>`_.
     less repetition for different platforms (``any_version``,
     ``any_os``) [:ref:`details <rules-files>`]
   + support ranges of versions and definitions for versions greater or
-    equal to a specific version [:ref:`details <verions-ranges-and-
-    geq>`]
+    equal to a specific version [:ref:`details <version-ranges-and-geq>`]
   + support options to OSs and condition rules on them [`details <OS
     options_>`_]
   + support package versions in rules files, e.g. parsed from

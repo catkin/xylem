@@ -98,4 +98,3 @@ class OSSupportTestCase(unittest.TestCase):
         assert(os.get_version() == "precise")
         assert(os.get_default_installer_name() == "apt")
         assert(os.get_installer_priority("apt") == 90)
-        assert(os.get_installer_priority("pip") == 50)

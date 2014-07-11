@@ -267,16 +267,18 @@ Which expands to::
 
 from __future__ import unicode_literals
 
-from ..sources.rules_dict import verify_rules_dict
-from ..sources.rules_dict import lookup_rules
-from ..sources.rules_dict import has_rule_for_os
-from .impl import Spec
-from ..util import load_yaml
-from ..util import dump_yaml
-from ..text_utils import text_type
-from ..text_utils import to_str
-from ..load_url import load_url
-from ..log_utils import error
+from ..rules_dict import verify_rules_dict
+from ..rules_dict import lookup_rules
+from ..rules_dict import has_rule_for_os
+
+from ..impl import Spec
+
+from ...util import load_yaml
+from ...util import dump_yaml
+from ...text_utils import text_type
+from ...text_utils import to_str
+from ...load_url import load_url
+from ...log_utils import error
 
 
 DESCRIPTION = """\
