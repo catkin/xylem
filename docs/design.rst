@@ -134,19 +134,23 @@ found `further blow <Improvements over rosdep_>`_.
 
   + smaller backwards-compatible changes, mostly syntactic sugar for
     less repetition for different platforms (``any_version``,
-    ``any_os``)
-  + support versions in rules files, e.g. parsed from ``package.xml``
-    files [`details <Versions in rules files_>`_]
-  + support different types of dependencies such as test dependencies
-  + support package managers with options (such as formula options on
-    homebrew, use flags on gentoo?)
+    ``any_os``) [:ref:`details <rules-files>`]
+  + support ranges of versions and definitions for versions greater or
+    equal to a specific version [:ref:`details <verions-ranges-and-
+    geq>`]
+  + support options to OSs and condition rules on them [`details <OS
+    options_>`_]
+  + support package versions in rules files, e.g. parsed from
+    ``package.xml`` files [`details <Versions in rules files_>`_]
+  + :strike:`support different types of dependencies such as test
+    dependencies`
   + consider precedence of conflicting rules [`details <Alternative
     resolutions_>`_]
   + inter-key dependencies [`details <Inter-key dependencies in rules
     files_>`_]
 
 - support package manager sources (e.g. PPAs for APT on Ubuntu)
-  [`details <Improved package manager abstraction_>`_]
+  [`details <Installer options_>`_]
 - support package manager prerequisites (such as PM is installed, PM
   cache is up-to-date, correct PPA is installed) [`details <Improved
   package manager abstraction_>`_]
@@ -174,6 +178,8 @@ found `further blow <Improvements over rosdep_>`_.
 - improve situation on Windows
 - support proxies for any downloads as well as for the installer
   invocations, see `ros-infrastructure/rosdep#335`_
+- support package managers with options (such as formula options on
+  homebrew, use flags on gentoo?)
 
 
 .. _ros-infrastructure/rosdep#335: https://github.com/ros-infrastructure/rosdep/pull/335
@@ -955,11 +961,46 @@ Derivative operating systems
 
 
 OS support e.g. for Ubuntu derivatives should be able to reuse most of
-the rules for Ubuntu, but maybe overwrite certain rules. We have started
-considering this by letting OS pluings define a list of increasingly
-specific names. E.g. a `Xubuntu` os support plugin might define the
-names ``["Debain", "Ubuntu", "Xubuntu"]``.
+the rules for Ubuntu, but maybe overwrite certain rules.
 
+We propose to let OS pluings define a list of increasingly specific
+names. E.g. a Xubuntu os plugin might define the names ``debian``,
+``ubuntu`` and ``xubuntu``. The most specific name corresponds to the OS
+name. It has to be considered that the version names of the less
+specific OSs might not match the version names of the derivative. In our
+example, ``xubuntu:trusty`` corresponds to ``ubuntu:trusty``, but does
+not have a (released-) version correspondence in Debian. Therefore,
+instead of a list of OS names, os plugins specify a list of tuples of OS
+names and versions. A ``None`` version indicates that there is no
+version correspondence. In that case only ``any_version`` rules may
+apply to the derivative. For example, the Xubuntu plugin might return
+the following list of names/versions on Trusty: ``[("debian", None),
+("ubuntu", "trusty"), ("xubuntu", "trusty")]``.
+
+The lookup of rules is done in the following way: For a given list of OS
+names and versions, lookup happens in such a way as if it was first done
+based on only the names (not versions) independently for each of the
+specified names (merging information from all sources). Then, the most
+specific OS name for which some definition exists (no matter for which
+OS version) is chosen as the sole definition. Only then is the according
+OS version name considered.
+
+For example, if we have the following rules
+
+.. code-block:: yaml
+
+  foo:
+    debian: libfoo
+  bar:
+    ubuntu:
+      precise: libbar
+      trusty: libbar
+    xubuntu:
+      trusty: libbar-x
+
+then on ``xubuntu:trusty`` the resolutions are ``foo -> libfoo`` and
+``bar -> libbar-x``, but on ``xubuntu:precise`` the key ``bar`` does not
+resolve.
 
 Versions in rules files
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -1044,6 +1085,189 @@ beneficial.
 
 - interesting blog about abstract vs concrete dependencies in python
   `<https://caremad.io/blog/setup-vs-requirement/>`_
+
+
+OS options
+~~~~~~~~~~
+
+OS plugins should have options that are configured in the xylem config
+files. One example of such options are proposed OS "features". Features
+can be either "active" or not. The config file contains a list of of
+active features (all other features are inactive). For example, let us
+consider the the Ubuntu OS plugin. For recent Ubuntu versions there
+exist two alternatives for each python package, one for python 2 and one
+for python 3. For this example, let us assume that something similar
+would hypothetically be the case for Ruby 2 and 3. Now if we want to use
+the latest and greatest, we might therefore put in our config:
+
+.. code-block:: yaml
+
+  os_options:
+    ubuntu:
+      features: [python3, ruby3]
+
+I.e. the Ubuntu plugin defines the features ``python3`` and ``ruby3``,
+where their absence implies Python 2 and Ruby 2.
+
+In rules files, we allow (optional) conditioning on the features at the
+OS level. In a shorthand notation (which gets expanded) this might look
+like the following:
+
+.. code-block:: yaml
+
+  rosdep:
+    ubuntu & python3:
+      any_version: [python3-rosdep]
+    ubuntu & !python3:
+      any_version: [python-rosdep]
+
+In order to keep things unambiguous, we require that in any rules file
+for any key and any OS name, if any version-dict is conditioned on a
+specific feature, then all version dicts must be condition on that
+feature (either negative or positive). Furthermore, for any two
+conditioned version-dicts, there must exist a feature for which the
+condition (positive or negative) is different. This ensures that for a
+given os and feature list, only at most one version dict applies.
+
+While we assume that in practice for each xylem key there is at most one
+OS feature that is relevant, here is an example of a definition
+envolving two features:
+
+.. code-block:: yaml
+
+  mixed-python-ruby-pkg-foo:
+    ubuntu & python3, ruby3: [python3-ruby3-foo]
+    ubuntu & !python3, ruby3: [python-ruby3-foo]
+    ubuntu & !python3, !ruby3: [python-ruby-foo]
+    # python3-ruby-foo does not exist. List does not have to be exhaustive.
+
+In the expanded rules dict, the feature conditions are organized in a
+binary decision tree (built from valid YAML, but optimized for lookup).
+Each inner node in the tree consists of a list with three elements. The
+first element is the feature name, the second element is the subtree for
+when that feature is active and the third element is the subtree for
+when that feature is inactive. The leaves of the tree are version dicts
+or None. Since in practice at most one feature is relevant each key,
+this tree would have depth 0 or 1 for almost all keys. To illustrate the
+structure, we should the expanded definition for the example with two
+features:
+
+.. code-block:: yaml
+
+  mixed-python-ruby-pkg-foo:
+    ubuntu:
+      - python3
+      -
+        - ruby3
+        - any_version:
+             apt:
+               packages: [python3-ruby3-foo]
+        - None
+      -
+        - ruby3
+        - any_version:
+             apt:
+               packages: [python-ruby3-foo]
+        - any_version:
+             apt:
+               packages: [python-ruby-foo]
+
+For rules defintions not involving OS features the expaned definition is
+unchanged, i.e. the version dict comes directly underneath OS dict.
+
+
+**Notes**:
+
+ - An alternative proposal to support python 2 vs 3 rules on recent
+   Ubuntu was using `derivative OSs <Derivative operating systems_>`_,
+   but that doesn't scale very well if multiple such alternatives have
+   to be considered on the same OS, like the hypothetical Ruby 2 vs 3
+   in the example above.
+ - Can we come up with a better compact syntax as well as expanded data
+   structure?
+
+
+Installer options
+~~~~~~~~~~~~~~~~~
+
+Installer options configure installer plugins. They can be defined in
+config files or rules definitions. As an example we consider a set of
+options to the ``apt`` installer to support PPAs.
+
+We would like to support custom PPAs for rules. With xylem being ROS-
+independent, the apt installer plugin has no knowledge of the ROS
+specific PPAs. We therefore define an option ``required_ppas``, which
+maps to a list of necessary ppas. This list can be populated from xylem
+config files, or from xylem rules that are currently being resolved. For
+installation, xylem would then first check that all the required PPAs
+are installed and possibly offer to install missing ones, or at least
+give meaningful instructions to the user.
+
+The definition in a config file might look like this:
+
+.. code-block:: yaml
+
+  installer_options:
+    apt:
+      required_ppas: ["ppa:osrf/ros"]
+
+An rule in an installer file might look like this:
+
+.. code-block:: yaml
+
+  python-rosdep:
+    ubuntu:
+      any_version:
+        apt:
+          packages: [python-rosdep]
+          required_ppas: ["ppa:osrf/ros"]
+
+Recognizing that a rules file might contain many apt rules for packages
+from the same PPA, rules files may contain global definitions of options
+for each installer. They act as if they are part of any rule of the
+corresponding installer. For example, the above file with the single
+``python-rosdep`` entry can alternatively be written:
+
+.. code-block:: yaml
+
+  _installer_options:
+    apt: required_ppas: ["ppa:osrf/ros"]
+  python-rosdep:
+    ubuntu:
+      any_version: [python-rosdep]
+
+The leading underscore distinguishes ``_installer_options`` from xylem
+keys and ensures that it appears at the top of the file. Having the PPA
+requirement always be liked to the rules themselves is advantageous. If
+none of the apt rules in a file with such installer options is part of
+the set of resolutions of the current ``install`` command, then of
+course the PPA requirement is not considered.
+
+Support for mirrors could be added as another option, e.g.:
+
+.. code-block:: yaml
+
+  installer_options:
+    apt:
+      ppa_mirrors:
+        "ppa:osrf/ros": ["ppa:freiburg/ros", "ppa:nyu/ros"]
+
+Note that these mirrors could be defined in a config file, or again, in
+the rules file.
+
+Sometimes it might be convenient to not only provide alternative PPAs,
+but actually replace a PPA with a different one, for example during
+testing. A third installer option could achieve this:
+
+.. code-block:: yaml
+
+  installer_options:
+    apt:
+      replace_ppas:
+        "ppa:osrf/ros": ["ppa:/ros-testing"]
+
+Replacing PPAs with a list of 0 or more different PPAs also allows to
+completely "disable" a PPA requirement without touching the rules files.
 
 
 Improved package manager abstraction
