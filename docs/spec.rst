@@ -102,13 +102,15 @@ has changed. Since we want to use ``any_version`` for the latest
 version, we have to retain the repeated explicit definition for all
 other versions (which are identical).
 
+We propose the following two changes to alleviate those problems.
+
 any_version with greater or equal condition
 -------------------------------------------
 
-We propose the following two changes to alleviate those problems. Firstly,
-installer dicts underneath ``any_version`` may optionally have a key
-``any_version_geq`` mapping to a minimal version to which the rule
-applies, for example:
+Firstly, the dictionary underneath ``any_version`` may optionally have a
+key ``version_geq`` mapping to a minimal version to which the rule
+applies. The installer dict is then pushed down one level accessed by a
+``installers`` key. For example:
 
 .. code-block:: yaml
 
@@ -118,10 +120,12 @@ applies, for example:
       quantal: [gazebo]
       raring: [gazebo]
       any_version:
-        any_version_geq: saucy
-        packages: [gazebo2]
+        version_geq: saucy
+        installers:
+          apt:
+            packages: [gazebo2]
 
-There exist short notations.
+There exists a short notation without the intermediary dictionary:
 
 .. code-block:: yaml
 
@@ -131,20 +135,45 @@ There exist short notations.
       quantal: [gazebo]
       raring: [gazebo]
       any_version>=saucy: [gazebo2]
+      # note that the above is parsed as string "any_version>=saucy"
 
-The above expands to the initial example.
+.. code-block:: yaml
+
+  gazebo:
+    ubuntu:
+      precise: [gazebo]
+      quantal: [gazebo]
+      raring: [gazebo]
+      any_version>=saucy:
+        apt:
+          packages: [gazebo2]
+
+The both of the above shorthands expand to the initial example. There is
+also a short notation at the os dict level:
 
 .. code-block:: yaml
 
   gazebo:
     ubuntu>=saucy: [gazebo2]
 
-The above exands to the initial example without the rules for precise,
-raring and quantal.
+which expands to:
+
+.. code-block:: yaml
+
+  gazebo:
+    ubuntu:
+      any_version:
+        version_geq: saucy
+        installers:
+          apt:
+            packages: [gazebo2]
 
 This means that for rule lookup the order on versions needs to be known.
 Therefore, each os plugin needs to provide an order over its version
-strings. Note that the order is not needed for rules file expansion.
+strings. For systems like OS X, that implies listing all known versions
+in the OS plugin.
+
+Note that the order is *not* needed for rules file *expansion*.
 
 
 Multiple versions in one defintion
@@ -158,12 +187,28 @@ version ranges (like ``precise - saucy``) to keep the implied versions
 explicit. This also helps to not require the list of all versions for
 rule expansion.
 
-For example, the above ``ffmpeg`` definition can be compacted as:
+For example, the ``ffmpeg`` definition can be compacted as:
 
 .. code-block:: yaml
 
   ffmpeg:
     ubuntu:
-      lucid, maverick, natty, oneiric, precise, quantal, raring, saucy: [ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
       any_version>=trusty: [libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
+      lucid, maverick, natty, oneiric, precise, quantal, raring, saucy: [ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
 
+
+which expands to:
+
+.. code-block:: yaml
+
+  ffmpeg:
+    ubuntu:
+      any_version>=trusty: [libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
+      lucid: [ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
+      maverick: [ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
+      natty: [ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
+      oneiric: [ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
+      precise: [ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
+      quantal: [ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
+      raring: [ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]
+      saucy: [ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev]

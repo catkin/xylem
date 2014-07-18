@@ -305,6 +305,8 @@ managed by a high-level API context object, the :class:`InstallerContext
 :class:`OSDetect <xylem.os_support.OSDetect>` to manage the
 detected/overridden OS.
 
+.. _setup_installers_method:
+
 :meth:`setup_installers() <xylem.installers.InstallerContext.setup_installers>`
 uses information from user configuration, os plugins and installer
 plugins to prepare the list of installers for the current os, their
@@ -962,7 +964,7 @@ Derivative operating systems
 OS support e.g. for Ubuntu derivatives should be able to reuse most of
 the rules for Ubuntu, but maybe overwrite certain rules.
 
-We propose to let OS pluings define a list of increasingly specific
+We propose to let OS plugins define a list of increasingly specific
 names. E.g. a Xubuntu os plugin might define the names ``debian``,
 ``ubuntu`` and ``xubuntu``. The most specific name corresponds to the OS
 name. It has to be considered that the version names of the less
@@ -1090,23 +1092,31 @@ OS options
 ~~~~~~~~~~
 
 OS plugins should have options that are configured in the xylem config
-files. One example of such options are proposed OS "features". Features
-can be either "active" or not. The config file contains a list of of
-active features (all other features are inactive). For example, let us
-consider the the Ubuntu OS plugin. For recent Ubuntu versions there
-exist two alternatives for each python package, one for python 2 and one
-for python 3. For this example, let us assume that something similar
-would hypothetically be the case for Ruby 2 and 3. Now if we want to use
-the latest and greatest, we might therefore put in our config:
+files. One example of such options are proposed OS "features" (another
+is "core installers", see `Alternative resolutions`_). Features can be
+either "active" or not. The config file contains a list of of active
+features (all other features are inactive). For example, let us consider
+the Ubuntu OS plugin. For recent Ubuntu versions there exist two
+alternatives for each python package, one for python 2 and one for
+python 3. For this example, let us assume that something similar would
+hypothetically be the case for Ruby 2 and
+3. Now if we want to use the latest and greatest, we might therefore put
+in our ``/etc/xylem/config.yaml``:
 
 .. code-block:: yaml
 
   os_options:
-    ubuntu:
-      features: [python3, ruby3]
+    features: [python3, ruby3]
 
-I.e. the Ubuntu plugin defines the features ``python3`` and ``ruby3``,
-where their absence implies Python 2 and Ruby 2.
+In this scenario the Ubuntu plugin defines features ``python3`` and
+``ruby3`` where their absence implies Python 2 and Ruby 2.
+
+It (probably) does not make sense to define os features in a rules file
+(like installer options), however, the OS plugins might choose to set
+default features depending on OS version. For Ubuntu, ``python3`` might
+be active by default starting from a certain version. We therefore might
+also add config options to activate or deactivate certain features (as
+apposed to only defining the definitive list of features).
 
 In rules files, we allow (optional) conditioning on the features at the
 OS level. In a shorthand notation (which gets expanded) this might look
@@ -1115,83 +1125,140 @@ like the following:
 .. code-block:: yaml
 
   rosdep:
-    ubuntu & python3:
-      any_version: [python3-rosdep]
-    ubuntu & !python3:
-      any_version: [python-rosdep]
+    ubuntu: [python-rosdep]
+    ubuntu & python3: [python3-rosdep]
+    # note that the above is parsed as string "ubuntu & python3"
 
-In order to keep things unambiguous, we require that in any rules file
-for any key and any OS name, if any version-dict is conditioned on a
-specific feature, then all version dicts must be condition on that
-feature (either negative or positive). Furthermore, for any two
-conditioned version-dicts, there must exist a feature for which the
-condition (positive or negative) is different. This ensures that for a
-given os and feature list, only at most one version dict applies.
+In order to keep things unambiguous, we need to ensure that in each file
+and for each key/os-name, only at most one rule applies to a configured
+set of features. In order to achieve this the list of features in os
+dicts are interpreted in the following way: For a given set of feature
+dependent os dict entries, we assume that any feature that appears in
+any of the entries is relevant for all entries. I.e. in the above
+example the ``ubuntu`` entry only applies when feature ``python3`` is
+not active, because it used in the next line for ``ubuntu & python3``.
+However, since ``ruby3`` does not appear in any of the entries (in that
+file, for that key/os), the two rules both apply to feature ``ruby3``
+active and inactive.
 
 While we assume that in practice for each xylem key there is at most one
 OS feature that is relevant, here is an example of a definition
-envolving two features:
+involving two features:
 
 .. code-block:: yaml
 
   mixed-python-ruby-pkg-foo:
+    ubuntu: [python-ruby-foo]
     ubuntu & python3, ruby3: [python3-ruby3-foo]
-    ubuntu & !python3, ruby3: [python-ruby3-foo]
-    ubuntu & !python3, !ruby3: [python-ruby-foo]
+    ubuntu & ruby3: [python-ruby3-foo]
+    # note that the above is parsed as string "ubuntu & python3, ruby3"
     # python3-ruby-foo does not exist. List does not have to be exhaustive.
 
 In the expanded rules dict, the feature conditions are organized in a
 binary decision tree (built from valid YAML, but optimized for lookup).
-Each inner node in the tree consists of a list with three elements. The
-first element is the feature name, the second element is the subtree for
-when that feature is active and the third element is the subtree for
-when that feature is inactive. The leaves of the tree are version dicts
-or None. Since in practice at most one feature is relevant each key,
-this tree would have depth 0 or 1 for almost all keys. To illustrate the
-structure, we should the expanded definition for the example with two
+Each inner node in the tree consists of a dict with at most 2 or 3
+entries: ``feature`` mapping to the feature that is conditioned on in
+this node and one or two of ``active`` and ``inactive``, mapping to
+subtrees for the corresponding decision. The leaves of the tree are
+version dicts. Since in practice at most one feature is relevant each
+key, this tree would have depth 0 or 1 for most keys. To illustrate the
+structure, we show the expanded definition for the example with two
 features:
 
 .. code-block:: yaml
 
   mixed-python-ruby-pkg-foo:
     ubuntu:
-      - python3
-      -
-        - ruby3
-        - any_version:
-             apt:
-               packages: [python3-ruby3-foo]
-        - None
-      -
-        - ruby3
-        - any_version:
-             apt:
-               packages: [python-ruby3-foo]
-        - any_version:
-             apt:
-               packages: [python-ruby-foo]
+      feature: python3
+      active:
+        feature: ruby3
+        active:
+          any_version:
+            apt:
+              packages: [python3-ruby3-foo]
+      inactive:
+        feature: ruby3
+        active:
+          any_version:
+            apt:
+              packages: [python-ruby3-foo]
+        inactive:
+          any_version:
+            apt:
+              packages: [python-ruby-foo]
 
 For rules defintions not involving OS features the expaned definition is
-unchanged, i.e. the version dict comes directly underneath OS dict.
+unchanged, i.e. the version dict comes directly underneath the OS dict.
 
+Here os another example to illustrate the features used are checked on a
+per-file basis:
+
+.. code-block:: yaml
+
+  # 01-rules.yaml
+  mixed-python-ruby-pkg-foo:
+    ubuntu: [python-foo]
+  # 02-rules.yaml
+  mixed-python-ruby-pkg-foo:
+    ubuntu: [python-ruby-foo]
+    ubuntu & python3, ruby3: [python3-ruby3-foo]
+    ubuntu & ruby3: [python-ruby3-foo]
+  # merged result:
+  mixed-python-ruby-pkg-foo:
+    ubuntu: [python-foo]
+
+In the above, the first file takes precedence for all cases, even though
+it does not condition on any features. As explained above, the
+unconditioned rule in the first file applies to all possible sets of
+active features.
 
 **Notes**:
 
+ - *Nikolaus*: I am open to suggestions for better compact syntax as
+   well as expanded data structure.
+ - We might also want to change the OS override syntax to specify
+   features, something like ``--os ubuntu:trusty&python3``.
  - An alternative proposal to support python 2 vs 3 rules on recent
    Ubuntu was using `derivative OSs <Derivative operating systems_>`_,
-   but that doesn't scale very well if multiple such alternatives have
-   to be considered on the same OS, like the hypothetical Ruby 2 vs 3
-   in the example above.
- - Can we come up with a better compact syntax as well as expanded data
-   structure?
+   but that doesn't scale very well. Considering multiple alternatives
+   on the same OS, like the hypothetical Ruby 2 vs 3 in the example
+   above, is already awkward, but when this is mixed with actual
+   derivative OSs, it scales very poorly.
+
+   Considering the examlpe above, we might define the following
+   derivative OSs with listed names:
+
+   .. code-block:: yaml
+
+     ubuntu => ['ubuntu']
+     ubuntu_py3 => ['ubuntu', 'ubuntu_py3']
+     ubuntu_rb3 => ['ubuntu', 'ubuntu_rb3']
+     ubuntu_py3_rb3 => ['ubuntu', 'ubuntu_py3', 'ubuntu_rb3', 'ubuntu_py3_rb3']
+
+   Now if I want to add an actual derivative OS like Xubuntu, I would
+   also have to add 4 variants:
+
+   .. code-block:: yaml
+
+     xubuntu => ['ubuntu', 'xubuntu']
+     xubuntu_py3 => ['ubuntu', 'ubuntu_py3', 'xubuntu', 'xubuntu_py3']
+     xubuntu_rb3 => ['ubuntu', 'ubuntu_rb3', 'xubuntu', 'xubuntu_rb3']
+     xubuntu_py3_rb3 => ['ubuntu', 'ubuntu_py3', 'ubuntu_rb3', 'ubuntu_py3_rb3', 'xubuntu', 'xubuntu_py3', 'xubuntu_rb3', 'xubuntu_py3_rb3']
+
+   Note that with this approach  we would also have to include some
+   setting in the config file to guide the os detection to choose the
+   appropriate variant.
 
 
 Installer options
 ~~~~~~~~~~~~~~~~~
 
 Installer options configure installer plugins. They can be defined in
-config files or rules definitions. As an example we consider a set of
-options to the ``apt`` installer to support PPAs.
+config files or rules definitions. Definitions in the config files apply
+to all rules (of that installer). Definitions in rules files only apply
+to the rules for which they are defined. There is a shortcut to define
+installer options in rules files that apply to every rule. As an example
+we consider a set of options to the ``apt`` installer to support PPAs.
 
 We would like to support custom PPAs for rules. With xylem being ROS-
 independent, the apt installer plugin has no knowledge of the ROS
@@ -1230,10 +1297,9 @@ corresponding installer. For example, the above file with the single
 .. code-block:: yaml
 
   _installer_options:
-    apt: required_ppas: ["ppa:osrf/ros"]
-  python-rosdep:
-    ubuntu:
-      any_version: [python-rosdep]
+    apt:
+      required_ppas: ["ppa:osrf/ros"]
+  python-rosdep: [python-rosdep]
 
 The leading underscore distinguishes ``_installer_options`` from xylem
 keys and ensures that it appears at the top of the file. Having the PPA
@@ -1268,6 +1334,11 @@ testing. A third installer option could achieve this:
 Replacing PPAs with a list of 0 or more different PPAs also allows to
 completely "disable" a PPA requirement without touching the rules files.
 
+Something similar should be done for Taps for Homebrew. While it is
+possible to reference the Tap with the formula name for installation
+(``brew install osrf/ros/foopkg``), which should be supported for
+specific packages.
+
 
 Improved package manager abstraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1281,10 +1352,10 @@ and comprehensible description]
   cases / needs)
 - if custom ppa's are supported, provide tools to list the ppa's for
   bunch of keys / rules sources
-- rules should never specify the ppa location, but rather have some sort
+- :strike:`rules should never specify the ppa location, but rather have some sort
   of names prerequisite. this way the user could configure/overwrite the
   prerequisite in the config file if he e.g. has a customized mirror of
-  that ppa or tap.
+  that ppa or tap.`
 - issue of trust for the user (auto add alternavte pm sources? query
   user?)
 - issue of reliability of sources for the maintainer
@@ -1318,24 +1389,221 @@ and comprehensible description]
 Alternative resolutions
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Allow for alternatives with resolutions on a specific platforms, e.g.
-the use can choose macports vs homebrew on OS X, or to use pip over apt
-for python packages on Ubuntu.
+On a specific platform we want to allow alternative resolutions for the
+same key. By default some order on these alternatives should determine
+which resolution is chosen without user interaction. However, it should
+be possible for the user to permanently or temporarily override that
+order to install different alternatives.
+
+For example on OS X we would like to offer installing packages either
+from macports, or from homebrew / pip / gem. Similarly on Ubuntu python
+packages are packaged with apt, but a user might prefer to install all
+or certain python packages from pip instead.
+
+We also have to consider that information for which installers are
+available on each platform and what their priority is should come from
+multiple sources: os plugins, installer plugins and the user
+configuration.
+
+We should consider the following use cases:
+
+1. The default scenario should be that the OS plugin defines a
+   preference on supported installers such that each key is resolved
+   uniquely in a way suitable for that platform.
+2. Installer plugins for platform independent package managers should be
+   able to specify additional installers independent from the OS
+   plugins. For example a new installer plugin for ``go get`` should be
+   available on all platforms without the need to update all OS plugins.
+   The installers take lower priority than the default installers for
+   that platform. They are independent from one-another and (by default)
+   don't need arbitration between them. For example, the ``go get``
+   installer does need have a relative priority to ``pip`` or ``gem``.
+   Enabling support for new installers should be possible just by
+   installing the corresponding plugin and without additional user
+   configuration.
+3. Installer plugins might define installers that are supposed to be
+   used instead of the core installers defined by an OS plugin. For
+   example, someone might write a ``linuxbrew`` installer plugin and
+   want to use that on Ubuntu instead of ``apt``. In that case the
+   installer needs to take higher priority than the OS plugin defined
+   core installers. Requiring user configuration for this rather rare
+   scenario is fine.
+4. The user wants to make a different choice for the core installers on
+   a platform where multiple alternatives are provided by xylem. For
+   example while by default the on OS X homebrew together with pip and
+   gem are used, an alternative is to use macports. In that case
+   homebrew should be deactivated completely, i.e. keys that are not
+   provided through macports should not be installed through homebrew,
+   and vice versa, by default keys not available on homebrew should not
+   be installed through macports. However it should still be possible to
+   set up xylem to use homebrew and fallback to macports, if the user
+   desires that. Requiring user configuration for anything non default
+   is fine.
+5. The user might want to specify the exact installer to use for specifc
+   keys. E.g. while she uses apt (as per default) on Ubuntu for python
+   packages, a given list of packages should still be installed through
+   pip. The user might do that through config-file / command-line or
+   custom rules file.
+
+Initially, as `described <setup_installers_method_>`_ in the installer
+plugin section, a system of real-valued priorities for installers was
+devised. However it was deemed unnecessarily complex. In particular user
+configuration should not deal with number-valued priorities for
+installers.
+
+The following therefore describes the newly proposed interplay of os
+plugins, installer plugins, rules files and user config to address the
+above use cases.
+
+The os pluings define an ordered list of "core installers" that are used
+on this operating system by default. The order determines which
+installer is used, in case multiple resolutions for one key are
+available. Moreover, installer plugins may register themselves as
+"additional installers" for any or all OSs. To that end they define a
+function that takes os name and version and returns a boolean that
+indicates if the installer should be used as "additional installer".
+E.g. installers like ``pip`` might return ``True`` for all OSs. The
+additional installers have arbitrary order/preference among themselves,
+and lower priority than any of the core installers. If for the
+resolution of a key there is the choice between multiple additional
+installers, we might want to either raise an error, or make an arbitrary
+choice (and possibly provide a warning). Any installers already present
+in the list of core installers are ignored as "additional installers".
+This way of configuring core and additional installers should cover use
+cases 1 and 2.
+
+The user may furthermore override the list of core installers in her
+config file. For example the following config file specifies that the
+``linuxbrew`` installer should be used with highest precedence, and
+``apt`` as a fallback, and thus supports use case 3 (see also `OS
+options`_):
+
+.. code-block:: yaml
+
+  os_options:
+    installers: [linuxbrew, apt]
+
+This still allows installer plugins to register themselves as additional
+installers, i.e. python packages without resolutions for ``linuxbrew``
+nor ``apt`` can still be installed from pip with the above config. This
+last part ensures the "no config" requirement of use case 2 (i.e. allow
+an alternative set of core installers, while still automatically picking
+up additional installers from newly installed installer plugins without
+touching the config file).
+
+The above also covers use case 4. In the example the OS plugin for OSX,
+the core installers would be ``[homebrew]`` (``pip`` and ``gem`` are
+additional installers), and can be overwritten in the config file to be
+``[macports]`` by a macports user that does not want to use homebrew at
+all. Neither macports nor homebrew would register themselves as
+"additional" installers. More exotically, the user might also configure
+``[homebrew, pip, gem, macports]`` as core installers, to use macports
+as a fallback for everything not available through homebrew/pip/gem.
+Even with this setup, the user can take immediately use a newly
+installer ``go get`` installer plugin without needing to touch her
+config file.
+
+To give the user ultimate control over which installers can be used, she
+might specify that no "additional installers" should be used. With that,
+the specified list of core installers is the definitive list of used
+installers:
+
+.. code-block:: yaml
+
+  use_additional_installers: False
+
+Lastly, we support use case 5, namely overrides for specific keys, in
+two ways. Firstly, the user can specify a list of keys to install from
+specific installers either in the config file
+
+.. code-block:: yaml
+
+  install_from:
+    pip: [python-foo, python-bar]
+    gem: [ruby-baz]
+
+or on the command line:
+
+.. code-block:: bash
+
+  xylem install some-pkg-with-deps --install-from="pip: [python-foo, python-bar]"
+
+This is useful to quickly choose a different resolution for some keys,
+where this resolution is already defined, but not the highest priority
+with the current installer precedence setup.
+
+A slightly different scenario is where one wants to override the
+resolution for a specific key in a custom rules file and make sure that
+this is the only rule, not merged with rules for other installers in
+existing rules files. For example:
+
+.. code-block:: yaml
+
+  # 01-local-rules.yaml
+  foo:
+    ubuntu:
+      any_version:
+        my_installer: ["libfoo"]
+  # 20-default-rules.yaml
+  ...
+  foo:
+    ubuntu:
+      any_version:
+        apt: ["libfoo"]
+  ...
+
+In this setup, the rules for ``my_installer`` and ``apt`` would get
+merged upon lookup of ``foo``. Since ``apt`` is the highest priority
+installer on Ubuntu, xylem would always choose the apt rule. In order to
+support true overriding of specific keys in local rules files (like is
+currently possible in rosdep) in a way that does not require to also
+list those keys in a config file, we propose a special ``disable``
+keyword for installer rules, which makes sure that a definition further
+down the line is not merged. A special ``any_installer`` entry in the
+installer dict can be used to disable all other installers. So in our
+example the ``01-local-rules.yaml`` can be written as either
+
+.. code-block:: yaml
+
+  foo:
+    ubuntu:
+      any_version:
+        my_installer: ["libfoo"]
+        apt:
+          disable: True
+
+or
+
+.. code-block:: yaml
+
+  foo:
+    ubuntu:
+      any_version:
+        my_installer: ["libfoo"]
+        any_installer:
+          disable: True
+
+to achieve the desired effect.
+
+Note that on top of the above configuration possibilities, there are
+also other ways in which power users might influence the list of
+installers. E.g. one can provide a custom os plugin and disable to one
+provided by xylem. The same can be done with installer plugins, to e.g.
+write a custom plugin for the ``apt`` installer and disable the one
+shipped with python. This last option allows to use all the existing
+rules for ``apt`` while fully customizing how the apt packages are
+actually installed (maybe someone wants to install all apt packages from
+source for some reason). Having to write and replace plugins should
+however not be the workflow for common use cases, which is granted by
+the above proposal.
 
 **Notes:**
 
- - multiple resolutions for one key on a specific os/version
- - how to do the right thing by default? (e.g. detect if either homebrew
-   or macports is installed to determine the default. Maybe some people
-   never want to fallback to macports, maybe some want to fall back to
-   macports if a key is not defined for homebrew)
- - have preferred order of the different alternatives, customizable (at
-   what granularity?)
- - for debian releases only apt dependencies are allowed, for stuff like
-   homebrew we can also depend on pip / gem
- - per rules file or per key
- - ``xylem resolve`` command should list all alternatives and help to
-   arbitrate
+ - The ``xylem resolve`` command can optionally list all alternative
+   resolution and their order in order to debug.
+ - In the context of bloom, keep in mind that for debian releases only
+   apt dependencies are allowed, whereas e.g. homebrew formulae can also
+   depend on pip / gem).
 
 
 Random points
