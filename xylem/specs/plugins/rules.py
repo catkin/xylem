@@ -42,6 +42,7 @@ First, the top level rules file has these properties:
 
 - The rules file is a YAML 1.1 compliant file
 - The rules file contains a single dictionary, the rules dict
+- The rules file may be empty, being interpreted as an empty dict
 
 the rules dict
 ^^^^^^^^^^^^^^
@@ -84,7 +85,7 @@ most operating systems, but is not specific to any one operating system.
 When the 'any_os' key is used, then the installer must be specified
 explicitly, i.e. no default key is used. Conversely, if the 'any_os' key
 is used, then the 'any_version' key must be used for the os_version as
-well, which makes sense because it doesn't make sense to have a
+well, because it doesn't make sense to have a
 definition which matches all operating systems but only a specific
 operating system version.
 
@@ -261,38 +262,145 @@ Which expands to::
             packages: [libbaz]
 """
 
-from __future__ import print_function
+# TODO: Update doc: for any_os only allow any_version
+# TODO: Update doc: for any_os disallow default_installer
 
-import yaml
+from __future__ import unicode_literals
 
-from xylem.specs import SpecParsingError
+from ..rules_dict import verify_rules_dict
+from ..rules_dict import lookup_rules
+from ..rules_dict import has_rule_for_os
 
+from ..impl import Spec
+
+from ...util import load_yaml
+from ...util import dump_yaml
+from ...text_utils import text_type
+from ...text_utils import to_str
+from ...load_url import load_url
+from ...log_utils import error
+
+
+DESCRIPTION = """\
+The rules spec downloads and expands rules files.
+"""
+
+
+class RulesSpec(Spec):
+
+    """Rules file spec.
+
+    ``arguments`` are the url of the rules file.
+
+    ``data`` is the expanded rules dict.
+    """
+
+    @property
+    def name(self):
+        return "rules"
+
+    @property
+    def version(self):
+        return 1
+
+    def unique_id(self, arguments):
+        return arguments
+
+    def load_data(self, arguments):
+        # TODO: Can we fast-fail if there is no connectivity (instead of
+        # doing the retries)? How to find out if there is no internet
+        # connection in general (as opposed to the resources not being
+        # accessible)?
+        data = load_url(arguments)
+        rules = load_yaml(data)
+        rules = expand_rules(rules)
+        return rules
+
+    def verify_arguments(self, arguments):
+        if not isinstance(arguments, text_type):
+            raise ValueError(
+                "Expected string (URL) as arguments for 'rules' spec, "
+                "but got '{0}' of type '{1}'.".
+                format(arguments, to_str(type(arguments))))
+
+    def verify_data(self, data, arguments):
+        return verify_rules_dict(data)
+
+    def is_data_outdated(self, data, arguments, data_load_time):
+        # TODO: actual sensible implementation here
+        return True
+
+    def lookup(self, data, xylem_key, installer_context):
+        os, version = installer_context.get_os_tuple()
+        default_installer_name = installer_context.get_default_installer_name()
+        # FIXME: pass default installer
+        return lookup_rules(
+            data, xylem_key, os, version, default_installer_name)
+
+    def keys(self, data, installer_context):
+        result = []
+        os_name, os_version = installer_context.get_os_tuple()
+        for key, os_dict in data.items():
+            if has_rule_for_os(os_dict, os_name, os_version):
+                result.append(key)
+        return result
+
+
+# TODO: The following code needs to be looked over and naming of
+# functions/variables/parameters be
+
+# TODO: what is the right abstraction here?
+class SpecParsingError(ValueError):
+
+    """Raised when an invalid spec element is encountered while parsing."""
+
+    def __init__(self, msg, related_snippet=None):
+        if related_snippet:
+            msg += "\n\n" + to_str(related_snippet)
+        ValueError.__init__(self, msg)
+
+
+# TODO: note in the docstrings that arguments are reused/modified in
+# return value
+
+# TODO: possibly change expand/compact to not share structure with the input
 
 def expand_definition(definition):
-    if type(definition) not in [str, list, dict] and definition is not None:
+    if not isinstance(definition, (text_type, list, dict, type(None))):
         raise ValueError("Invalid installer specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(definition)))
     if definition is None:
         definition = []
-    if isinstance(definition, str):
+    if isinstance(definition, text_type):
         # Up convert the str to a list
         definition = [definition]
     if isinstance(definition, list):
         # Convert to an default_installer dict
         definition = {'packages': definition}
+    if 'packages' in definition:
+        if definition['packages'] is None:
+            definition['packages'] = []
+        if isinstance(definition['packages'], text_type):
+            definition['packages'] = [definition['packages']]
+    if 'depends' in definition:
+        if definition['depends'] is None:
+            definition['depends'] = []
+        if isinstance(definition['depends'], text_type):
+            definition['depends'] = [definition['depends']]
+        if definition['depends'] == []:
+            del definition['depends']
     return definition
 
 
 def expand_installer_definition(installer_dict):
-    if type(installer_dict) not in [str, list, dict] and \
-            installer_dict is not None:
+    if not isinstance(installer_dict, (text_type, list, dict, type(None))):
         raise ValueError("Invalid installer specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(installer_dict)))
     if installer_dict is None:
         installer_dict = []
-    if isinstance(installer_dict, str):
+    if isinstance(installer_dict, text_type):
         # Up convert the str to a list
         installer_dict = [installer_dict]
     if isinstance(installer_dict, list):
@@ -303,59 +411,152 @@ def expand_installer_definition(installer_dict):
     return installer_dict
 
 
-def expand_os_version_definition(version_dict):
-    if type(version_dict) not in [str, list, dict] and \
-            version_dict is not None:
+def expand_os_version_definition(os_name, version_dict):
+    if not isinstance(version_dict, (text_type, list, dict, type(None))):
         raise ValueError("Invalid os version specific definition, expected "
                          "dict, list, string, or null but got '{0}'"
                          .format(type(version_dict)))
     if version_dict is None:
         version_dict = []
-    if isinstance(version_dict, str):
+    if isinstance(version_dict, text_type):
         # Up convert the str to a list
         version_dict = [version_dict]
     if isinstance(version_dict, list):
         # Convert to an any_version dict
         version_dict = {'any_version': version_dict}
+    if os_name == "any_os":
+        if "any_version" in version_dict:
+            if not len(version_dict) == 1:
+                raise ValueError(
+                    "'any_os' entry may only have 'any_version' version keys, "
+                    "but got '{0}'".format(version_dict.keys()))
+        else:
+            # Interpret as installer dict
+            version_dict = {"any_version": version_dict}
     for name, installer_dict in version_dict.items():
         version_dict[name] = expand_installer_definition(installer_dict)
     return version_dict
 
 
 def expand_os_definition(os_dict):
-    if type(os_dict) not in [str, list, dict] and os_dict is not None:
-        raise ValueError("Invalid os specific definition, expected dict, "
-                         "list, string, or null but got '{0}'"
-                         .format(type(os_dict)))
-    if os_dict is None:
-        os_dict = []
-    if isinstance(os_dict, str):
-        # Up convert the str to a list
-        os_dict = [os_dict]
-    if isinstance(os_dict, list):
-        # Convert to an any_version dict
-        os_dict = {'any_version': os_dict}
+    if not isinstance(os_dict, dict):
+        raise ValueError(
+            "Invalid os specific definition, expected dict but got '{0}'".
+            format(type(os_dict)))
     for os_name, version_dict in os_dict.items():
-        os_dict[os_name] = expand_os_version_definition(version_dict)
+        os_dict[os_name] = expand_os_version_definition(os_name, version_dict)
     return os_dict
 
 
 def expand_rules(rules):
+    if rules is None:
+        rules = {}
     if not isinstance(rules, dict):
         raise ValueError("Invalid rules set, expected dict got '{0}'"
                          .format(type(rules)))
-    for xylem_key, os_dict in dict(rules).items():
+    for xylem_key, os_dict in rules.items():
         # Store the (possibly) updated os_dict
         try:
             rules[xylem_key] = expand_os_definition(os_dict)
         except ValueError as exc:
             raise SpecParsingError("Failed to expand rule for '{0}': {1}"
                                    .format(xylem_key, exc),
-                                   yaml.dump({xylem_key: os_dict}))
+                                   dump_yaml({xylem_key: os_dict}))
     return rules
 
 
-def rules_spec_parser(data):
-    rules = yaml.load(data)
-    rules = expand_rules(rules)
-    return rules
+# TODO: Cleanup, error handling and docstrings for `compact...` functions
+
+
+def compact_installer_rule(rule):
+    if "packages" in rule and len(rule) == 1:
+        rule = rule["packages"]
+
+    if isinstance(rule, list):
+        if len(rule) == 0:
+            pass
+#            rule = None
+        elif len(rule) == 1:
+            pass
+#            rule = rule[0]
+
+    # TODO: copy
+    return rule
+
+
+def compact_installer_dict(installer_dict, default_installer):
+    result = {}
+
+    for installer_name, rule in installer_dict.items():
+        result[installer_name] = compact_installer_rule(rule)
+
+    if default_installer:
+        if 'default_installer' in result:
+            if default_installer in result:
+                raise ValueError(
+                    "Both 'default_installer' and default installer "" '{0}' "
+                    "in installer dict.".format(default_installer))
+            result[default_installer] = result['default_installer']
+            del result['default_installer']
+    else:
+        default_installer = 'default_installer'
+
+    if default_installer in result and len(result) == 1:
+        rule = result[default_installer]
+        if not isinstance(rule, dict):
+            result = rule
+
+    return result
+
+
+def compact_version_dict(version_dict, default_installer):
+    new_version_dict = {}
+    has_any_version = 'any_version' in version_dict
+    if has_any_version:
+        any_version_installer_dict = compact_installer_dict(
+            version_dict['any_version'], default_installer)
+        if len(version_dict) == 1 and \
+                not isinstance(any_version_installer_dict, dict):
+            return any_version_installer_dict
+        else:
+            new_version_dict['any_version'] = any_version_installer_dict
+
+    for version, installer_dict in version_dict.items():
+
+        if version != 'any_version':
+            installer_dict = compact_installer_dict(
+                installer_dict, default_installer)
+            if not (has_any_version and
+                    installer_dict == any_version_installer_dict):
+                new_version_dict[version] = installer_dict
+    return new_version_dict
+
+
+def compact_os_dict(os_dict, default_installers):
+    for os_name, version_dict in os_dict.items():
+        try:
+            if os_name == 'any_os':
+                os_dict['any_os'] = compact_installer_dict(
+                    version_dict['any_version'], None)
+            else:
+                os_dict[os_name] = compact_version_dict(
+                    version_dict, default_installers.get(os_name, None))
+        except Exception as e:
+            error("Failed to expand version dict for os {0} with error: "
+                  "{1}\n{2}".format(os_name, to_str(e), version_dict))
+            raise
+    return os_dict
+
+
+def compact_rules(rules_dict, default_installers):
+    for xylem_key, os_dict in rules_dict.items():
+        rules_dict[xylem_key] = compact_os_dict(os_dict, default_installers)
+    return rules_dict
+
+
+# definition for plugin loader
+definition = dict(
+    plugin_name='rules',
+    description=DESCRIPTION,
+    spec=RulesSpec
+)

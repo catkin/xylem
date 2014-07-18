@@ -1,5 +1,9 @@
-from .impl import get_spec_parser
-from .impl import list_spec_parsers
-from .impl import SpecParsingError
+from __future__ import unicode_literals
 
-__all__ = ['get_spec_parser', 'list_spec_parsers', 'SpecParsingError']
+from .impl import verify_spec_name
+from .impl import get_spec_plugin_list
+from .impl import Spec
+from .rules import SpecParsingError
+
+__all__ = ['get_spec_plugin_list', 'SpecParsingError', 'verify_spec_name',
+           'Spec']

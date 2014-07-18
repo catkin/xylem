@@ -1,0 +1,4 @@
+- rules: 'https://raw.githubusercontent.com/NikolausDemmel/rosdistro/xylem/rosdep/osx-homebrew.yaml'
+- rules: 'https://raw.githubusercontent.com/NikolausDemmel/rosdistro/xylem/rosdep/base.yaml'
+- rules: 'https://raw.githubusercontent.com/NikolausDemmel/rosdistro/xylem/rosdep/python.yaml'
+- rules: 'https://raw.githubusercontent.com/NikolausDemmel/rosdistro/xylem/rosdep/ruby.yaml'

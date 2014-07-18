@@ -31,7 +31,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import print_function
+from __future__ import unicode_literals
 
 import argparse
 import sys
@@ -68,14 +68,14 @@ def main(args=None):
         args = parser.parse_args()
         handle_global_arguments(args)
     try:
-        update(dry_run=args.dry_run)
+        update(prefix=args.prefix, dry_run=args.dry_run)
     except (KeyboardInterrupt, EOFError):
         info('')
         sys.exit(1)
 
 
 # This describes this command to the loader
-description = dict(
+definition = dict(
     title='update',
     description=DESCRIPTION,
     main=main,

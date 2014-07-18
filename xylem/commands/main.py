@@ -31,7 +31,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import print_function
+
+from __future__ import unicode_literals
 
 import argparse
 import sys
@@ -108,7 +109,8 @@ def print_usage():
 
 def main(sysargs=None):
     parser = argparse.ArgumentParser(
-        description="xylem is a package manager abstraction tool."
+        description="xylem is a package manager abstraction tool.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     add_global_arguments(parser)
 

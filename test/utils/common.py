@@ -3,6 +3,7 @@ Common tools for running tests
 """
 
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import functools
 import os
