@@ -2,6 +2,12 @@
 
 from setuptools import setup, find_packages
 
+# TODO: read README and LICENSE files to compose "long description"
+#
+# This might be useful:
+# http://stackoverflow.com/questions/1192632/how-to-convert-restructuredtext-to-plain-text
+# http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
+
 # see: http://reinout.vanrees.org/weblog/2009/12/17/managing-dependencies.html
 tests_require = ['nose', 'flake8', 'mock', 'coverage']
 
@@ -32,7 +38,7 @@ setup(
         'Development Status :: 2 - Pre-Alpha'
         'Environment :: Console',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
@@ -49,7 +55,7 @@ setup(
     ],
     description="xylem is a package manager abstraction tool.",
     long_description="xylem is a package manager abstraction tool.",
-    license='BSD',
+    license='Apache License 2.0',
     test_suite='test',
     entry_points={
         'console_scripts': [
