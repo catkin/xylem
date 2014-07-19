@@ -24,7 +24,7 @@ Code & tickets
 +---------------+---------------------------------------------------+
 | Issues        | http://github.com/catkin/xylem/issues             |
 +---------------+---------------------------------------------------+
-| Documentation | http://catkin.github.com/xylem/doc                |
+| Documentation | http://xylem.readthedocs.org                      |
 +---------------+---------------------------------------------------+
 
 
