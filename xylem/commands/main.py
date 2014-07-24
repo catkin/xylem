@@ -21,8 +21,8 @@ import pkg_resources
 from xylem.log_utils import error
 from xylem.log_utils import info
 
-from xylem.util import add_global_arguments
-from xylem.util import handle_global_arguments
+from xylem.arguments import add_global_arguments
+from xylem.arguments import handle_global_arguments
 
 XYLEM_CMDS_GROUP = 'xylem.commands'
 

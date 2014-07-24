@@ -21,8 +21,8 @@ from xylem.log_utils import info
 
 from xylem.update import update
 
-from xylem.util import add_global_arguments
-from xylem.util import handle_global_arguments
+from xylem.arguments import add_global_arguments
+from xylem.arguments import handle_global_arguments
 
 DESCRIPTION = """\
 Updates the xylem cache according to the source config files.

@@ -22,8 +22,8 @@ from ..log_utils import info
 from ..resolve import resolve
 from ..installers import InstallerContext
 
-from ..util import add_global_arguments
-from ..util import handle_global_arguments
+from ..arguments import add_global_arguments
+from ..arguments import handle_global_arguments
 
 from ..text_utils import to_str
 

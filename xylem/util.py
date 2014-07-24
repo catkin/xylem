@@ -17,7 +17,6 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import argparse
 import os
 import shutil
 import sys
@@ -28,10 +27,7 @@ import subprocess
 
 from six import StringIO
 
-from . import DEFAULT_PREFIX
 from .text_utils import to_str
-from .log_utils import enable_debug, enable_verbose
-from .terminal_color import disable_ANSI_colors
 
 
 class change_directory(object):
@@ -100,47 +96,22 @@ def raise_from(exc_type, exc_args, from_exc):
         raise exc
 
 
-def add_global_arguments(parser):
-    from xylem import __version__
-    group = parser.add_argument_group('global', description="""\
-The XYLEM_PREFIX environment variable sets the path under which xylem
-operates on source configurations and caches, which can be overwritten
-by the --prefix argument. If set, the XYLEM_DEBUG environment variable
-enables debug messages.""")
-    add = group.add_argument
-    add('-d', '--debug', help='enable debug messages',
-        action='store_true', default=False)
-    add('--pdb', help=argparse.SUPPRESS,
-        action='store_true', default=False)
-    add('--version', action='version', version=__version__,
-        help="prints the xylem version")
-    add('-v', '--verbose', action='store_true', default=False,
-        help="verbose console output")
-    add('--no-color', action='store_true', default=False,
-        dest='no_color', help=argparse.SUPPRESS)
-    add('-p', '--prefix', metavar='XYLEM_PREFIX',
-        default=os.environ.get('XYLEM_PREFIX', DEFAULT_PREFIX),
-        help="Sets the prefix for finding configs and caches. "
-             "The default is either '/' or, if set, the XYLEM_PREFIX "
-             "environment variable.")
-    return parser
+# TODO: document this soft dependency on pygments, and also add unit
+# test for printing exceptions with and without pygments
+
 
 _pdb = False
 
 
-def handle_global_arguments(args):
+def enable_pdb(pdb=True):
     global _pdb
-    enable_debug(args.debug or 'XYLEM_DEBUG' in os.environ)
-    _pdb = args.pdb
-    args.prefix = os.path.expanduser(args.prefix)
-    if args.verbose:
-        enable_verbose()
-    if args.no_color:
-        disable_ANSI_colors()
+    _pdb = pdb
 
 
-# TODO: document this soft dependency on pygments, and also add unit
-# test for printing exceptions with and without pygments
+def pdb_enabled():
+    global _pdb
+    return _pdb
+
 
 def print_exc(formated_exc):
     exc_str = ''.join(formated_exc)
@@ -157,11 +128,10 @@ def print_exc(formated_exc):
 
 
 def custom_exception_handler(type, value, tb):
-    global _pdb
     # Print traceback
     import traceback
     print_exc(traceback.format_exception(type, value, tb))
-    if not _pdb or hasattr(sys, 'ps1') or not sys.stderr.isatty():
+    if not pdb_enabled() or hasattr(sys, 'ps1') or not sys.stderr.isatty():
         pass
     else:
         # ...then start the debugger in post-mortem mode.
@@ -173,8 +143,7 @@ sys.excepthook = custom_exception_handler
 
 
 def pdb_hook():
-    global _pdb
-    if _pdb:
+    if pdb_enabled():
         import pdb
         pdb.set_trace()
 

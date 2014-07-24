@@ -31,8 +31,9 @@ from ..text_utils import to_bytes
 
 from ..util import load_yaml
 from ..util import dump_yaml
-from ..util import add_global_arguments
-from ..util import handle_global_arguments
+
+from ..arguments import add_global_arguments
+from ..arguments import handle_global_arguments
 
 DESCRIPTION = """\
 Compact a rules file.

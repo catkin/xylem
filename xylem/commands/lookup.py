@@ -23,9 +23,11 @@ from ..lookup import lookup
 
 from ..installers import InstallerContext
 
-from ..util import add_global_arguments
-from ..util import handle_global_arguments
+from ..arguments import add_global_arguments
+from ..arguments import handle_global_arguments
+
 from ..util import dump_yaml
+
 from ..terminal_color import ansi
 
 DESCRIPTION = """\
