@@ -260,6 +260,7 @@ from ...text_utils import text_type
 from ...text_utils import to_str
 from ...load_url import load_url
 from ...log_utils import error
+from ...exception import XylemError
 
 
 DESCRIPTION = """\
@@ -331,7 +332,7 @@ class RulesSpec(Spec):
 # functions/variables/parameters be
 
 # TODO: what is the right abstraction here?
-class SpecParsingError(ValueError):
+class SpecParsingError(XylemError):
 
     """Raised when an invalid spec element is encountered while parsing."""
 

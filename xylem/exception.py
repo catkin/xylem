@@ -22,12 +22,17 @@ from __future__ import unicode_literals
 # by multiple submodules?
 
 
-class InvalidDataError(Exception):
+class XylemError(Exception):
+
+    """Common base class for all custom xylem exceptions."""
+
+
+class InvalidDataError(XylemError):
 
     """Data is not in valid xylem format."""
 
 
-class InvalidPluginError(Exception):
+class InvalidPluginError(XylemError):
 
     """Plugin loaded from an entry point does not have the right type/data."""
 
@@ -45,14 +50,14 @@ class InvalidPluginError(Exception):
 #         return self.message
 
 
-class DownloadFailure(Exception):
+class DownloadFailure(XylemError):
 
     """Failure downloading data for I/O or other reasons."""
 
     pass
 
 
-class InstallerNotAvailable(Exception):
+class InstallerNotAvailable(XylemError):
 
     """Failure indicating a installer is not installed."""
 

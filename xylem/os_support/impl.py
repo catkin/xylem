@@ -18,6 +18,7 @@ import pkg_resources
 
 from xylem.log_utils import warning
 from xylem.exception import InvalidPluginError
+from ..exception import XylemError
 from six.moves import map
 # TODO: Document the description of how OS plugins look like (maybe in
 #       module docstring?)
@@ -80,7 +81,7 @@ def get_os_plugin_list():
     return os_list
 
 
-class UnsupportedOSError(Exception):
+class UnsupportedOSError(XylemError):
 
     """
     Operating system unsupported.

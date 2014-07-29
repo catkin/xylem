@@ -29,6 +29,7 @@ from ..util import raise_from
 from ..text_utils import to_str
 from ..specs import verify_spec_name
 from ..specs import get_spec_plugin_list
+from ..exception import XylemError
 
 
 # is supposed to work like a entry_point? Does package data work that
@@ -194,7 +195,7 @@ def cache_dir_from_xylem_dir(xylem_dir):
 # permission problems with creating or manipulating the cache dir
 
 
-class UnknownSpecError(Exception):
+class UnknownSpecError(XylemError):
 
     pass
 
