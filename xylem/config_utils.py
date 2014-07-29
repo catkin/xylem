@@ -219,7 +219,7 @@ def process_config_file_yaml(config):
     Handles empty files and makes sure config file is dictionary with
     strings as keys.
 
-    :raises ConfigValueError: if config is not ``None` or dictionary
+    :raises ConfigValueError: if config is not ``None`` or dictionary
         with string keys
     """
     if config is None:
@@ -289,9 +289,9 @@ class ConfigHelpFormatter(argparse.HelpFormatter):
     The standard argparse formatter formats all argument help texts and
     section descriptions into one block, ignoring all existing line-
     breaks. With this formatter, three or more consecutive line-breaks
-    are interpreted as a paragraph break (replaced by ``\n\n``) and
+    are interpreted as a paragraph break (replaced by ``\\n\\n``) and
     within paragraphs, two consecutive line-breaks are interpreted as a
-    hard line-break (replaced by ``\n``). Each blocks within a paragraph
+    hard line-break (replaced by ``\\n``). Each blocks within a paragraph
     (between the hard line-breaks) is still formatted as in the standard
     help formatter.
 
