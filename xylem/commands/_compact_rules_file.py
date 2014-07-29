@@ -14,7 +14,6 @@
 
 from __future__ import unicode_literals
 
-import argparse
 import sys
 import os
 
@@ -32,11 +31,13 @@ from ..text_utils import to_bytes
 from ..util import load_yaml
 from ..util import dump_yaml
 
-from ..arguments import add_global_arguments
-from ..arguments import handle_global_arguments
+from .main import command_handle_args
+
 
 DESCRIPTION = """\
-Compact a rules file.
+Parse a rules file and print it in canonical compact notation.
+
+This is a utility command intended for rules file maintenance.
 """
 
 
@@ -48,15 +49,12 @@ def prepare_arguments(parser):
              "compacted file.")
 
 
+def prepare_config(description):
+    pass
+
+
 def main(args=None):
-    if args is None:
-        parser = argparse.ArgumentParser(
-            description=DESCRIPTION
-        )
-        prepare_arguments(parser)
-        add_global_arguments(parser)
-        args = parser.parse_args()
-        handle_global_arguments(args)
+    args = command_handle_args(args, definition)
     try:
         # prepare arguments
         filepath = os.path.abspath(os.path.expanduser(args.rules_file))
@@ -88,5 +86,6 @@ definition = dict(
     title='_compact_rules_file',
     description=DESCRIPTION,
     main=main,
-    prepare_arguments=prepare_arguments
+    prepare_arguments=prepare_arguments,
+    prepare_config=prepare_config
 )

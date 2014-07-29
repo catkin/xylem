@@ -19,17 +19,22 @@ import os
 import pkg_resources
 import yaml
 
-from .. import DEFAULT_PREFIX
+from ..config import DEFAULT_SOURCES_DIR
+from ..config import DEFAULT_CACHE_DIR
+from ..config import get_config
 from ..log_utils import error
 from ..log_utils import is_verbose
 from ..log_utils import info
-from ..log_utils import debug
 from ..util import load_yaml
 from ..util import raise_from
 from ..text_utils import to_str
 from ..specs import verify_spec_name
 from ..specs import get_spec_plugin_list
 from ..exception import XylemError
+
+
+SOURCES_CACHE_PATH = "sources"
+"""Path of sources cache inside the cache dir."""
 
 
 # is supposed to work like a entry_point? Does package data work that
@@ -175,20 +180,8 @@ def verify_source_description(descr):
                    "spec name '{0}'".format(keys[0], e))
 
 
-def sources_dir_from_prefix(prefix):
-    return os.path.join(prefix, "etc", "xylem", "sources.d")
-
-
-def cache_dir_from_prefix(prefix):
-    return os.path.join(prefix, "var", "cache", "xylem", "sources")
-
-
-def sources_dir_from_xylem_dir(xylem_dir):
-    return os.path.join(xylem_dir, "sources.d")
-
-
-def cache_dir_from_xylem_dir(xylem_dir):
-    return os.path.join(xylem_dir, "cache", "sources")
+def sources_cache_dir(cache_dir):
+    return os.path.join(cache_dir, SOURCES_CACHE_PATH)
 
 
 # TODO: Introduce CachePermissionError to specifically indicate
@@ -208,49 +201,36 @@ class UnknownSpecError(XylemError):
 # argument for the rosdistro spec plugin). Keeping plugins single-
 # purpose seems like a good idea.
 
-# TODO: rethink 'prefix': don't use environment variable; provide better
-# default for sources.d/cache in user home dir (no fhs structure);
-# possibly provide option to set sources.d separately; Note: we have a
-# suggestion towards this with the `xylem_dir` below, which can be set
-# alternative to `prefix` (use prefix in FHS scenario and xylem_dir to
-# manage sources/cache in user's home or in temporary directory)
 
 class SourcesContext(object):
 
-    def __init__(self, prefix=None, xylem_dir=None, spec_plugins=None):
-        self.setup_paths(prefix, xylem_dir)
+    def __init__(self, config=None, spec_plugins=None):
+        if config is None:
+            config = get_config()
+        self.setup_paths(config)
         self.spec_plugins = spec_plugins or get_spec_plugin_list()
 
-    def setup_paths(self, prefix=None, xylem_dir=None):
-        if prefix and xylem_dir:
-            debug("Specifed both prefix '{0}' and xylem dir '{1}'. "
-                  "The prefix will be ignored.".format(prefix, xylem_dir))
-        if xylem_dir:
-            self.xylem_dir = xylem_dir
-            self.prefix = None
-            self.sources_dir = sources_dir_from_xylem_dir(self.xylem_dir)
-            self.cache_dir = cache_dir_from_xylem_dir(self.xylem_dir)
-        else:
-            self.prefix = prefix or DEFAULT_PREFIX
-            self.xylem_dir = None
-            self.sources_dir = sources_dir_from_prefix(self.prefix)
-            self.cache_dir = cache_dir_from_prefix(self.prefix)
+    def setup_paths(self, config):
+        self.sources_dir = config.sources_dir or DEFAULT_SOURCES_DIR
+        cache_dir = config.cache_dir or DEFAULT_CACHE_DIR
+        self.cache_dir = sources_cache_dir(cache_dir)
 
     def ensure_cache_dir(self):
         if not self.cache_dir_exists():
             os.makedirs(self.cache_dir)
-        # TODO: check if dir is directory (or link to dir) not file
+        if not self.cache_dir_exists():
+            raise OSError("Could not create cache dir: `{}`".
+                          format(self.cache_dir))
 
     def cache_dir_exists(self):
-        return os.path.exists(self.cache_dir)
-        # TODO: check if dir is directory (or link to dir) not file
+        return os.path.isdir(self.cache_dir)
 
     def sources_dir_exists(self):
-        return os.path.exists(self.sources_dir)
-        # TODO: check if dir is directory (or link to dir) not file
+        return os.path.isdir(self.sources_dir)
 
     def is_default_dirs(self):
-        return self.prefix == DEFAULT_PREFIX
+        return (self.sources_dir == DEFAULT_SOURCES_DIR and
+                self.cache_dir == sources_cache_dir(DEFAULT_CACHE_DIR))
 
     def get_spec(self, spec_name):
         for spec in self.spec_plugins:

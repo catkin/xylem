@@ -18,19 +18,20 @@ from .sources import SourcesContext
 from .sources import RulesDatabase
 from .installers import InstallerContext
 from .specs.rules import compact_installer_dict
+from .config import get_config
 
 
-def lookup(xylem_key, prefix=None, os_override=None, compact=False):
+def lookup(xylem_key, compact=False, config=None, sources_context=None,
+           installer_context=None):
 
-    sources_context = SourcesContext(prefix=prefix)
+    if config is None:
+        config = get_config()
+
+    sources_context = sources_context or SourcesContext(config)
+    ic = installer_context or InstallerContext(config)
 
     database = RulesDatabase(sources_context)
     database.load_from_cache()
-
-    if isinstance(os_override, InstallerContext):
-        ic = os_override
-    else:
-        ic = InstallerContext(os_override=os_override)
 
     installer_dict = database.lookup(xylem_key, ic)
 

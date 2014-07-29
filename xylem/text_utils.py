@@ -82,3 +82,8 @@ def to_bytes(obj, encoding='utf-8', errors='replace'):
         if isinstance(value, six.text_type):
             value = value.encode(encoding, errors)
         return value
+
+
+def type_name(obj):
+    """Return name of the type of ``obj``."""
+    return to_str(type(obj))

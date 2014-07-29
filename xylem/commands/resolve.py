@@ -14,21 +14,23 @@
 
 from __future__ import unicode_literals
 
-import argparse
 import sys
+
+from six.moves import map
 
 from ..log_utils import info
 
 from ..resolve import resolve
 from ..installers import InstallerContext
 
-from ..arguments import add_global_arguments
-from ..arguments import handle_global_arguments
-
 from ..text_utils import to_str
 
 from ..terminal_color import ansi
-from six.moves import map
+
+from ..config import get_config
+
+from .main import command_handle_args
+
 
 DESCRIPTION = """\
 Lookup a xylem key and resolve to unique, parsed rule based on
@@ -39,8 +41,6 @@ priorities.
 def prepare_arguments(parser):
     add = parser.add_argument
     add('xylem_key', nargs="*")
-    add('--os',
-        help="Override detected operating system with os:version pair.")
     add('--show-trumped', action="store_true",
         help="Show all possible resolutions for key, also for "
              "trumped installers.")
@@ -52,48 +52,28 @@ def prepare_arguments(parser):
         help="Show installer even if it is the default installer.")
     # TODO: add 'show-depends' option
 
+# TODO: abstract a way to
 
-# TODO: move this to os_support package
-def parse_os_tuple(os_arg):
-    if ':' in os_arg:
-        os_tuple = tuple(os_arg.split(':', 1))
-    else:
-        os_tuple = os_arg, ''
-    return os_tuple
+
+def prepare_config(description):
+    pass
 
 
 def main(args=None):
-    if args is None:
-        parser = argparse.ArgumentParser(
-            description=DESCRIPTION
-        )
-        prepare_arguments(parser)
-        add_global_arguments(parser)
-        args = parser.parse_args()
-        handle_global_arguments(args)
+    args = command_handle_args(args, definition)
+    config = get_config()
     try:
-        os_tuple = None
-        if args.os:
-            os_tuple = parse_os_tuple(args.os)
-
-        ic = InstallerContext(os_override=os_tuple)
+        ic = InstallerContext(config)
         default_installer_name = ic.get_default_installer_name()
-
-        results = resolve(args.xylem_key,
-                          prefix=args.prefix,
-                          os_override=ic,
-                          all_keys=args.all)
-
+        results = resolve(args.xylem_key, all_keys=args.all, config=config,
+                          installer_context=ic)
         for key, result in results:
-
             if not args.show_trumped:
                 result = [result[0]]
                 # TODO: this should be done inside `resolve`
-
                 # TODO: Error if single resolution is requested, but
                 # highest priority occurs multuple times (macports vs
                 # homebrew)
-
             for priority, installer_name, resolutions in result:
                 if installer_name != default_installer_name or \
                         args.show_default_installer or \
@@ -105,9 +85,7 @@ def main(args=None):
                         installer_string = "{0} : ".format(installer_name)
                 else:
                     installer_string = ""
-
                 resolution_string = ', '.join(map(to_str, resolutions))
-
                 info("{0} --> {1}{2}".
                      format(ansi("cyanf") + key + ansi("reset"),
                             ansi("bluef") + installer_string,
@@ -122,5 +100,6 @@ definition = dict(
     title='resolve',
     description=DESCRIPTION,
     main=main,
-    prepare_arguments=prepare_arguments
+    prepare_arguments=prepare_arguments,
+    prepare_config=prepare_config
 )

@@ -16,23 +16,27 @@ from __future__ import unicode_literals
 
 import pkg_resources
 
-from xylem.log_utils import warning
-from xylem.exception import InvalidPluginError
-from ..exception import XylemError
 from six.moves import map
+
+from ..log_utils import warning
+from ..exception import XylemError
+from ..exception import InvalidPluginError
+
 # TODO: Document the description of how OS plugins look like (maybe in
 #       module docstring?)
-
 # COMMENT: @wjwwood: This is good to describe, minimally, in the module
 #          docstring, however, the details on how to write one and what
 #          all the ramifications and such are can go in a high level
 #          document in the developer docs.
+
 OS_GROUP = 'xylem.os'
 
 
 # TODO: for installers and os, verfiy that the names used are valid and
 # are not any of the special values like any_os, any_version,
 # default_installer etc
+
+# TODO: fix docstrings and error handling
 
 
 def load_os_plugin(entry_point):
@@ -205,7 +209,10 @@ class OverrideOS(OS):
         #     raise RuntimeError("Tried to override OS '{0}' with invalid "
         #                        "version '{1}'.".format(os.name(), version))
         self.os = os
-        self.version = version
+        if version is None:
+            self.version = os.get_version()
+        else:
+            self.version = version
 
     def is_os(self):
         """Detection for OverrideOS is always `True`."""

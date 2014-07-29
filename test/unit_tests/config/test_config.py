@@ -12,13 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Unit tests for config module."""
+
 from __future__ import unicode_literals
 
-try:
-    import pkg_resources
-    try:
-        __version__ = pkg_resources.require('xylem')[0].version
-    except pkg_resources.DistributionNotFound:
-        __version__ = 'unset'
-except (ImportError, OSError):
-    __version__ = 'unset'
+# TODO
