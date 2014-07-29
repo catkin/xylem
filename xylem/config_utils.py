@@ -724,8 +724,9 @@ class MergingDict(Dict):
 
     @staticmethod
     def command_line_parsing_help():
-        return """value is merged with the config file entries; multiple
-        occurrences of the same command line argument are merged"""
+        return Dict.command_line_parsing_help() + \
+            "; value is merged with the config file entries"
+
 
 
 class Path(String):
@@ -921,15 +922,15 @@ class ConfigDescription(object):
                                         t.command_line_parsing_help())
                         for t in typelist]
             typehelp = "\n\n\nThere are some special cases and short hand " \
-                "notation:\n\n* " + "\n\n* ".join(helplist)
+                "notation for parsing config arguments:\n\n* " + "\n\n* ".join(helplist)
         else:
             typehelp = ""
         subparser = parser.add_argument_group(
             "config arguments", description="""The following typed
-            arguments correspond to entries in the config file.  In
-            general, command line argument values are interpreted as
-            YAML and overwrite the corresponding entries in user/system
-            config files.  """ + typehelp)
+            arguments correspond to entries in the config file.  Command
+            line argument values are interpreted as YAML and override
+            the corresponding entries in user/system config files.  """
+            + typehelp)
         for item in self.itemlist:
             if item.command_line:
                 item.add_argument(subparser)
