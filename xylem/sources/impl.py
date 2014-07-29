@@ -25,7 +25,7 @@ from ..config import get_config
 from ..log_utils import error
 from ..log_utils import is_verbose
 from ..log_utils import info
-from ..util import load_yaml
+from ..yaml_utils import load_yaml
 from ..util import raise_from
 from ..text_utils import to_str
 from ..specs import verify_spec_name

@@ -22,7 +22,6 @@ import shutil
 import sys
 import tempfile
 import six
-import yaml
 import subprocess
 
 from six import StringIO
@@ -152,58 +151,6 @@ def create_temporary_directory(prefix_dir=None):
     """Create a temporary directory and return its location."""
     from tempfile import mkdtemp
     return mkdtemp(prefix='xylem_', dir=prefix_dir)
-
-
-# use this utility function throughout to make sure the custom
-# constructors for unicode handling are loaded
-def load_yaml(data):
-    """Parse a unicode string containing yaml.
-
-    This calls ``yaml.load(data)`` but makes sure unicode is handled correctly.
-
-    See :func:`yaml.load`.
-
-    :raises yaml.YAMLError: if parsing fails"""
-
-    class MyLoader(yaml.SafeLoader):
-        def construct_yaml_str(self, node):
-            # Override the default string handling function
-            # to always return unicode objects
-            return self.construct_scalar(node)
-
-    MyLoader.add_constructor(
-        'tag:yaml.org,2002:str', MyLoader.construct_yaml_str)
-
-    return yaml.load(data, Loader=MyLoader)
-
-
-def dump_yaml(data, inline=False):
-    """Dump data to unicode string."""
-
-    class MyDumper(yaml.SafeDumper):
-        def ignore_aliases(self, _data):
-            return True
-
-        def represent_sequence(self, tag, data, flow_style=False):
-            # represent lists inline
-            return yaml.SafeDumper.represent_sequence(
-                self, tag, data, flow_style=True)
-
-        def represent_none(self, data):
-            return self.represent_scalar('tag:yaml.org,2002:null', '')
-
-    MyDumper.add_representer(type(None), MyDumper.represent_none)
-
-    result = yaml.dump(data,
-                       Dumper=MyDumper,
-                       # TODO: use this for inline==True ??
-                       # default_style=None,
-                       default_flow_style=False,
-                       allow_unicode=True,
-                       indent=2,
-                       width=10000000)
-
-    return result
 
 
 def read_stdout(cmd):

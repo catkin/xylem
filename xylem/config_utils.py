@@ -104,8 +104,8 @@ from .text_utils import type_name
 from .text_utils import text_type
 from .text_utils import to_str
 from .util import raise_from
-from .util import load_yaml
-from .util import dump_yaml
+from .yaml_utils import load_yaml
+from .yaml_utils import dump_yaml
 from .log_utils import info
 from .log_utils import debug
 from .exception import XylemError
@@ -1028,7 +1028,7 @@ def handle_global_config_arguments_post(args, config, tool_name):
         locations, argument names and environment variables
     """
     if args.print_config:
-        info(dump_yaml(copy_to_dict(config)))
+        info(dump_yaml(config))
         exit(0)
 
 

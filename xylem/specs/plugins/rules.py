@@ -254,8 +254,8 @@ from ..rules_dict import has_rule_for_os
 
 from ..impl import Spec
 
-from ...util import load_yaml
-from ...util import dump_yaml
+#from ...yaml_utils import load_yaml
+#from ...yaml_utils import dump_yaml
 from ...text_utils import text_type
 from ...text_utils import to_str
 from ...load_url import load_url

@@ -20,7 +20,7 @@ from ..log_utils import info
 from ..config import get_config
 from ..lookup import lookup
 from ..installers import InstallerContext
-from ..util import dump_yaml
+from ..yaml_utils import dump_yaml
 from ..terminal_color import ansi
 
 from .main import command_handle_args
