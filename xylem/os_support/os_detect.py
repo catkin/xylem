@@ -414,7 +414,7 @@ class OsDetect(object):
     def detect_os(self, env=None):
         """
         Detect operating system.  Return value can be overridden by
-        the :env:`ROS_OS_OVERRIDE` environment variable.
+        the ``ROS_OS_OVERRIDE`` environment variable.
 
         :param env: override ``os.environ``
         :returns: (os_name, os_version, os_codename), ``(str, str, str)``
