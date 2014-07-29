@@ -19,8 +19,8 @@ import os
 
 from ..specs.rules_dict import verify_rules_dict
 
-from ..specs.rules import expand_rules
-from ..specs.rules import compact_rules
+from ..specs.plugins.rules import expand_rules
+from ..specs.plugins.rules import compact_rules
 
 from ..os_support import OSSupport
 from ..log_utils import info

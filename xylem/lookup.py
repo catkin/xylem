@@ -17,7 +17,7 @@ from __future__ import unicode_literals
 from .sources import SourcesContext
 from .sources import RulesDatabase
 from .installers import InstallerContext
-from .specs.rules import compact_installer_dict
+from .specs.plugins.rules import compact_installer_dict
 from .config import get_config
 
 
