@@ -8,7 +8,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq sloccount
   - pip install -r requirements.txt
-  - pip install pip-tools coviolations_app flake8 coverage coveralls
+  - pip install pip-tools coviolations_app flake8 coverage coveralls testfixtures
 script: python setup.py nosetests --with-coverage --cover-package=xylem > test_result
 notifications:
   email: false
