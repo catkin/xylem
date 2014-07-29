@@ -23,6 +23,7 @@ Database
 .. automodule:: xylem.update
   :members:
   :undoc-members:
+  :noindex:
 
 Indices and tables
 ------------------
