@@ -222,7 +222,7 @@ def parse_os_override(os_arg):
     if '&' in os_arg:
         os_tuple, features = map(strip, os_arg.split('&', 1))
         if features:
-            features = map(strip, features.split(','))
+            features = list(map(strip, features.split(',')))
         else:
             features = []
     else:
