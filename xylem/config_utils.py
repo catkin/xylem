@@ -728,7 +728,6 @@ class MergingDict(Dict):
             "; value is merged with the config file entries"
 
 
-
 class Path(String):
 
     """Path that gets expanded and normalized."""
@@ -922,7 +921,8 @@ class ConfigDescription(object):
                                         t.command_line_parsing_help())
                         for t in typelist]
             typehelp = "\n\n\nThere are some special cases and short hand " \
-                "notation for parsing config arguments:\n\n* " + "\n\n* ".join(helplist)
+                "notation for parsing config arguments:\n\n* " + "\n\n* ". \
+                join(helplist)
         else:
             typehelp = ""
         subparser = parser.add_argument_group(
