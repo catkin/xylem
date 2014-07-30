@@ -2,6 +2,8 @@
 
 # Run in root of xylem repository
 
+# When result looks ok, run again with `-w` to actually update the files
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 python "$DIR/update_license_headers.py" \
     xylem test \
