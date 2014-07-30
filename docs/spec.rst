@@ -4,7 +4,7 @@
 xylem Rules files
 =================
 
-.. automodule:: xylem.specs.rules
+.. automodule:: xylem.specs.plugins.rules
 
 Notes
 ~~~~~
