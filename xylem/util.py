@@ -74,6 +74,13 @@ class temporary_directory(object):
             os.chdir(self.original_cwd)
 
 
+# TODO: change this to not update the message in PY2, but manually add
+# the `cause` attribute and create a custom exception printer that
+# prints is like in PY3. Normally format exceptions without stack trace
+# and in this custom manner with "CAUSED BY:". When in debug mode, or
+# when catching non XylemError, print with all stack traces like in
+# Python 3
+
 def raise_from(exc_type, exc_args, from_exc):
     """Raise new exception directly caused by ``from_exc``.
 

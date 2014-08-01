@@ -85,7 +85,10 @@ def build_config_description():
         command_line_metavar="name:version",
         help="""override os detection; if no ':' is present, the entire
                 string is interpreted as the os name and the version is
-                detected""")
+                detected; may also be of the form
+                `name:version&feature1,feature2` to concisely override
+                the list of os features (takes precedence over
+                `--os-features`).""")
     add("os_options/features", type=List(String),
         command_line_argument="os-features",
         command_line_metavar='"feature1,feature2,..."',

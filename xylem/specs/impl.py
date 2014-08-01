@@ -27,6 +27,9 @@ from ..plugin_utils import get_plugin_list
 SPEC_GROUP = 'xylem.specs'
 
 
+# TODO: docstrings for Spec class methods and module
+
+
 class Spec(six.with_metaclass(abc.ABCMeta, PluginBase)):
 
     """Spec plugin abstract base class.
