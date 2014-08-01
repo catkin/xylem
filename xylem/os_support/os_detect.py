@@ -17,9 +17,11 @@ Library for detecting the current OS, including detecting specific
 Linux distributions.
 """
 
-# NOTE: almost unchanged copy from `rospkg`, so disable pyflakes for now
-# flake8: noqa
+# NOTE: Almost unchanged copy from `rospkg`, so disable pyflakes for
+#       now. We want to eventually refactor the relevant code directly
+#       into the plugins and remove this file.
 
+# flake8: noqa
 
 from __future__ import unicode_literals
 
@@ -58,7 +60,7 @@ def read_issue(filename="/etc/issue"):
             return f.read().split()
     return None
 
-class OsNotDetected(XylemError):
+class OsNotDetected(object):
     """
     Exception to indicate failure to detect operating system.
     """
@@ -216,7 +218,8 @@ _osx_codename_map = {4: 'tiger',
                      6: 'snow',
                      7: 'lion',
                      8: 'mountain lion',
-                     9: 'mavericks'}
+                     9: 'mavericks',
+                    10: 'yosemite'}
 def _osx_codename(major, minor):
     if major != 10 or minor not in _osx_codename_map:
         raise OsNotDetected("unrecognized version: %s.%s"%(major, minor))

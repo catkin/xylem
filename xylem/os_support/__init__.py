@@ -13,8 +13,13 @@
 # limitations under the License.
 
 """Module to manage OS plugins and their use for OS detection."""
+
 from __future__ import unicode_literals
 
-from .impl import OS, OSSupport, UnsupportedOSError
+from .impl import OS
+from .impl import OSSupport
+from .impl import UnsupportedOSError
+from .impl import UnsupportedOSVersionError
 
-__all__ = ["OS", "OSSupport", "UnsupportedOSError"]
+__all__ = ["OS", "OSSupport", "UnsupportedOSError",
+           "UnsupportedOSVersionError"]

@@ -72,9 +72,9 @@ setup(
             'rules = xylem.specs.plugins.rules:definition',
         ],
         'xylem.os': [
-            'debian = xylem.os_support.plugins:Debian',
-            'ubuntu = xylem.os_support.plugins:Ubuntu',
-            'osx    = xylem.os_support.plugins:OSX',
+            'debian = xylem.os_support.plugins:debian_definition',
+            'ubuntu = xylem.os_support.plugins:ubuntu_definition',
+            'osx    = xylem.os_support.plugins:osx_definition',
         ],
         'xylem.installers': [
             'fake = xylem.installers.plugins.fake:definition',
