@@ -741,22 +741,22 @@ class ConfigItem(object):
 
     """Holds meta information about one entry in a config file.
 
-    :cvar str name: name of the config item; may contain (up to one) '/'
+    :ivar str name: name of the config item; may contain (up to one) '/'
         to specify grouping into a sub-dictionary, which is interpreted
         as 'group/subname'
-    :cvar str help: description of the config item for the argument
+    :ivar str help: description of the config item for the argument
         parser help
-    :cvar ConfigType type: type of config item describing how it is
+    :ivar ConfigType type: type of config item describing how it is
         parsed and merged
-    :cvar default: default value to be used if unset
-    :cvar bool command_line: if true, this config is exposed on the
+    :ivar default: default value to be used if unset
+    :ivar bool command_line: if true, this config is exposed on the
         command line; ``False`` by default, but specifying any other
         ``command_line_...`` arguments implies ``True`` for
         ``command_line``, unless explicitly set to ``False``.
-    :cvar command_line_argument: command line argument name (without
+    :ivar command_line_argument: command line argument name (without
         leading dashdash); if not explicitly supplied, this is derived
         from name by replacing all '_' and '/' with '-'
-    :cvar command_line_metavar: command line argument metavar; if not
+    :ivar command_line_metavar: command line argument metavar; if not
         explicitly supplied, the default for the type is used
     """
 
@@ -838,14 +838,14 @@ class ConfigDescription(object):
     constitute the keys of the group dicts.  When config dicts are
     merged, Group dicts are merged automatically key but key.
 
-    :cvar str namespace: path of the config file relative to the root
+    :ivar str namespace: path of the config file relative to the root
         config directory
-    :cvar list itemlist: list of all items in order (including items in
+    :ivar list itemlist: list of all items in order (including items in
         groups)
-    :cvar dict items: mapping names to items (including full
+    :ivar dict items: mapping names to items (including full
         names for items in groups)
-    :cvar dict groups: mapping group names to dict of subnames to items
-    :cvar dict command_line_arguments: mapping command line argument
+    :ivar dict groups: mapping group names to dict of subnames to items
+    :ivar dict command_line_arguments: mapping command line argument
         names to items
     """
 
