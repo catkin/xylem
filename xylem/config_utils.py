@@ -109,6 +109,7 @@ from .yaml_utils import dump_yaml
 from .log_utils import info
 from .log_utils import debug
 from .exception import XylemError
+from .exception import type_error_msg
 
 
 UNSET_YAML = None
@@ -201,16 +202,6 @@ def expand_input_path(value):
     if value is None:
         return None
     return os.path.abspath(os.path.expanduser(value))
-
-
-def type_error_msg(expected_type_name, value, what_for=None):
-    """Helper for exception error messages about wrong type."""
-    if what_for:
-        what_for = ' for {}'.format(what_for)
-    else:
-        what_for = ''
-    return "Expected type '{}'{}, but got '{}' of type '{}'.".format(
-        expected_type_name, what_for, value, type_name(value))
 
 
 def process_config_file_yaml(config):

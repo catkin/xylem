@@ -17,9 +17,21 @@
 
 from __future__ import unicode_literals
 
+from xylem.text_utils import type_name
+
 
 # TODO: Do we keep _all_ exceptions here or just the ones that are used
 # by multiple submodules?
+
+
+def type_error_msg(expected_type_name, value, what_for=None):
+    """Helper for exception error messages about wrong type."""
+    if what_for:
+        what_for = ' for {}'.format(what_for)
+    else:
+        what_for = ''
+    return "Expected type '{}'{}, but got '{}' of type '{}'.".format(
+        expected_type_name, what_for, value, type_name(value))
 
 
 class XylemError(Exception):
