@@ -30,8 +30,8 @@ from ..log_utils import debug
 from .impl import get_default_source_descriptions
 from .impl import get_source_descriptions
 from ..text_utils import to_str
-from ..specs.rules_dict import verify_installer_dict
-from ..specs.rules_dict import merge_installer_dict
+from xylem.sources.rules_dict import verify_installer_dict
+from xylem.sources.rules_dict import merge_installer_dict
 
 
 def _id_string(unique_id):

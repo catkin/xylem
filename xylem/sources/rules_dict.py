@@ -26,9 +26,9 @@ import re
 import numbers
 import six
 
-from ..util import raise_from
+from xylem.util import raise_from
 
-from ..text_utils import text_type
+from xylem.text_utils import text_type
 
 
 def lookup_rules(rules_dict,

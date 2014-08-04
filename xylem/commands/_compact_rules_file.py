@@ -17,7 +17,7 @@ from __future__ import unicode_literals
 import sys
 import os
 
-from ..specs.rules_dict import verify_rules_dict
+from xylem.sources.rules_dict import verify_rules_dict
 
 from ..specs.plugins.rules import expand_rules
 from ..specs.plugins.rules import compact_rules

@@ -22,8 +22,8 @@ from pprint import pprint
 
 from xylem.specs.plugins.rules import expand_rules
 
-from xylem.specs.rules_dict import merge_rules
-from xylem.specs.rules_dict import verify_rules_dict
+from xylem.sources.rules_dict import merge_rules
+from xylem.sources.rules_dict import verify_rules_dict
 
 from xylem.yaml_utils import load_yaml
 

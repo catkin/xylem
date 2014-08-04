@@ -248,9 +248,9 @@ Which expands to::
 
 from __future__ import unicode_literals
 
-from ..rules_dict import verify_rules_dict
-from ..rules_dict import lookup_rules
-from ..rules_dict import has_rule_for_os
+from xylem.sources.rules_dict import verify_rules_dict
+from xylem.sources.rules_dict import lookup_rules
+from xylem.sources.rules_dict import has_rule_for_os
 
 from ..impl import Spec
 
