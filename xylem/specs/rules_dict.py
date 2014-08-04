@@ -223,12 +223,6 @@ def verify_installer_rule(installer_rule):
             except ValueError as e:
                 raise_from(ValueError, "Expected 'depends' entry of installer "
                            "rule to be list of xylem keys.", e)
-        if key == "priority":
-            try:
-                verify_installer_priority(value)
-            except ValueError as e:
-                raise_from(ValueError, "Expected 'priority' entry of "
-                           "installer rule to be installer priority.", e)
 
 
 def verify_xylem_key(xylem_key):
@@ -291,16 +285,6 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
         raise ValueError(
             "{0} '{1}' has disallowed characters. Allowed are: alphanumeric, "
             "dash, dot, underscore.".format(kind, identifier))
-
-
-def verify_installer_priority(priority):
-    """Verify validity of an installer priority.
-
-    :raises ValueError: if ``priority`` is not a real number
-    """
-    if not isinstance(priority, numbers.Real):
-        raise ValueError("Expected installer priority to be a real number, "
-                         "but got '{0}'.".format(priority))
 
 
 # TODO: change order of merge to start with highest priority. Change
