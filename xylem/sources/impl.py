@@ -19,18 +19,18 @@ import os
 import pkg_resources
 import yaml
 
-from ..config import DEFAULT_SOURCES_DIR
-from ..config import DEFAULT_CACHE_DIR
-from ..config import get_config
-from ..log_utils import error
-from ..log_utils import is_verbose
-from ..log_utils import info
-from ..yaml_utils import load_yaml
-from ..util import raise_from
-from ..text_utils import to_str
-from ..specs import verify_spec_name
-from ..specs import get_spec_plugin_list
-from ..exception import XylemError
+from xylem.config import DEFAULT_SOURCES_DIR
+from xylem.config import DEFAULT_CACHE_DIR
+from xylem.config import get_config
+from xylem.log_utils import error
+from xylem.log_utils import is_verbose
+from xylem.log_utils import info
+from xylem.yaml_utils import load_yaml
+from xylem.util import raise_from
+from xylem.text_utils import to_str
+from xylem.specs import verify_spec_name
+from xylem.specs import get_spec_plugin_list
+from xylem.exception import XylemError
 
 
 SOURCES_CACHE_PATH = "sources"

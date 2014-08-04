@@ -18,10 +18,10 @@ from __future__ import unicode_literals
 import abc
 import six
 
-from ..text_utils import to_str
-from ..text_utils import text_type
-from ..plugin_utils import PluginBase
-from ..plugin_utils import get_plugin_list
+from xylem.text_utils import to_str
+from xylem.text_utils import text_type
+from xylem.plugin_utils import PluginBase
+from xylem.plugin_utils import get_plugin_list
 
 
 SPEC_GROUP = 'xylem.specs'
@@ -38,8 +38,8 @@ class Spec(six.with_metaclass(abc.ABCMeta, PluginBase)):
     their needed parameters passed on every invocation.
 
     The `data` and `arguments` (e.g. url for the 'rules' spec plugin)
-    are managed by the `..sources.database.RulesSource` class in the
-    `..sources.database.RulesDatabase`.
+    are managed by the `xylem.sources.database.RulesSource` class in the
+    `xylem.sources.database.RulesDatabase`.
     """
 
     @abc.abstractproperty

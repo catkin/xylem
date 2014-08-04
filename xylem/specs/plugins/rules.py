@@ -252,15 +252,15 @@ from xylem.sources.rules_dict import verify_rules_dict
 from xylem.sources.rules_dict import lookup_rules
 from xylem.sources.rules_dict import has_rule_for_os
 
-from ..impl import Spec
+from xylem.specs import Spec
 
-from ...yaml_utils import load_yaml
-from ...yaml_utils import dump_yaml
-from ...text_utils import text_type
-from ...text_utils import to_str
-from ...load_url import load_url
-from ...log_utils import error
-from ...exception import XylemError
+from xylem.yaml_utils import load_yaml
+from xylem.yaml_utils import dump_yaml
+from xylem.text_utils import text_type
+from xylem.text_utils import to_str
+from xylem.load_url import load_url
+from xylem.log_utils import error
+from xylem.exception import XylemError
 
 
 DESCRIPTION = """\

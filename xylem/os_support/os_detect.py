@@ -31,7 +31,7 @@ import platform
 import locale
 import codecs
 
-from ..exception import XylemError
+from xylem.exception import XylemError
 
 
 def _read_stdout(cmd):

@@ -23,9 +23,9 @@ from __future__ import unicode_literals
 
 import subprocess
 
-from ..package_manager_installer import PackageManagerInstaller
-from ...util import read_stdout
-from ...exception import InstallerNotAvailable
+from xylem.installers import PackageManagerInstaller
+from xylem.util import read_stdout
+from xylem.exception import InstallerNotAvailable
 
 DESCRIPTION = """\
 This is a installer plugin for the pip python package manager.

@@ -21,15 +21,15 @@ import datetime
 
 import six.moves.cPickle as pickle
 
-from .. import __version__
-from ..log_utils import error
-from ..log_utils import warning
-from ..log_utils import info
-from ..log_utils import is_verbose
-from ..log_utils import debug
+from xylem import __version__
+from xylem.log_utils import error
+from xylem.log_utils import warning
+from xylem.log_utils import info
+from xylem.log_utils import is_verbose
+from xylem.log_utils import debug
 from .impl import get_default_source_descriptions
 from .impl import get_source_descriptions
-from ..text_utils import to_str
+from xylem.text_utils import to_str
 from xylem.sources.rules_dict import verify_installer_dict
 from xylem.sources.rules_dict import merge_installer_dict
 

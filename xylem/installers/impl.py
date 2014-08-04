@@ -18,11 +18,6 @@ import pkg_resources
 
 from six.moves import map
 
-from ..os_support import OSSupport
-from ..exception import InvalidPluginError
-from ..log_utils import info, warning, is_verbose
-from ..text_utils import text_type
-from ..config import get_config
 
 
 INSTALLER_GROUP = "xylem.installers"
@@ -30,6 +25,13 @@ INSTALLER_GROUP = "xylem.installers"
 
 # TODO: split out verify installer plugin function
 
+from xylem.os_support import OSSupport
+from xylem.exception import InvalidPluginError
+from xylem.log_utils import info
+from xylem.log_utils import warning
+from xylem.log_utils import is_verbose
+from xylem.text_utils import text_type
+from xylem.config import get_config
 
 # TODO: fix docstrings
 

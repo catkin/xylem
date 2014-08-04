@@ -18,16 +18,16 @@ import sys
 
 from six.moves import map
 
-from ..log_utils import info
+from xylem.log_utils import info
 
-from ..resolve import resolve
-from ..installers import InstallerContext
+from xylem.resolve import resolve
+from xylem.installers import InstallerContext
 
-from ..text_utils import to_str
+from xylem.text_utils import to_str
 
-from ..terminal_color import ansi
+from xylem.terminal_color import ansi
 
-from ..config import get_config
+from xylem.config import get_config
 
 from .main import command_handle_args
 

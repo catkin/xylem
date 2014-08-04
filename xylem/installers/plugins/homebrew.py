@@ -21,7 +21,7 @@
 
 from __future__ import unicode_literals
 
-from ..package_manager_installer import PackageManagerInstaller
+from xylem.installers import PackageManagerInstaller
 
 DESCRIPTION = """\
 TODO: Describe and implement this

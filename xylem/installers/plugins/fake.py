@@ -23,7 +23,7 @@
 from __future__ import unicode_literals
 import os.path
 
-from ..package_manager_installer import PackageManagerInstaller
+from xylem.installers import PackageManagerInstaller
 from six.moves import filter
 
 DESCRIPTION = """\

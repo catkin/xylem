@@ -14,5 +14,6 @@
 
 from __future__ import unicode_literals
 from .impl import InstallerContext, Installer
+from .package_manager_installer import PackageManagerInstaller
 
-__all__ = ["InstallerContext", "Installer"]
+__all__ = ["InstallerContext", "Installer", "PackageManagerInstaller"]

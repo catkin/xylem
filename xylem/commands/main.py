@@ -18,19 +18,19 @@ import argparse
 import sys
 import pkg_resources
 
-from ..log_utils import error
-from ..log_utils import info
-from ..log_utils import ansi
+from xylem.log_utils import error
+from xylem.log_utils import info
+from xylem.log_utils import ansi
 
-from ..arguments import add_global_arguments
-from ..arguments import handle_global_arguments
+from xylem.arguments import add_global_arguments
+from xylem.arguments import handle_global_arguments
 
-from ..config import get_config_description
-from ..config import add_config_arguments
-from ..config import handle_config_arguments
-from ..config_utils import ConfigHelpFormatter
+from xylem.config import get_config_description
+from xylem.config import add_config_arguments
+from xylem.config import handle_config_arguments
+from xylem.config_utils import ConfigHelpFormatter
 
-from ..text_utils import type_name
+from xylem.text_utils import type_name
 
 
 XYLEM_CMDS_GROUP = 'xylem.commands'
