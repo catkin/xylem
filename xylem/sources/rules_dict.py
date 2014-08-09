@@ -23,7 +23,6 @@
 from __future__ import unicode_literals
 
 import re
-import numbers
 import six
 
 from xylem.util import raise_from
