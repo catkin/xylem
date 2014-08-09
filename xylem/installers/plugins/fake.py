@@ -20,11 +20,13 @@
     by the according entry point
 """
 
+# TODO: rename to `fake apt`
+
 from __future__ import unicode_literals
+
 import os.path
 
-from xylem.installers import PackageManagerInstaller
-from six.moves import filter
+from xylem.installers.package_manager_installer import PackageManagerInstaller
 
 DESCRIPTION = """\
 This is a fake installer plugin for testing.
@@ -49,38 +51,51 @@ INSTALL_LOCATION = 'fake-installer'
 files. Can be relative (to the cwd of xylem invocation) or absolute."""
 
 
-def get_installer_filename(resolved_item):
+def get_install_dir():
+    return os.path.abspath(os.path.expanduser(INSTALL_LOCATION))
+
+
+def get_installer_filename(package):
     """Return the location of the file indicating installation of item."""
-    return os.path.abspath(os.path.join(INSTALL_LOCATION, resolved_item))
-
-
-def detect_fn(resolved):
-    """Return list of subset of  installed packages."""
-    return filter(lambda pkg: os.path.exists(get_installer_filename(pkg)),
-                  resolved)
+    return os.path.abspath(os.path.join(get_install_dir(), package))
 
 
 class FakeInstaller(PackageManagerInstaller):
 
     """FakeInstaller class for testing.
 
-    The opaque installer items are simply strings (package names).
-
     Packages are installed by touching files in `INSTALL_LOCATION`. The
     folder must exist, else installation fails and all packages are
     assumed uninstalled.
     """
 
-    @staticmethod
-    def get_name():
+    def __init__(self):
+        super(FakeInstaller, self).__init__("touch")
+        self.options_description.items["as_root"].default = False
+
+    @property
+    def name(self):
         return FAKE_INSTALLER
 
-    def __init__(self):
-        super(FakeInstaller, self).__init__(detect_fn, supports_depends=True)
-
-    def get_install_command(self, resolved, interactive=True, reinstall=False):
-        return [["touch", self.get_installer_filename(item)] for
+    def get_install_commands_no_root(self,
+                                     resolved,
+                                     interactive=True,
+                                     reinstall=False):
+        return [["touch", self.get_installer_filename(item.package)] for
                 item in resolved]
+
+    def filter_uninstalled(self, resolved):
+        return [r for r in resolved
+                if not os.path.exists(get_installer_filename(r.package))]
+
+    def is_package_manager_installed(self):
+        """Fake installer is installer if that folder is an existing dir."""
+        return os.path.isdir(get_install_dir())
+
+    def install_package_manager(self, os_tuple):
+        """Installing fake installer means creating that folder."""
+        if not os.path.exists(get_install_dir()):
+            os.makedirs(get_install_dir())
 
 
 # This definition the installer to the plugin loader

@@ -26,8 +26,8 @@ def resolve(xylem_keys, all_keys=False, config=None, sources_context=None,
             installer_context=None):
     if config is None:
         config = get_config()
-    sources_context = sources_context or SourcesContext(config)
-    ic = installer_context or InstallerContext(config)
+    sources_context = sources_context or SourcesContext(config=config)
+    ic = installer_context or InstallerContext(config=config)
 
     # xylem_keys can be one key or list of keys, return value accordingly
     database = RulesDatabase(sources_context)
@@ -50,21 +50,17 @@ def resolve(xylem_keys, all_keys=False, config=None, sources_context=None,
             raise LookupError("Could not find rule for xylem key '{0}' on "
                               "'{1}'.".format(key, ic.get_os_string()))
         rules = []
-        for installer_name, rule in installer_dict.items():
-            priority = ic.get_installer_priority(installer_name)
-            if priority is None:
-                debug("Ignoring installer '{0}' for resolution of '{1}' "
-                      "because it is not registered for '{2}'".
-                      format(installer_name, key, ic.get_os_string()))
-                continue
-            if 'priority' in rule:
-                priority = rule['priority']
+        for installer in ic.get_installers():
+            if installer.name in installer_dict:
+                resolutions = installer.resolve(installer_dict[installer.name])
+                rules.append((installer.name, resolutions))
 
-            installer = ic.get_installer(installer_name)
-            resolutions = installer.resolve(rule)
+        # TODO: check installers in installer dict that are not configured
+        # debug("Ignoring installer '{0}' for resolution of '{1}' "
+        #      "because it is not registered for '{2}'".
+        #       format(installer_name, key, ic.get_os_string()))
 
             # TODO: use installer instead of installer_name here?
-            rules.append((priority, installer_name, resolutions))
         if not rules:
             # This means we have rules, but non for registered
             # installers, ignore this key unless it is in the requested
@@ -85,7 +81,6 @@ def resolve(xylem_keys, all_keys=False, config=None, sources_context=None,
                              ", ".join(ic.get_installer_names()),
                              ", ".join(installer_dict.keys())))
         else:
-            rules.sort(reverse=True)
             result.append((key, rules))
     if not list_argument:
         assert(len(result) == 1)

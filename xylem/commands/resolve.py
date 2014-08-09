@@ -41,13 +41,11 @@ priorities.
 def prepare_arguments(parser):
     add = parser.add_argument
     add('xylem_key', nargs="*")
+    add('--all', action="store_true",
+        help="Resolve all keys with resolution for this OS.")
     add('--show-trumped', action="store_true",
         help="Show all possible resolutions for key, also for "
              "trumped installers.")
-    add('--all', action="store_true",
-        help="Resolve all keys with resolution for this OS.")
-    add('--show-priority', action="store_true",
-        help="Show priority of installer.")
     add('--show-default-installer', action="store_true",
         help="Show installer even if it is the default installer.")
     # TODO: add 'show-depends' option
@@ -63,7 +61,7 @@ def main(args=None):
     args = command_handle_args(args, definition)
     config = get_config()
     try:
-        ic = InstallerContext(config)
+        ic = InstallerContext(config=config)
         default_installer_name = ic.get_default_installer_name()
         results = resolve(args.xylem_key, all_keys=args.all, config=config,
                           installer_context=ic)
@@ -74,15 +72,10 @@ def main(args=None):
                 # TODO: Error if single resolution is requested, but
                 # highest priority occurs multuple times (macports vs
                 # homebrew)
-            for priority, installer_name, resolutions in result:
+            for installer_name, resolutions in result:
                 if installer_name != default_installer_name or \
-                        args.show_default_installer or \
-                        args.show_priority:
-                    if args.show_priority:
-                        installer_string = "{0} ({1}) : ".format(
-                            installer_name, priority)
-                    else:
-                        installer_string = "{0} : ".format(installer_name)
+                        args.show_default_installer:
+                    installer_string = "{0} : ".format(installer_name)
                 else:
                     installer_string = ""
                 resolution_string = ', '.join(map(to_str, resolutions))

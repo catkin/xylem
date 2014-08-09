@@ -13,7 +13,11 @@
 # limitations under the License.
 
 from __future__ import unicode_literals
-from .impl import InstallerContext, Installer
+from .impl import InstallerContext
+from .impl import Installer
+from .impl import InstallerPrerequisiteError
+from .installer_base import InstallerBase
 from .package_manager_installer import PackageManagerInstaller
 
-__all__ = ["InstallerContext", "Installer", "PackageManagerInstaller"]
+__all__ = ["InstallerContext", "Installer", "InstallerPrerequisiteError",
+           "InstallerBase", "PackageManagerInstaller"]

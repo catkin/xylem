@@ -44,7 +44,7 @@ def main(args=None):
     config = get_config()
     try:
         # TODO: handle multiple keys in one go
-        ic = InstallerContext(config)
+        ic = InstallerContext(config=config)
         for key in args.xylem_key:
             result = lookup(key, compact=True, config=config,
                             installer_context=ic)
