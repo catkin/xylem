@@ -27,7 +27,7 @@ from xylem.text_utils import type_name
 def type_error_msg(expected_type_name, value, what_for=None):
     """Helper for exception error messages about wrong type."""
     if what_for:
-        what_for = ' for {}'.format(what_for)
+        what_for = ' ' + what_for
     else:
         what_for = ''
     return "Expected type '{}'{}, but got '{}' of type '{}'.".format(
