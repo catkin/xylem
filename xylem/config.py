@@ -95,8 +95,8 @@ def build_config_description():
         help="""OS features to be used. The list of possible values and
                 the default choice is defined by the os plugin for the
                 selected OS.""")
-    add("os_options/installers", type=List(String),
-        command_line_argument="core-installers",
+    add("core_installers", type=List(String),
+        command_line=True,
         command_line_metavar='"inst1,inst2,..."',
         help="""core installers to be used. The default list is defined
                 by the OS plugin for the selected OS. Additional
