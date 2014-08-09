@@ -161,6 +161,25 @@ def create_temporary_directory(prefix_dir=None):
 
 
 def read_stdout(cmd):
+    """Execute a command and return stdout.
+
+    :param cmd: executable and arguments
+    :type cmd: `list` of `str`
+    """
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     std_out, std_err = p.communicate()
     return to_str(std_out)
+
+
+def is_program_installed(executable_name):
+    """Test whether executable is found.
+
+    :param str executable_name: name of the program
+    """
+    try:
+        subprocess.Popen([executable_name],
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE).communicate()
+        return True
+    except OSError:
+        return False
