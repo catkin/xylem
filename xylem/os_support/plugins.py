@@ -90,8 +90,7 @@ class _OSDetecorBase(OSBase):
                 version = mapping.get(version, None)
         return tuples
 
-    @property
-    def core_installers(self):
+    def get_core_installers(self, version, options):
         return self._core_installers
 
     @property

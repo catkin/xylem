@@ -117,6 +117,7 @@ class OS(six.with_metaclass(abc.ABCMeta, PluginBase)):
         """
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def get_version(self):
         """Get version of this operating system.
 
@@ -128,6 +129,7 @@ class OS(six.with_metaclass(abc.ABCMeta, PluginBase)):
         """
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def get_tuple(self):
         """Get (name,version) tuple.
 
@@ -139,6 +141,7 @@ class OS(six.with_metaclass(abc.ABCMeta, PluginBase)):
         """
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def get_all_tuples(self, version):
         """Get a list of decreasingly specific tuples, given a current version.
 
@@ -157,9 +160,9 @@ class OS(six.with_metaclass(abc.ABCMeta, PluginBase)):
         """
         raise NotImplementedError()
 
-    @abc.abstractproperty
-    def core_installers(self):
-        """List of core installers.
+    @abc.abstractmethod
+    def get_core_installers(self, version, options):
+        """List of core installers given os version and options.
 
         :rtype: `list` of `str`
         """
@@ -194,10 +197,27 @@ class OS(six.with_metaclass(abc.ABCMeta, PluginBase)):
         """
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def is_os(self):
         """Return true if the current OS matches the one this object describes.
 
         :rtype: `bool`
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def set_options(self, options):
+        """Set OS options such as active *features*.
+
+        :param dict options: OS options dictionary
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_options(self):
+        """Get OS options susch as active *features*.
+
+        :return dict: OS options dictionary
         """
         raise NotImplementedError()
 
@@ -233,6 +253,16 @@ class OSBase(OS):
     def version_less_fn(self):
         return version_order_from_list(self.known_versions)
 
+    def set_options(self, options):
+        self._options = options
+
+    def get_options(self):
+        return self._options
+
+    # TODO: do handling of `features` here; maybe introduce a
+    # ConfigDescription that handles verifying the structure of options
+    # (and subclasses can extend the description)
+    # TODO: make this more like with Installer (options property)
 
 class OSOverride(OS):
 
@@ -258,7 +288,7 @@ class OSOverride(OS):
         """
         if not isinstance(os, OS):
             raise UnsupportedOSError(
-                type_error_msg("OS", os, what_for="os override"))
+                type_error_msg("OS", os, what_for="as os override"))
         self.os = os
         if version is None:
             self.version = os.get_version()
@@ -291,10 +321,9 @@ class OSOverride(OS):
         """Defer to delegate."""
         return self.os.get_all_tuples(version)
 
-    @property
-    def core_installers(self):
+    def get_core_installers(self, version, options):
         """Defer to delegate."""
-        return self.os.core_installers
+        return self.os.get_core_installers(version, options)
 
     @property
     def default_installer(self):
@@ -314,6 +343,14 @@ class OSOverride(OS):
     def is_os(self):
         """Detection for OSOverride is always `True`."""
         return True
+
+    def set_options(self, options):
+        """Defer to delegate."""
+        return self.os.set_options(options)
+
+    def get_options(self):
+        """Defer to delegate."""
+        return self.os.get_options()
 
 
 class OSSupport(object):

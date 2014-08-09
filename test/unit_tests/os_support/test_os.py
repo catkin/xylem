@@ -124,4 +124,4 @@ class OSSupportTestCase(unittest.TestCase):
         assert(os.get_version() == "precise")
         assert(os.get_all_tuples("precise") == [("ubuntu", "precise"), ("debian", None)])
         assert(os.default_installer == "apt")
-        assert(os.core_installers == ["apt"])
+        assert(os.get_core_installers("precise", {}) == ["apt"])
