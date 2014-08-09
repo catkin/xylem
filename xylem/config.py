@@ -142,6 +142,11 @@ def get_config_description():
     return _config_description
 
 
+def get_default_config():
+    """Create a fresh default config object."""
+    return config_from_defaults(get_config_description())
+
+
 def get_config():
     """Access the global config dict as built after command line parsing.
 
