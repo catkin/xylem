@@ -1068,6 +1068,19 @@ def merge_configs(description, top, *more_configs):
     return result
 
 
+def merge_with_defaults(description, config):
+    """Fill in unset entries in ``config`` with default values.
+
+    :param description: description of the config dicts; the type
+        information of each entry is used for merging
+    :type description: `ConfigDescription`
+    :param dict top: config dict with structure defined by
+        ``description``
+    """
+    default_config = config_from_defaults(description)
+    return merge_configs(description, config, default_config)
+
+
 def load_config(args, description, tool_name):
     """Load configuration from config files and command line arguments.
 
@@ -1174,14 +1187,17 @@ def config_from_file(filename, description):
     return config_from_parsed_yaml(contents, description)
 
 
-def config_from_parsed_yaml(data, description):
+def config_from_parsed_yaml(data, description, use_defaults=False):
     """Utility for creating config dict from parsed YAML file.
 
     :param dict data: dictionary (nested yaml structure) as read from
         file (see :func:`load_config_file_yaml`)
     :param description: config dict is created according to this
         description; any missing keys are created with 'unset' values
-        and unknown entries are ignored
+        (unless ``use_defaults`` is ``True``) and unknown entries are
+        ignored
+    :param use_defaults: if ``True``, replace unset entries with default
+        values form ``description``
     :type description: `ConfigDescription`
     :returns: config dict with structure as defined by ``description``
     :raises ConfigValueError: if parsing of files fails
@@ -1201,4 +1217,7 @@ def config_from_parsed_yaml(data, description):
         # only handle non-group items
         if "/" not in name:
             process_item(config, data, name, item)
-    return config
+    if use_defaults:
+        return merge_with_defaults(description, config)
+    else:
+        return config
