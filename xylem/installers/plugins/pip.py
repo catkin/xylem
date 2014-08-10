@@ -47,6 +47,9 @@ class PipInstaller(PackageManagerInstaller):
     def name(self):
         return PIP_INSTALLER
 
+    def use_as_additional_installer(self, os_tuple):
+        return True
+
     def get_install_commands_no_root(self,
                                      resolved,
                                      interactive=True,
