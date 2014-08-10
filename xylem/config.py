@@ -29,26 +29,26 @@ import os
 
 from six.moves import map
 
-from .config_utils import DEFAULT_PREFIX
-from .config_utils import ConfigDescription
-from .config_utils import String
-from .config_utils import List
-from .config_utils import Boolean
-from .config_utils import Dict
-from .config_utils import MergingDict
-from .config_utils import Any
-from .config_utils import Path
-from .config_utils import load_config
-from .config_utils import config_from_defaults
-from .config_utils import system_config_dir
-from .config_utils import system_cache_dir
-from .config_utils import user_cache_dir
-from .config_utils import user_config_dir
-from .config_utils import add_global_config_arguments as \
+from xylem.config_utils import DEFAULT_PREFIX
+from xylem.config_utils import ConfigDescription
+from xylem.config_utils import String
+from xylem.config_utils import List
+from xylem.config_utils import Boolean
+from xylem.config_utils import Dict
+from xylem.config_utils import MergingDict
+from xylem.config_utils import Any
+from xylem.config_utils import Path
+from xylem.config_utils import load_config
+from xylem.config_utils import config_from_defaults
+from xylem.config_utils import system_config_dir
+from xylem.config_utils import system_cache_dir
+from xylem.config_utils import user_cache_dir
+from xylem.config_utils import user_config_dir
+from xylem.config_utils import add_global_config_arguments as \
     _add_global_config_arguments
-from .config_utils import handle_global_config_arguments as \
+from xylem.config_utils import handle_global_config_arguments as \
     _handle_global_config_arguments
-from .config_utils import handle_global_config_arguments_post as \
+from xylem.config_utils import handle_global_config_arguments_post as \
     _handle_global_config_arguments_post
 
 from .text_utils import text_type
