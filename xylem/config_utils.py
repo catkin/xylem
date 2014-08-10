@@ -336,23 +336,24 @@ class ConfigDict(dict):
         self.__dict__ = self
 
 
-def ceorce_config_dict(config):
+def ceorce_config_dict(config, copy=False):
     """Helper to convert a regular dictionary to a config dict.
 
-    Calls ``ceorce_config_dict`` recursively on dict type values. Does
-    not copy or modify if ``config`` is already of type ``ConfigDict``.
+    Calls ``ceorce_config_dict`` recursively on dict type values.
 
     The resulting config dict may share structure with the input.
 
     :type config: `dict` or `ConfigDict`
+    :param bool copy: if ``True``, copies to new dict even if
+        ``config`` is already of type ``ConfigDict``
     """
-    if isinstance(config, ConfigDict):
-        return config
     if not isinstance(config, dict):
+        return config
+    if not copy and isinstance(config, ConfigDict):
         return config
     result = ConfigDict()
     for k, v in six.iteritems(config):
-        result[k] = ceorce_config_dict(v)
+        result[k] = ceorce_config_dict(v, copy=copy)
 
 
 def copy_to_dict(config):
