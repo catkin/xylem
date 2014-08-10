@@ -47,6 +47,14 @@ xylem.exception module
     :undoc-members:
     :show-inheritance:
 
+xylem.install module
+--------------------
+
+.. automodule:: xylem.install
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 xylem.load_url module
 ---------------------
 

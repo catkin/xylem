@@ -21,10 +21,6 @@ import six
 from .impl import Installer
 from .impl import InvalidRuleError
 
-from xylem.exception import type_error_msg
-
-from xylem.text_utils import text_type
-
 from xylem.exception import raise_from
 
 from xylem.log_utils import warning
@@ -32,8 +28,50 @@ from xylem.log_utils import warning
 from xylem.config_utils import ConfigDescription
 from xylem.config_utils import ConfigValueError
 from xylem.config_utils import Boolean
+from xylem.config_utils import List
+from xylem.config_utils import String
 from xylem.config_utils import config_from_parsed_yaml
 from xylem.config_utils import config_from_defaults
+
+
+class Resolution(dict):
+
+    """Resolution object as a dictionary with attribute access.
+
+    Corresponds to a single package to be installed by a package
+    manager. By default only key `package` is assumed. Equality is the
+    same as dictionary equality. Set the ``_to_list_keys`` instance
+    variable to define how the resolution is printed.
+
+    These objects are hashable, which is used to remove duplicates of a
+    list of resolutions. This means that once created by `resolve`, they
+    should be considered immutable.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(Resolution, self).__init__(*args, **kwargs)
+        self.__dict__ = self  # this allows attribute access: `self.package`
+        self._to_list_keys = ["package"]
+
+    def __eq__(self, other):
+        # use standard dict equality
+        return super(Resolution, self).__eq__(other)
+
+    def __hash__(self):
+        return hash((type(self), tuple(self.items())))
+
+    def __str__(self):
+        return ' '.join(self.to_list())
+
+    def to_list(self):
+        result = []
+        for key in self._to_list_keys:
+            value = self[key]
+            if isinstance(value, list):
+                result.extend(value)
+            else:
+                result.append(value)
+        return result
 
 
 def is_root():
@@ -53,18 +91,27 @@ class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
 
     Deriving installers must call this class' :meth:`__init__`.
 
-    :ivar Configdescription options_description: description of
-        structure and types of :ivar:`options` property. Deriving
-        installers may modify it in their `__init__`, but not after
-        `options` has been accessed for the first time. Initialization
-        of :ivar:`options` with default values from this description is
+    :ivar ConfigDescription options_description: description of
+        structure and types of ``options`` property. Deriving installers
+        may modify it in their :meth:`__init__`, but not after
+        ``options`` has been accessed for the first time. Initialization
+        of ``options`` with default values from this description is
         delayed until first access.
+    :ivar options: the options property can be set as a dictionary and
+        is parsed according to ``options_description`` with default
+        values filled in; it is always returned as a
+        `xylem.config_utils.ConfigDict` instance.
     """
 
     def __init__(self):
         self.options_description = ConfigDescription("options")
         self.options_description.add("as_root", type=Boolean, default=True)
         self._options = None  # delay loading default config to first access
+        self.installer_rule_description = ConfigDescription("rule")
+        self.installer_rule_description.add(
+            "packages", type=List(String), default=[])
+        self.installer_rule_description.add(
+            "depends", type=List(String), default=[])
 
     @property
     def options(self):
@@ -90,26 +137,40 @@ class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
     def use_as_additional_installer(self, os_tuple):
         return False
 
+    def _parse_installer_rule(self, installer_rule):
+        """Helper to parse installer rule with the installer_description."""
+        try:
+            parsed_rule = config_from_parsed_yaml(
+                installer_rule, self.installer_rule_description,
+                use_defaults=True)
+        except ConfigValueError as e:
+            raise_from(InvalidRuleError, "invalid installer rule `{}` for "
+                       "installer '{}'".format(installer_rule, self.name), e)
+        unused_keys = set(installer_rule.keys()) - set(parsed_rule.keys())
+        if unused_keys:
+            warning("ignoring the following unknown keys '{}' while parsing "
+                    "installer rule with packages '{}' for installer '{}'".
+                    format(parsed_rule.packages, self.name,
+                           ", ".join(unused_keys)))
+        return parsed_rule
+
     def get_depends(self, installer_rule):
-        if not isinstance(installer_rule, dict):
-            raise InvalidRuleError(type_error_msg(
-                "dict", installer_rule, what_for="installer rule for "
-                "installer '{}'".format(self.name)))
-        if "depends" in installer_rule:
-            if not isinstance(installer_rule["depends"], list):
-                raise InvalidRuleError(type_error_msg(
-                    "list", installer_rule["depends"], what_for="`depends` "
-                    "in installer rule `{}` for installer '{}'".
-                    format(installer_rule, self.name)))
-            for d in installer_rule["depends"]:
-                if isinstance(d, text_type):
-                    raise InvalidRuleError(type_error_msg(
-                        "string", d, what_for="dependency in `depends` of "
-                        "installer rule `{}` for installer '{}'".
-                        format(installer_rule, self.name)))
-            return installer_rule["depends"][:]
-        else:
-            return []
+        parsed_rule = self._parse_installer_rule(installer_rule)
+        return parsed_rule.depends
+
+    def resolve(self, installer_rule):
+        parsed_rule = self._parse_installer_rule(installer_rule)
+        # each package gets its own resolution object
+        packages = parsed_rule.pop("packages")
+        # dependencies are not included in the resolution objects
+        del parsed_rule["depends"]
+        result = []
+        for p in packages:
+            # copy all other entries, e.g. options, to each resolution object
+            resolution = Resolution(parsed_rule)
+            resolution["package"] = p
+            result.append(p)
+        return result
 
     def is_installed(self, resolved):
         if not isinstance(resolved, list):

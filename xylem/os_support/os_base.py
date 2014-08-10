@@ -57,12 +57,16 @@ class OSBase(OS):
     This class may be used by OS plugins as a base class instead of
     `OS`. Deriving installers must call this class' :meth:`__init__`.
 
-    :ivar Configdescription options_description: description of
-        structure and types of :ivar:`options` property. Deriving
-        os plugins may modify it in their `__init__`, but not after
-        `options` has been accessed for the first time. Initialization
-        of :ivar:`options` with default values from this description is
+    :ivar ConfigDescription options_description: description of
+        structure and types of ``options`` property. Deriving os plugins
+        may modify it in their :meth:`__init__`, but not after
+        ``options`` has been accessed for the first time. Initialization
+        of ``options`` with default values from this description is
         delayed until first access.
+    :ivar options: the options property can be set as a dictionary and
+        is parsed according to ``options_description`` with default
+        values filled in; it is always returned as a
+        `xylem.config_utils.ConfigDict` instance.
     """
 
     def __init__(self):

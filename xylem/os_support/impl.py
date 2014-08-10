@@ -102,7 +102,7 @@ class OS(PluginBase):
     def all_names(self):
         """Return list of decreasingly specific OS names.
 
-        The first element is equal to :ivar:`name`.
+        The first element is equal to `name`.
 
         :rtype: `list` of `str`
         """
@@ -137,10 +137,10 @@ class OS(PluginBase):
         """Get a list of decreasingly specific tuples, given a current version.
 
         The first elements of the tuples correspond to the output of
-        :ivar:`all_names`; versions of any 'parent' OS may also be
-        ``None``, indicating that no matching version can be determined
-        give the current derivative OS version. The first element of the
-        list is equal to  :meth:`get_tuple`.
+        `all_names`; versions of any 'parent' OS may also be ``None``,
+        indicating that no matching version can be determined give the
+        current derivative OS version. The first element of the list is
+        equal to :meth:`get_tuple`.
 
         This does not run version detection, i.e. it works with an
         override OS version running on a different OS.
@@ -296,8 +296,7 @@ class OSSupport(object):
     override option.
 
     In order to set up, either call :meth:`detect_os` or
-    :meth:`override_os` and subsequently access it with
-    :ivar:`current_os`
+    :meth:`override_os` and subsequently access it with `current_os`
     """
 
     def __init__(self, disabled_os_plugins=[]):
