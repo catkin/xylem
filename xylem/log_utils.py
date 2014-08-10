@@ -124,5 +124,5 @@ def error(msg, file=None, exit=False, *args, **kwargs):
 
 def info_v(*args, **kwargs):
     """Like :func:`info`, but only if :func:`is_verbose` is `True`."""
-    if is_verbose:
+    if is_verbose():
         info(*args, **kwargs)
