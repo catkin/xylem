@@ -26,9 +26,10 @@ from .os_detect import OsDetect
 from .os_detect import OS_DEBIAN
 from .os_detect import OS_OSX
 from .os_detect import OS_UBUNTU
+from .os_detect import OS_XUBUNTU
 
 # TODO: refactor the relevant detection code from `os_detect` to be
-# directly contained in the os plugins
+#       directly contained in the os plugins and remove `os_detect`
 
 
 class _OSDetecorBase(OSBase):
@@ -42,17 +43,11 @@ class _OSDetecorBase(OSBase):
 
     Derived classes should fill in the following member variables:
 
-    :ivar list(str) names: list of names
-    :ivar detect: Detector object supporting ``is_os()``,
-        ``get_version()`` and ``get_codename()``
-    :ivar bool use_codename: boolean to decide if numbered version or
-        codename should be used
-    :ivar dict installer_priorities: dict of installer_name => priority
-    :ivar str default_installer_name: name of the desired default
-        installer
+    TODO: documentation of these members
     """
 
     def __init__(self):
+        super(_OSDetecorBase, self).__init__()
         self._names = []
         self._version_mappings = []
         self._known_versions = []
@@ -60,6 +55,10 @@ class _OSDetecorBase(OSBase):
         self._use_codename = False
         self._core_installers = []
         self._default_installer = None
+
+    def _prepend_name(self, name, version_mapping=None):
+        self._names.insert(0, name)
+        self._version_mappings.insert(0, version_mapping)
 
     @property
     def all_names(self):
@@ -84,10 +83,13 @@ class _OSDetecorBase(OSBase):
         tuples = []
         for name, mapping in zip(self.all_names, self._version_mappings):
             tuples.append((name, version))
-            if mapping is None or version is None:
-                version = None
-            else:
-                version = mapping.get(version, None)
+            if version is not None:
+                if mapping is None:
+                    version = None
+                elif isinstance(mapping, dict):
+                    version = mapping.get(version, None)
+                else:
+                    version = mapping(version)
         return tuples
 
     def get_core_installers(self, version, options):
@@ -112,8 +114,7 @@ class Debian(_OSDetecorBase):
 
     def __init__(self):
         super(Debian, self).__init__()
-        self._names = [OS_DEBIAN]
-        self._version_mappings = [None]
+        self._prepend_name(OS_DEBIAN)
         self._versions = ["etch",
                           "lenny",
                           "squeeze",
@@ -136,8 +137,7 @@ class Ubuntu(Debian):
 
     def __init__(self):
         super(Ubuntu, self).__init__()
-        self._names.insert(0, OS_UBUNTU)
-        self._version_mappings.insert(0, None)
+        self._prepend_name(OS_UBUNTU)
         self._versions = ["lucid",
                           "maverick",
                           "natty",
@@ -148,7 +148,7 @@ class Ubuntu(Debian):
                           "saucy",
                           "trusty",
                           "utopic"]
-        self.detect = OsDetect().get_detector(OS_UBUNTU)
+        self._detector = OsDetect().get_detector(OS_UBUNTU)
 
 
 ubuntu_definition = dict(
@@ -158,12 +158,27 @@ ubuntu_definition = dict(
 )
 
 
+# TODO: test if detection for Xubuntu is implemented correctly
+class Xubuntu(Ubuntu):
+
+    def __init__(self):
+        super(Xubuntu, self).__init__()
+        self._prepend_name(OS_XUBUNTU, lambda v: v)
+        self._detector = OsDetect().get_detector(OS_XUBUNTU)
+
+
+xubuntu_definition = dict(
+    plugin_name='xubuntu',
+    description="""OS plugin for Xubuntu.""",
+    os=Xubuntu
+)
+
+
 class OSX(_OSDetecorBase):
 
     def __init__(self):
         super(OSX, self).__init__()
-        self._names = [OS_OSX]
-        self._version_mappings = [None]
+        self._prepend_name(OS_OSX)
         self._versions = ["tiger",
                           "leopard",
                           "snow",

@@ -74,6 +74,7 @@ setup(
         'xylem.os': [
             'debian = xylem.os_support.plugins:debian_definition',
             'ubuntu = xylem.os_support.plugins:ubuntu_definition',
+            'xubuntu = xylem.os_support.plugins:xubuntu_definition',
             'osx    = xylem.os_support.plugins:osx_definition',
         ],
         'xylem.installers': [
