@@ -23,9 +23,9 @@ from six.moves.urllib.error import URLError
 from six.moves.urllib.request import urlopen
 import cgi
 
-from .text_utils import to_str
 from xylem.exception import raise_from
 from xylem.exception import XylemError
+from xylem.text_utils import to_str
 
 
 class DownloadFailure(XylemError):

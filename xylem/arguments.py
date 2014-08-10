@@ -25,13 +25,13 @@ import pydoc
 import os
 from six import StringIO
 
-from .config import add_global_config_arguments
-from .config import handle_global_config_arguments
+from xylem.config import add_global_config_arguments
+from xylem.config import handle_global_config_arguments
 
-from .util import enable_pdb
-from .log_utils import enable_verbose
-from .log_utils import enable_debug
-from .terminal_color import disable_ANSI_colors
+from xylem.util import enable_pdb
+from xylem.log_utils import enable_verbose
+from xylem.log_utils import enable_debug
+from xylem.terminal_color import disable_ANSI_colors
 
 
 class PagerHelpAction(argparse._HelpAction):

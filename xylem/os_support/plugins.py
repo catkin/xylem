@@ -18,8 +18,8 @@ from __future__ import unicode_literals
 
 from six.moves import zip
 
-from .impl import OSBase
-from .impl import UnsupportedOSVersionError
+from xylem.os_support import OSBase
+from xylem.os_support import UnsupportedOSVersionError
 
 from .os_detect import OsNotDetected
 from .os_detect import OsDetect

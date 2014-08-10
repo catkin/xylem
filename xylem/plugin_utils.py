@@ -20,12 +20,12 @@ import pkg_resources
 import abc
 import six
 
-from .text_utils import text_type
-from .text_utils import to_str
-from .log_utils import warning
-from .log_utils import error
 from xylem.exception import XylemError
 from xylem.exception import raise_from
+from xylem.text_utils import text_type
+from xylem.text_utils import to_str
+from xylem.log_utils import warning
+from xylem.log_utils import error
 
 
 class InvalidPluginError(XylemError):

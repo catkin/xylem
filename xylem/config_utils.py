@@ -100,16 +100,16 @@ import re
 from copy import deepcopy
 from yaml import YAMLError
 
-from .text_utils import type_name
-from .text_utils import text_type
-from .text_utils import to_str
-from .yaml_utils import load_yaml
-from .yaml_utils import dump_yaml
-from .log_utils import info
-from .log_utils import debug
-from .exception import XylemError
-from .exception import type_error_msg
+from xylem.text_utils import type_name
+from xylem.text_utils import text_type
+from xylem.text_utils import to_str
+from xylem.yaml_utils import load_yaml
+from xylem.yaml_utils import dump_yaml
+from xylem.log_utils import info
+from xylem.log_utils import debug
+from xylem.exception import XylemError
 from xylem.exception import raise_from
+from xylem.exception import type_error_msg
 
 
 UNSET_YAML = None

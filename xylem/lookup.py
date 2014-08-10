@@ -14,11 +14,11 @@
 
 from __future__ import unicode_literals
 
-from .sources import SourcesContext
-from .sources import RulesDatabase
-from .installers import InstallerContext
-from .specs.plugins.rules import compact_installer_dict
-from .config import get_config
+from xylem.sources import SourcesContext
+from xylem.sources import RulesDatabase
+from xylem.installers import InstallerContext
+from xylem.specs.plugins.rules import compact_installer_dict
+from xylem.config import get_config
 
 
 def lookup(xylem_key, compact=False, config=None, sources_context=None,

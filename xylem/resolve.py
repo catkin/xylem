@@ -14,12 +14,12 @@
 
 from __future__ import unicode_literals
 
-from .sources import SourcesContext
-from .sources import RulesDatabase
-from .installers import InstallerContext
+from xylem.sources import SourcesContext
+from xylem.sources import RulesDatabase
+from xylem.installers import InstallerContext
 
-from .log_utils import debug
-from .config import get_config
+from xylem.log_utils import debug
+from xylem.config import get_config
 
 
 def resolve(xylem_keys, all_keys=False, config=None, sources_context=None,
