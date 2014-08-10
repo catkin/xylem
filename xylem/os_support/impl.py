@@ -288,7 +288,7 @@ class OSOverride(OS):
         """
         if not isinstance(os, OS):
             raise UnsupportedOSError(
-                type_error_msg("OS", os, what_for="as os override"))
+                type_error_msg("OS", os, what_for="os override"))
         self.os = os
         if version is None:
             self.version = os.get_version()

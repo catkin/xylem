@@ -26,6 +26,7 @@ import re
 import six
 
 from xylem.util import raise_from
+from xylem.exception import type_error_msg
 
 from xylem.text_utils import text_type
 
@@ -273,8 +274,7 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
     rules_dict_whitelist = {'mountain lion'}
     # NOTE: 'unset_installers' is reserved for future use, not yet implemented.
     if not isinstance(identifier, text_type):
-        raise ValueError("Expected {0} to be text type, but got '{1}'".
-                         format(kind, type(identifier)))
+        raise ValueError(type_error_msg("str", identifier, what_for=kind))
     if identifier in rules_dict_keywords - set(allow_keywords):
         raise ValueError("{0} is disallowed keyword '{1}'.".
                          format(kind, identifier))

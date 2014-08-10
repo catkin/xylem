@@ -62,18 +62,18 @@ class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
     def get_depends(self, installer_rule):
         if not isinstance(installer_rule, dict):
             raise InvalidDataError(type_error_msg(
-                "dict", installer_rule, what_for="as installer rule for "
+                "dict", installer_rule, what_for="installer rule for "
                 "installer '{}'".format(self.name)))
         if "depends" in installer_rule:
             if not isinstance(installer_rule["depends"], list):
                 raise InvalidDataError(type_error_msg(
-                    "list", installer_rule["depends"], what_for="as `depends` "
+                    "list", installer_rule["depends"], what_for="`depends` "
                     "in installer rule `{}` for installer '{}'".
                     format(installer_rule, self.name)))
             for d in installer_rule["depends"]:
                 if isinstance(d, text_type):
                     raise InvalidDataError(type_error_msg(
-                        "string", d, what_for="as dependency in `depends` of "
+                        "string", d, what_for="dependency in `depends` of "
                         "installer rule `{}` for installer '{}'".
                         format(installer_rule, self.name)))
             return installer_rule["depends"][:]

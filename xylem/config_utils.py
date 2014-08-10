@@ -223,7 +223,7 @@ def process_config_file_yaml(config):
     for key in config:
         if not isinstance(key, text_type):
             raise ConfigValueError(
-                type_error_msg('text', key, what_for="as config key"))
+                type_error_msg('text', key, what_for="config key"))
     return config
 
 
