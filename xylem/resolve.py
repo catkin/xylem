@@ -22,29 +22,31 @@ from xylem.log_utils import debug
 from xylem.config import get_config
 
 
-def resolve(xylem_keys, all_keys=False, config=None, sources_context=None,
+def resolve(xylem_keys,
+            all_keys=False,
+            config=None,
+            database=None,
+            sources_context=None,
             installer_context=None):
+    #  1. Prepare config and contexts and load database
     if config is None:
         config = get_config()
-    sources_context = sources_context or SourcesContext(config=config)
     ic = installer_context or InstallerContext(config=config)
+    del installer_context  # don't use further down, use `ic` only
+    if not database:
+        sources_context = sources_context or SourcesContext(config=config)
+        database = RulesDatabase(sources_context)
+        database.load_from_cache()
+    del sources_context  # don't use further down, use `database` only
 
-    # xylem_keys can be one key or list of keys, return value accordingly
-    database = RulesDatabase(sources_context)
-    database.load_from_cache()
-
-    list_argument = isinstance(xylem_keys, list)
-    if not list_argument:
-        xylem_keys = [xylem_keys]
-    requested_keys = list(xylem_keys)
-
+    #  2. Prepare set of keys to look up
     if all_keys:
-        list_argument = True
-        xylem_keys.extend(database.keys(ic))
-        xylem_keys = set(xylem_keys)
+        lookup_keys = set(xylem_keys + database.keys(ic))
+    else:
+        lookup_keys = set(xylem_keys)  # copy
 
     result = []
-    for key in xylem_keys:
+    for key in lookup_keys:
         installer_dict = database.lookup(key, ic)
         if not installer_dict:
             raise LookupError("Could not find rule for xylem key '{0}' on "
@@ -65,27 +67,27 @@ def resolve(xylem_keys, all_keys=False, config=None, sources_context=None,
             # This means we have rules, but non for registered
             # installers, ignore this key unless it is in the requested
             # list of keys
-            if key in requested_keys:
-                raise LookupError(
-                    "Could not find rule for xylem key '{0}' on '{1}' for "
-                    "registered installers '{2}'. Found rules for "
-                    "installers '{3}'.".
-                    format(key, ic.get_os_string(),
-                           ", ".join(ic.get_installer_names()),
-                           ", ".join(installer_dict.keys())))
+            msg = "Could not find rule for xylem key '{0}' on '{1}' for " \
+                  "installers '{2}'. Found rules for unconfigured " \
+                  "installers '{3}'.". \
+                  format(key, ic.get_os_string(),
+                         ", ".join(ic.get_installer_names()),
+                         ", ".join(installer_dict.keys()))
+            # TODO: what happens when dependency fails to resolve?
+            if key in xylem_keys:
+                raise LookupError(msg)
             else:
-                debug("Could not find rule for xylem key '{0}' on '{1}' for "
-                      "registered installers '{2}'. Found rules for "
-                      "installers '{3}'. Ignoring from 'all' keys.".
-                      format(key, ic.get_os_string(),
-                             ", ".join(ic.get_installer_names()),
-                             ", ".join(installer_dict.keys())))
+                debug(msg + " Ignoring from 'all' keys.")
         else:
             result.append((key, rules))
-    if not list_argument:
-        assert(len(result) == 1)
-        key, resolution = result[0]
-        result = resolution
-    else:
-        result = sorted(result)
+    result = sorted(result)
     return result
+
+
+# TODO: do dependency resolution here
+# TODO: use that to determine flattened tree
+# TODO: return and display dependencies
+# TODO: don't raise LookupError, but collect and return
+
+
+# def resolve_one(xylem_key, installers, )

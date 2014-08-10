@@ -75,7 +75,7 @@ def main(args=None):
             for installer_name, resolutions in result:
                 if installer_name != default_installer_name or \
                         args.show_default_installer:
-                    installer_string = "{0} : ".format(installer_name)
+                    installer_string = "{0}: ".format(installer_name)
                 else:
                     installer_string = ""
                 resolution_string = ', '.join(map(to_str, resolutions))
