@@ -89,6 +89,16 @@ class OS(PluginBase):
         raise NotImplementedError()
 
     @abc.abstractproperty
+    def options(self):
+        """OS options such as active *features*."""
+        raise NotImplementedError()
+
+    @options.setter
+    def options(self, options):
+        """Set OS options such as active *features*."""
+        raise NotImplementedError()
+
+    @abc.abstractproperty
     def all_names(self):
         """Return list of decreasingly specific OS names.
 
@@ -186,56 +196,6 @@ class OS(PluginBase):
         """
         raise NotImplementedError()
 
-    @abc.abstractmethod
-    def set_options(self, options):
-        """Set OS options such as active *features*.
-
-        :param dict options: OS options dictionary
-        """
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def get_options(self):
-        """Get OS options susch as active *features*.
-
-        :return dict: OS options dictionary
-        """
-        raise NotImplementedError()
-
-
-class OSBase(OS):
-
-    """Some sensible default implementations of parts of the `OS` interface.
-
-    This class may be used by OS plugins as a base class instead of
-    `OS`.
-    """
-
-    @property
-    def name(self):
-        return self.all_names[0]
-
-    def get_tuple(self):
-        return (self.name, self.get_version())
-
-    @property
-    def default_installer(self):
-        return None
-
-    @property
-    def version_less_fn(self):
-        return version_order_from_list(self.known_versions)
-
-    def set_options(self, options):
-        self._options = options
-
-    def get_options(self):
-        return self._options
-
-    # TODO: do handling of `features` here; maybe introduce a
-    # ConfigDescription that handles verifying the structure of options
-    # (and subclasses can extend the description)
-    # TODO: make this more like with Installer (options property)
 
 class OSOverride(OS):
 
@@ -317,13 +277,15 @@ class OSOverride(OS):
         """Detection for OSOverride is always `True`."""
         return True
 
-    def set_options(self, options):
+    @property
+    def options(self):
         """Defer to delegate."""
-        return self.os.set_options(options)
+        return self.os.options
 
-    def get_options(self):
+    @options.setter
+    def options(self, options):
         """Defer to delegate."""
-        return self.os.get_options()
+        self.os.options = options
 
 
 class OSSupport(object):
@@ -331,21 +293,19 @@ class OSSupport(object):
     """OSSupport manages the OS plugins and options such as OS override.
 
     Can detect the current OS from the installed OS plugins or use the
-    override option. Moreover manages options such as disabling specific
-    plugins.
+    override option.
 
     In order to set up, either call :meth:`detect_os` or
     :meth:`override_os` and subsequently access it with
-    :func:`get_current_os`
+    :ivar:`current_os`
     """
 
-    # TODO: Configure to disable specific plugins
-
-    def __init__(self):
+    def __init__(self, disabled_os_plugins=[]):
         self._os = None
-        self._os_plugin_list = get_os_plugin_list()
+        self.os_plugins = load_os_plugins(disabled_os_plugins)
 
-    def get_current_os(self):
+    @property
+    def current_os(self):
         """Return OS object of current OS.
 
         Detect current OS if not yet detected or overridden.
@@ -358,25 +318,21 @@ class OSSupport(object):
             self.detect_os()
         return self._os
 
-    def get_os_plugins(self):
-        """Return list of is plugin objects."""
-        return self._os_plugin_list
-
-    def get_os_plugin_names(self):
+    @property
+    def os_plugin_names(self):
         """Return list of known/configured os names."""
-        return [x.name for x in self.get_os_plugins()]
+        return [x.name for x in self.os_plugins]
 
-    def get_os_plugin(self, name):
+    def lookup_os(self, name):
         """Return os plugin object for given os name or `None` if not known."""
-        for os in self.get_os_plugins():
+        for os in self.os_plugins:
             if name == os.name:
                 return os
         return None
 
     def get_default_installer_names(self):
         """Return mapping of os name to default installer for all os."""
-        return {os.name: os.default_installer
-                for os in self.get_os_plugins()}
+        return {os.name: os.default_installer for os in self.os_plugins}
 
     def override_os(self, os_tuple):
         """Override current OS to (name,version) tuple.
@@ -390,7 +346,7 @@ class OSSupport(object):
         """
         if os_tuple:
             name, version = os_tuple
-            os = self.get_os_plugin(name)
+            os = self.lookup_os(name)
             if not os:
                 raise UnsupportedOSError(
                     "Did not find OS plugin {0} to be used as override.".
@@ -410,7 +366,7 @@ class OSSupport(object):
         :raises UnsupportedOSError: If no OS plugin accepts the current OS
         """
         result = None
-        for os in self.get_os_plugins():
+        for os in self.os_plugins:
             if os.is_os():
                 if not result:
                     result = os
@@ -422,10 +378,10 @@ class OSSupport(object):
                         # found a more specific derivative os; use that instead
                         result = os
                     else:
-                        warning("OS '{}' detected, but '{}' already detected".
-                                format(os.name, result.name))
+                        warning("ignoring detection of OS '{0}'; '{1}' already"
+                                " detected".format(os.name, result.name))
         if not result:
             raise UnsupportedOSError(
                 "None of the OS plugins {} detected the current OS.".
-                format(self.get_os_plugin_names()))
+                format(self.os_plugin_names))
         self._os = result

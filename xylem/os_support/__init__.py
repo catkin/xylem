@@ -21,5 +21,7 @@ from .impl import OSSupport
 from .impl import UnsupportedOSError
 from .impl import UnsupportedOSVersionError
 
-__all__ = ["OS", "OSSupport", "UnsupportedOSError",
+from .os_base import OSBase
+
+__all__ = ["OS", "OSBase", "OSSupport", "UnsupportedOSError",
            "UnsupportedOSVersionError"]
