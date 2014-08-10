@@ -39,7 +39,7 @@ _default_installers = {
     'osx': 'homebrew'
 }
 
-# TODO: test the real `xylem.os_support.impl.get_os_plugin_list`
+# TODO: test the real `xylem.os_support.impl.load_os_plugins`
 
 
 class OSSupportCurrentTestCase(unittest.TestCase):
@@ -47,27 +47,27 @@ class OSSupportCurrentTestCase(unittest.TestCase):
     def test_detect_running_os(self):
         # test that the actual OS is detected (no exception is raised)
         o = OSSupport()
-        name, version = o.get_current_os().get_tuple()
+        name, version = o.current_os.get_tuple()
         assert(name is not None)
         assert(version is not None)
 
     def test_detect_version_only(self):
         # test that the actual OS is detected (no exception is raised)
         o = OSSupport()
-        name, version = o.get_current_os().get_tuple()
+        name, version = o.current_os.get_tuple()
 
         o = OSSupport()
         o.override_os((name, None))
-        os = o.get_current_os()
+        os = o.current_os
         assert(name == os.name)
         assert(version == os.get_version())
 
 
-@patch('xylem.os_support.impl.get_os_plugin_list', autospec=True)
+@patch('xylem.os_support.impl.load_os_plugins', autospec=True)
 class OSSupportTestCase(unittest.TestCase):
 
-    def test_current_os_throws(self, mock_get_os_plugin_list):
-        mock_get_os_plugin_list.return_value = _os_plugin_list
+    def test_current_os_throws(self, mock_load_os_plugins):
+        mock_load_os_plugins.return_value = _os_plugin_list
 
         o = OSSupport()
 
@@ -78,16 +78,16 @@ class OSSupportTestCase(unittest.TestCase):
 
         with self.assertRaises(UnsupportedOSVersionError):
             o.override_os(("ubuntu", "bar"))
-            print("invlid ubuntu version 'bar' did not raise")
+            print("invalid ubuntu version 'bar' did not raise")
 
         # fake failed detection
-        o._os_plugin_list = []
+        o.os_plugins = []
         with self.assertRaises(UnsupportedOSError):
             o.detect_os()
             print("failed detection did not raise")
 
-    def test_default_installer_name(self, mock_get_os_plugin_list):
-        mock_get_os_plugin_list.return_value = _os_plugin_list
+    def test_default_installer_name(self, mock_load_os_plugins):
+        mock_load_os_plugins.return_value = _os_plugin_list
 
         o = OSSupport()
 
@@ -100,25 +100,25 @@ class OSSupportTestCase(unittest.TestCase):
             pprint(expected)
         assert(expected == result)
 
-    def test_get_current_os(self, mock_get_os_plugin_list):
-        mock_get_os_plugin_list.return_value = _os_plugin_list
+    def test_get_current_os(self, mock_load_os_plugins):
+        mock_load_os_plugins.return_value = _os_plugin_list
 
         # get_current_os calls detect_os if no os not set yet
         o1 = OSSupport()
         o1.detect_os()
-        os1 = o1.get_current_os()
+        os1 = o1.current_os
 
         o2 = OSSupport()
-        os2 = o2.get_current_os()
+        os2 = o2.current_os
 
         assert(os1.get_tuple() == os2.get_tuple())
 
-    def test_override_os(self, mock_get_os_plugin_list):
-        mock_get_os_plugin_list.return_value = _os_plugin_list
+    def test_override_os(self, mock_load_os_plugins):
+        mock_load_os_plugins.return_value = _os_plugin_list
 
         o = OSSupport()
         o.override_os(("ubuntu", "precise"))
-        os = o.get_current_os()
+        os = o.current_os
         assert(os.name == "ubuntu")
         assert(os.all_names == ["ubuntu", "debian"])
         assert(os.get_version() == "precise")
