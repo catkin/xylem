@@ -49,12 +49,43 @@ def elevate_privileges(command):
 
 class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
 
-    """Base class for installer plugins with some reasonable defaults."""
+    """Base class for installer plugins with some reasonable defaults.
+
+    Deriving installers must call this class' :meth:`__init__`.
+
+    :ivar Configdescription options_description: description of
+        structure and types of :ivar:`options` property. Deriving
+        installers may modify it in their `__init__`, but not after
+        `options` has been accessed for the first time. Initialization
+        of :ivar:`options` with default values from this description is
+        delayed until first access.
+    """
 
     def __init__(self):
         self.options_description = ConfigDescription("options")
         self.options_description.add("as_root", type=Boolean, default=True)
-        self._options = None
+        self._options = None  # delay loading default config to first access
+
+    @property
+    def options(self):
+        if self._options is None:
+            self._options = config_from_defaults(self.options_description)
+        return self._options
+
+    @options.setter
+    def options(self, value):
+        try:
+            self._options = config_from_parsed_yaml(
+                value, self.options_description, use_defaults=True)
+        except ConfigValueError as e:
+            raise_from(ConfigValueError, "invalid options `{}` for installer "
+                       "'{}'".format(value, self.name), e)
+        unused_keys = set(value.keys()) - set(self._options.keys())
+        if unused_keys:
+            warning("Ignoring the following unknown options for installer "
+                    "'{}': {}. Known options are: {}.".
+                    format(self.name, ", ".join(unused_keys),
+                           ", ".join(self._options.keys())))
 
     def use_as_additional_installer(self, os_tuple):
         return False
@@ -109,22 +140,3 @@ class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
         of :meth:`get_install_commands`.
         """
         raise NotImplementedError()
-
-    def get_options(self):
-        if self._options is None:
-            self._options = config_from_defaults(self.options_description)
-        return self._options
-
-    def set_options(self, options):
-        try:
-            self._options = config_from_parsed_yaml(
-                options, self.options_description, use_defaults=True)
-        except ConfigValueError as e:
-            raise_from(ConfigValueError, "invalid options `{}` for installer "
-                       "'{}'".format(options, self.name), e)
-        unused_keys = set(options.keys()) - set(self._options.keys())
-        if unused_keys:
-            warning("Ignoring the following unknown options for installer "
-                    "'{}': {}.".format(self.name, ", ".join(unused_keys)))
-
-    options = property(get_options, set_options)

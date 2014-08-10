@@ -17,9 +17,8 @@ from __future__ import unicode_literals
 import abc
 
 from xylem.os_support import OSSupport
-from xylem.log_utils import info
+from xylem.log_utils import info_v
 from xylem.log_utils import error
-from xylem.log_utils import is_verbose
 from xylem.config import get_config
 from xylem.plugin_utils import PluginBase
 from xylem.plugin_utils import load_plugins
@@ -55,98 +54,126 @@ class InstallerContext(object):
 
     It combines OS plugins, installer plugins and user settings to
     manage the current OS and installers to be used.
+
+    :ivar dict config: config dictionary used; e.g. for os override, os
+        options, installer options
+    :ivar OSSupport os_support: os support object managing current
+        (or override) os; is set by :meth:`setup_os`
+    :ivar installer_plugins: list of all known installer objects,
+        independent of the current OS
+    :type installer_plugins: `list` of `Installer`
+    :ivar core_installers: list of the core installer objects for
+        the current os; is set by :meth:`setup_installers`
+    :type core_installers: `list` of `Installer`
+    :ivar additional_installers: list of the additional installer
+        objects for the current os; is set by :meth:`setup_installers`
+    :type additional_installers: `list` of `Installer`
     """
 
-    def __init__(self, os_support=None, config=None, setup_installers=True):
+    def __init__(self, config=None, os_support=None, setup_installers=True):
 
         if config is None:
             config = get_config()
         self.config = config
-
         if os_support is None:
             self.setup_os()
         else:
             self.os_support = os_support
-
-        self.core_installers = []
-        self.additional_installers = []
-
         self.installer_plugins = load_installer_plugins(
             self.config.disabled_plugins.installer)
         if setup_installers:
             self.setup_installers()
+        else:
+            self.core_installers = []
+            self.additional_installers = []
 
     def setup_os(self):
         """Create `OSSupport` and detect or override OS depending on config.
 
-        :raises UnsupportedOsError: if OS override was invalid and
-            detection failed
-        :raises UnsupportedOSVersionError: if override version is not
-            valid for override OS
+        :raises xylem.os_support.UnsupportedOsError: if OS override was
+            invalid and detection failed
+        :raises xylem.os_support.UnsupportedOSVersionError: if override
+            version is not valid for override OS
         """
-        self.os_support = OSSupport()
+        self.os_support = OSSupport(self.config.disabled_plugins.os)
         if self.config.os_override is None:
             self.os_support.detect_os()
-            if is_verbose():
-                info("detected OS [%s]" % self.get_os_string())
+            info_v("detected OS [%s]" % self.get_os_string())
         else:
-            if is_verbose():
-                info("overriding OS to [%s:%s]" % self.config.os_override)
+            info_v("overriding OS to [%s:%s]" % self.config.os_override)
             self.os_support.override_os(self.config.os_override)
-            if is_verbose() and self.config.os_override[1] is None:
-                info("detected OS version [%s]" % self.get_os_string())
-        self.os_support.get_current_os().set_options(self.config.os_options)
+            if self.config.os_override[1] is None:
+                info_v("detected OS version [%s]" % self.get_os_string())
+        self.get_os().options = self.config.os_options
+
+    def get_os(self):
+        """Get the current OS plugin object.
+
+        :rtype xylem.os_support.OS: the current OS object
+        :raises xylem.os_support.UnsupportedOsError: if OS was not
+            detected correctly
+        """
+        return self.os_support.current_os
 
     def get_os_tuple(self):
-        """Get the OS (name,version) tuple.
-
-        Return the OS name/version tuple to use for resolution and
-        installation.  This will be the detected OS name/version unless
-        :meth:`InstallerContext.set_os_override()` has been called.
+        """Get the current OS (name,version) tuple.
 
         :return: (os_name, os_version)
-        :rtype: (str,str)
-        :raises UnsupportedOsError: if OS was not detected correctly
+        :rtype: ``(str,str)``
+        :raises xylem.os_support.UnsupportedOsError: if OS was not
+            detected correctly
         """
-        return self.os_support.get_current_os().get_tuple()
+        return self.get_os().get_tuple()
 
     def get_os_string(self):
-        """Get the OS name and version as 'name:version' string.
+        """Get the cuurent OS name and version as ``'name:version'`` string.
 
-        See :meth:`get_os_tuple`
-
-        :rtype: str
-        :raises UnsupportedOsError: if OS was not detected correctly
+        :rtype: `str`
+        :raises xylem.os_support.UnsupportedOsError: if OS was not
+            detected correctly
         """
         return "%s:%s" % self.get_os_tuple()
 
     def get_default_installer_name(self):
-        """Get name of default installer for current os."""
-        return self.os_support.get_current_os().default_installer
+        """Get name of default installer for current OS.
 
-    def get_installer_names(self):
-        """Get all configured installers for current os.
-
-        :meth:`setup_installers` needs to be called beforehand.
+        :rtype: `str`
         """
-        return [i.name for i in self.get_installers()]
+        return self.os_support.current_os.default_installer
 
     def get_installers(self):
         """Get list of core and additional installers.
 
         :meth:`setup_installers` needs to be called beforehand.
+
+        :rtype: `list` of `Installer`
         """
         return self.core_installers + self.additional_installers
 
-    def get_installer(self, name):
-        """Get configured installer object by name."""
-        for inst in self.get_installers():
-            if inst.name == name:
-                return inst
-        return None
+    def get_installer_names(self):
+        """Get all configured installers for current os.
 
-    def _get_installer_plugin(self, name):
-        """Get installer from list of plugins by name."""
+        :meth:`setup_installers` needs to be called beforehand.
+
+        :rtype: `list` of `str`
+        """
+        return [i.name for i in self.get_installers()]
+
+    @property
+    def installer_plugin_names(self):
+        """Get list of names for all known installers.
+
+        :rtype: `list` of `str`
+        """
+        return [i.name for i in self.installer_plugins]
+
+    def lookup_installer(self, name):
+        """Get installer object by name.
+
+        :param str name: name of the installer
+        :return: if found, installer object, else ``None``
+        :rtype: `Installer` or ``None``
+        """
         for inst in self.installer_plugins:
             if inst.name == name:
                 return inst
@@ -158,51 +185,43 @@ class InstallerContext(object):
         Installers are set based on the current os, user config and
         installer plugins.
         """
-        os = self.os_support.get_current_os()
+        os = self.get_os()
         os_tuple = os.get_tuple()
-        os_name, os_version = os_tuple
-        os_options = os.get_options()
+        _, os_version = os_tuple
 
         self.core_installers = []
         self.additional_installers = []
 
-        # setup core installers from config or OS plugin
+        #  1. setup core installers from config or OS plugin
         if self.config.core_installers is not None:
             installer_names = self.config.core_installers
-            if is_verbose():
-                info("setting up core installers from config: '{}'".
-                     format(", ".join(installer_names)))
+            info_v("setting up core installers from config: '{}'".
+                   format(", ".join(installer_names)))
         else:
-            installer_names = os.get_core_installers(os_version, os_options)
-            if is_verbose():
-                info("setting up core installers from os plugin: '{}'".
-                     format(", ".join(installer_names)))
+            installer_names = os.get_core_installers(os_version, os.options)
+            info_v("setting up core installers from os plugin: '{}'".
+                   format(", ".join(installer_names)))
 
         for name in installer_names:
-            inst = self._get_installer_plugin(name)
+            inst = self.lookup_installer(name)
             if inst is None:
                 error("ignoring core installer '{}'; according plugin was not "
                       "found".format(name))
             else:
                 self.core_installers.append(inst)
 
-        # Go through all installers and check if they should be used as
-        # additional installers for the current os.
+        #  2. Go through all installers and check if they should be used
+        #     as additional installers for the current OS.
         if self.config.use_additional_installers:
             for inst in self.installer_plugins:
-                if inst.use_as_additional_installer(os_tuple):
+                if inst not in self.core_installers and \
+                        inst.use_as_additional_installer(os_tuple):
                     self.additional_installers.append(inst)
-        if is_verbose():
-            info("Using additional installers: '{}'".format(
-                ", ".join([i.name for i in self.additional_installers])))
+        info_v("Using additional installers: '{}'".format(
+               ", ".join([i.name for i in self.additional_installers])))
 
 
-class InstallerPrerequisiteError(XylemError):
-
-    """Exception for unfulfilled installer prerequisites."""
-
-
-class Installer(six.with_metaclass(abc.ABCMeta, PluginBase)):
+class Installer(PluginBase):
 
     """Installer class that custom installer plugins derive from.
 
@@ -226,6 +245,15 @@ class Installer(six.with_metaclass(abc.ABCMeta, PluginBase)):
         :rtype: `str`
         """
         raise NotImplementedError()
+
+    @abc.abstractproperty
+    def options(self):
+        """Get installer options as `xylem.config_utils.ConfigDict`."""
+        raise NotImplementedError()
+
+    @options.setter
+    def options(self, value):
+        """Set installer options as `dict`."""
 
     @abc.abstractmethod
     def use_as_additional_installer(self, os_tuple):
@@ -260,7 +288,7 @@ class Installer(six.with_metaclass(abc.ABCMeta, PluginBase)):
         :param dict installer_rule: installer rule from the rules
             dictionary for this installer
         :returns: ``[resolution]`` -- list of opaque resolved items
-        :raises InvalidDataError: if installer_rule cannot does not have
+        :raises InvalidRuleError: if installer_rule cannot does not have
             a valid structure according to this installer
         """
         raise NotImplementedError()
@@ -369,19 +397,3 @@ class Installer(six.with_metaclass(abc.ABCMeta, PluginBase)):
             successful
         """
         raise NotImplementedError()
-
-    def get_options(self):
-        """Get installer options susch as active *features*.
-
-        :return dict: installer options dictionary
-        """
-        raise NotImplementedError()
-
-    def set_options(self, options):
-        """Set installer options.
-
-        :param dict options: installer options dictionary
-        """
-        raise NotImplementedError()
-
-    options = abc.abstractproperty(get_options, set_options)
