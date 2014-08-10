@@ -126,6 +126,15 @@ def build_config_description():
     add("sources_dir", type=Path,
         command_line=True,
         help="""override the sources directory""")
+    add("disabled_plugins/os", type=List(String), default=[],
+        command_line_argument="disable-os-plugins",
+        help="""of disabled plugin names""")
+    add("disabled_plugins/installer", type=List(String), default=[],
+        command_line_argument="disable-installer-plugins",
+        help="""disabled plugin names""")
+    add("disabled_plugins/spec", type=List(String), default=[],
+        command_line_argument="disable-spec-plugins",
+        help="""disabled plugin names""")
     return description
 
 

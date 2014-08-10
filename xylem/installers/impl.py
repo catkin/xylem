@@ -15,7 +15,6 @@
 from __future__ import unicode_literals
 
 import abc
-import six
 
 from xylem.os_support import OSSupport
 from xylem.log_utils import info
@@ -23,7 +22,7 @@ from xylem.log_utils import error
 from xylem.log_utils import is_verbose
 from xylem.config import get_config
 from xylem.plugin_utils import PluginBase
-from xylem.plugin_utils import get_plugin_list
+from xylem.plugin_utils import load_plugins
 from xylem.exception import XylemError
 
 # TODO: fix docstrings
@@ -32,12 +31,12 @@ from xylem.exception import XylemError
 INSTALLER_GROUP = "xylem.installers"
 
 
-def get_installer_plugin_list():
+def load_installer_plugins(disabled=[]):
     """Return list of installer plugin objects unique by name.
 
-    See :func:`get_plugin_list`
+    See :func:`load_plugins`
     """
-    return get_plugin_list("installer", Installer, INSTALLER_GROUP)
+    return load_plugins("installer", Installer, INSTALLER_GROUP, disabled)
 
 
 class InvalidRuleError(XylemError):
@@ -69,11 +68,11 @@ class InstallerContext(object):
         else:
             self.os_support = os_support
 
-        self.installer_plugins = get_installer_plugin_list()
-
         self.core_installers = []
         self.additional_installers = []
 
+        self.installer_plugins = load_installer_plugins(
+            self.config.disabled_plugins.installer)
         if setup_installers:
             self.setup_installers()
 

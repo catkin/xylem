@@ -15,42 +15,23 @@
 from __future__ import unicode_literals
 
 import abc
-import six
 
 from xylem.log_utils import warning
 from xylem.exception import XylemError
 from xylem.exception import type_error_msg
 from xylem.plugin_utils import PluginBase
-from xylem.plugin_utils import get_plugin_list
+from xylem.plugin_utils import load_plugins
 
 
 OS_GROUP = 'xylem.os'
 
 
-# TODO: for installers and os, verfiy that the names used are valid and
-# are not any of the special values like any_os, any_version,
-# default_installer etc
+def load_os_plugins(disabled=[]):
+    """Return list of os plugin objects unique by name.
 
-# TODO: fix docstrings and error handling
-
-
-def version_order_from_list(versions):
-    """Return order function from list of verions."""
-    # check uniqueness
-    assert(len(versions) == len(set(versions)))
-    # copy versions since the returned function references it
-    versions = versions[:]
-
-    def less(a, b):
-        if a not in versions:
-            raise UnsupportedOSVersionError(
-                "cannot order unknown version '{}'".format(a))
-        if b not in versions:
-            raise UnsupportedOSVersionError(
-                "cannot order unknown version '{}'".format(b))
-        return versions.index(a) < versions.index(b)
-
-    return less
+    See :func:`load_plugins`
+    """
+    return load_plugins("os", OS, OS_GROUP, disabled)
 
 
 class UnsupportedOSError(XylemError):
@@ -71,7 +52,7 @@ class UnsupportedOSVersionError(XylemError):
     """
 
 
-class OS(six.with_metaclass(abc.ABCMeta, PluginBase)):
+class OS(PluginBase):
 
     """Abstract OS plugin base class.
 
@@ -220,14 +201,6 @@ class OS(six.with_metaclass(abc.ABCMeta, PluginBase)):
         :return dict: OS options dictionary
         """
         raise NotImplementedError()
-
-
-def get_os_plugin_list():
-    """Return list of os plugin objects unique by name.
-
-    See :func:`get_plugin_list`
-    """
-    return get_plugin_list("os", OS, OS_GROUP)
 
 
 class OSBase(OS):

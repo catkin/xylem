@@ -230,7 +230,7 @@ def verify_xylem_key(xylem_key):
 
     :raises ValueError: if ``xylem_key`` is not valid
     """
-    _verify_rules_dict_identifier(xylem_key, "xylem key")
+    verify_rules_dict_identifier(xylem_key, "xylem key")
 
 
 def verify_os_name(os_name):
@@ -238,7 +238,7 @@ def verify_os_name(os_name):
 
     :raises ValueError: if ``os_name`` is not valid
     """
-    _verify_rules_dict_identifier(os_name, "os name", ["any_os"])
+    verify_rules_dict_identifier(os_name, "os name", ["any_os"])
 
 
 def verify_os_version(os_version):
@@ -246,7 +246,7 @@ def verify_os_version(os_version):
 
     :raises ValueError: if ``os_version`` is not valid
     """
-    _verify_rules_dict_identifier(os_version, "os version", ["any_version"])
+    verify_rules_dict_identifier(os_version, "os version", ["any_version"])
 
 
 def verify_installer_name(installer_name):
@@ -254,11 +254,11 @@ def verify_installer_name(installer_name):
 
     :raises ValueError: if ``installer_name`` is not valid
     """
-    _verify_rules_dict_identifier(
+    verify_rules_dict_identifier(
         installer_name, "installer name", ["default_installer"])
 
 
-def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
+def verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
     """Helper function to verify validity of identifiers used in rules dicts.
 
     :param str identifier: the identifier to be validated
@@ -268,7 +268,7 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
     :raises ValueError: if ``identifier`` is not valid
     """
     rules_dict_keywords = {'any_os', 'any_version', 'default_installer',
-                           'unset_installers'}
+                           'unset_installers', 'any_key'}
     # FIXME: implement this whitelist differently (specific to where it
     #        might occur)
     rules_dict_whitelist = {'mountain lion'}

@@ -29,7 +29,7 @@ from xylem.yaml_utils import load_yaml
 from xylem.exception import raise_from
 from xylem.text_utils import to_str
 from xylem.specs import verify_spec_name
-from xylem.specs import get_spec_plugin_list
+from xylem.specs import load_spec_plugins
 from xylem.exception import XylemError
 
 
@@ -208,7 +208,8 @@ class SourcesContext(object):
         if config is None:
             config = get_config()
         self.setup_paths(config)
-        self.spec_plugins = spec_plugins or get_spec_plugin_list()
+        self.spec_plugins = spec_plugins or load_spec_plugins(
+            config.disabled_plugins.spec)
 
     def setup_paths(self, config):
         self.sources_dir = config.sources_dir or DEFAULT_SOURCES_DIR

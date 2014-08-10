@@ -15,9 +15,11 @@
 from __future__ import unicode_literals
 
 from .impl import verify_spec_name
-from .impl import get_spec_plugin_list
+from .impl import load_spec_plugins
 from .impl import Spec
+
+# FIXME:
 from .plugins.rules import SpecParsingError
 
-__all__ = ['get_spec_plugin_list', 'SpecParsingError', 'verify_spec_name',
+__all__ = ['load_spec_plugins', 'SpecParsingError', 'verify_spec_name',
            'Spec']
