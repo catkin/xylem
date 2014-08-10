@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Provides common utility functions for xylem."""
+"""Provides common utility functions for xylem.
+
+Importing this module will install a custom exception hook if the
+current script name is `xylem`.
+"""
 
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -21,12 +25,12 @@ import os
 import shutil
 import sys
 import tempfile
-import six
 import subprocess
 
 from six import StringIO
 
-from .text_utils import to_str
+from xylem.text_utils import to_str
+from xylem.exception import exc_to_str
 
 
 class change_directory(object):
@@ -74,36 +78,12 @@ class temporary_directory(object):
             os.chdir(self.original_cwd)
 
 
-# TODO: change this to not update the message in PY2, but manually add
-# the `cause` attribute and create a custom exception printer that
-# prints is like in PY3. Normally format exceptions without stack trace
-# and in this custom manner with "CAUSED BY:". When in debug mode, or
-# when catching non XylemError, print with all stack traces like in
-# Python 3
-
-def raise_from(exc_type, exc_args, from_exc):
-    """Raise new exception directly caused by ``from_exc``.
-
-    On py3, this is equivalent to ``raise exc_type(exc_args) from
-    from_exc`` and on py2 the messages are composed manually to retain
-    the arguments of ``from_exc`` as well as the stack trace.
-    """
-    if six.PY2:
-        exc_args = to_str(exc_args)
-        exc_args += "\nCAUSED BY:\n"
-        exc_args += to_str(type(from_exc)) + ": " + to_str(from_exc)
-        # we need to use `exec` else py3 throws syntax error
-        exec("raise exc_type, exc_type(exc_args), sys.exc_info()[2]")
-    else:
-        # the following is a py2-syntax-correct equivalent of
-        # `raise exc_type(exc_args) from from_exc`
-        exc = exc_type(exc_args)
-        exc.__cause__ = from_exc
-        raise exc
-
-
 # TODO: document this soft dependency on pygments, and also add unit
-# test for printing exceptions with and without pygments
+# test for printing exceptions with and without pygments (maybe in
+# "install" section of docs)
+
+# TODO: document all hidden debug environment variables and arguments
+# (may in "development setion" of docs)s
 
 
 _pdb = False
@@ -119,8 +99,7 @@ def pdb_enabled():
     return _pdb
 
 
-def print_exc(formated_exc):
-    exc_str = ''.join(formated_exc)
+def print_exc(exc_str):
     try:
         from pygments import highlight
         from pygments.lexers import PythonTracebackLexer
@@ -134,9 +113,8 @@ def print_exc(formated_exc):
 
 
 def custom_exception_handler(type, value, tb):
-    # Print traceback
-    import traceback
-    print_exc(traceback.format_exception(type, value, tb))
+    # Print traceback, ...
+    print_exc(exc_to_str(value, tb))
     if not pdb_enabled() or hasattr(sys, 'ps1') or not sys.stderr.isatty():
         pass
     else:
@@ -145,13 +123,17 @@ def custom_exception_handler(type, value, tb):
         pdb.set_trace()
 
 
-sys.excepthook = custom_exception_handler
+def set_excepthook():
+    sys.excepthook = custom_exception_handler
 
 
-def pdb_hook():
-    if pdb_enabled():
-        import pdb
-        pdb.set_trace()
+def running_script_name():
+    """Return the name of the currently executing python script."""
+    return os.path.basename(os.path.realpath(sys.argv[0]))
+
+
+if running_script_name() == "xylem":
+    set_excepthook()
 
 
 def create_temporary_directory(prefix_dir=None):
@@ -161,14 +143,28 @@ def create_temporary_directory(prefix_dir=None):
 
 
 def read_stdout(cmd):
-    """Execute a command and return stdout.
+    """Execute a command synchronously and return stdout.
 
     :param cmd: executable and arguments
     :type cmd: `list` of `str`
+    :return str: captured stdout
     """
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     std_out, std_err = p.communicate()
     return to_str(std_out)
+
+
+def read_stdout_err(cmd):
+    """Execute a command synchronously and return stdout, stderr and exit code.
+
+    :param cmd: executable and arguments
+    :type cmd: `list` of `str`
+    :return: tuple of stdout, stderr and exit code
+    :rtype: ``(str, str, int)``
+    """
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    std_out, std_err = p.communicate()
+    return (to_str(std_out), to_str(std_err), p.returncode)
 
 
 def is_program_installed(executable_name):

@@ -103,13 +103,13 @@ from yaml import YAMLError
 from .text_utils import type_name
 from .text_utils import text_type
 from .text_utils import to_str
-from .util import raise_from
 from .yaml_utils import load_yaml
 from .yaml_utils import dump_yaml
 from .log_utils import info
 from .log_utils import debug
 from .exception import XylemError
 from .exception import type_error_msg
+from xylem.exception import raise_from
 
 
 UNSET_YAML = None

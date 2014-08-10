@@ -26,7 +26,7 @@ from xylem.log_utils import error
 from xylem.log_utils import is_verbose
 from xylem.log_utils import info
 from xylem.yaml_utils import load_yaml
-from xylem.util import raise_from
+from xylem.exception import raise_from
 from xylem.text_utils import to_str
 from xylem.specs import verify_spec_name
 from xylem.specs import get_spec_plugin_list

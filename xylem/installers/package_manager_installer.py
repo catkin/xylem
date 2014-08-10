@@ -19,11 +19,10 @@ import abc
 
 from .installer_base import InstallerBase
 from .impl import InstallerPrerequisiteError
-
-from xylem.exception import InvalidDataError
+from .impl import InvalidRuleError
 
 from xylem.util import is_program_installed
-from xylem.util import raise_from
+from xylem.exception import raise_from
 
 from xylem.log_utils import info_v
 from xylem.log_utils import warning
@@ -102,7 +101,7 @@ class PackageManagerInstaller(six.with_metaclass(abc.ABCMeta, InstallerBase)):
                 installer_rule, self.installer_rule_description,
                 use_defaults=True)
         except ConfigValueError as e:
-            raise_from(InvalidDataError, "invalid installer rule `{}` for "
+            raise_from(InvalidRuleError, "invalid installer rule `{}` for "
                        "installer '{}'".format(installer_rule, self.name), e)
         unused_keys = set(installer_rule.keys()) - set(parsed_rule.keys())
         if unused_keys:

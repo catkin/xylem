@@ -19,13 +19,13 @@ import os
 import six
 
 from .impl import Installer
+from .impl import InvalidRuleError
 
 from xylem.exception import type_error_msg
-from xylem.exception import InvalidDataError
 
 from xylem.text_utils import text_type
 
-from xylem.util import raise_from
+from xylem.exception import raise_from
 
 from xylem.log_utils import warning
 
@@ -61,18 +61,18 @@ class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
 
     def get_depends(self, installer_rule):
         if not isinstance(installer_rule, dict):
-            raise InvalidDataError(type_error_msg(
+            raise InvalidRuleError(type_error_msg(
                 "dict", installer_rule, what_for="installer rule for "
                 "installer '{}'".format(self.name)))
         if "depends" in installer_rule:
             if not isinstance(installer_rule["depends"], list):
-                raise InvalidDataError(type_error_msg(
+                raise InvalidRuleError(type_error_msg(
                     "list", installer_rule["depends"], what_for="`depends` "
                     "in installer rule `{}` for installer '{}'".
                     format(installer_rule, self.name)))
             for d in installer_rule["depends"]:
                 if isinstance(d, text_type):
-                    raise InvalidDataError(type_error_msg(
+                    raise InvalidRuleError(type_error_msg(
                         "string", d, what_for="dependency in `depends` of "
                         "installer rule `{}` for installer '{}'".
                         format(installer_rule, self.name)))

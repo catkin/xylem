@@ -16,8 +16,9 @@ from __future__ import unicode_literals
 from .impl import InstallerContext
 from .impl import Installer
 from .impl import InstallerPrerequisiteError
+from .impl import InvalidRuleError
 from .installer_base import InstallerBase
 from .package_manager_installer import PackageManagerInstaller
 
 __all__ = ["InstallerContext", "Installer", "InstallerPrerequisiteError",
-           "InstallerBase", "PackageManagerInstaller"]
+           "InvalidRuleError", "InstallerBase", "PackageManagerInstaller"]

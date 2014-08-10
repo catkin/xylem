@@ -20,12 +20,17 @@ import pkg_resources
 import abc
 import six
 
-from .util import raise_from
 from .text_utils import text_type
 from .text_utils import to_str
-from .exception import InvalidPluginError
 from .log_utils import warning
 from .log_utils import error
+from xylem.exception import XylemError
+from xylem.exception import raise_from
+
+
+class InvalidPluginError(XylemError):
+
+    """Plugin loaded from an entry point does not have the right type/data."""
 
 
 class PluginBase(six.with_metaclass(abc.ABCMeta, object)):

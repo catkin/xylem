@@ -40,6 +40,16 @@ def get_installer_plugin_list():
     return get_plugin_list("installer", Installer, INSTALLER_GROUP)
 
 
+class InvalidRuleError(XylemError):
+
+    """Invalid rule input to installer plugin."""
+
+
+class InstallerPrerequisiteError(XylemError):
+
+    """Exception for unfulfilled installer prerequisites."""
+
+
 class InstallerContext(object):
 
     """Manages the context of OS and installers for xylem.

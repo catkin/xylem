@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 import re
 import six
 
-from xylem.util import raise_from
+from xylem.exception import raise_from
 from xylem.exception import type_error_msg
 
 from xylem.text_utils import text_type

@@ -23,9 +23,14 @@ from six.moves.urllib.error import URLError
 from six.moves.urllib.request import urlopen
 import cgi
 
-from .exception import DownloadFailure
-from .util import raise_from
 from .text_utils import to_str
+from xylem.exception import raise_from
+from xylem.exception import XylemError
+
+
+class DownloadFailure(XylemError):
+
+    """Failure downloading data for I/O or other reasons."""
 
 
 def load_url(url, retry=2, retry_period=1, timeout=10):
