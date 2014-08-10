@@ -1,3 +1,6 @@
+.. image:: https://badge.waffle.io/catkin/xylem.png?label=ready&title=Ready 
+ :target: https://waffle.io/catkin/xylem
+ :alt: 'Stories in Ready'
 Note: this tool is not complete yet, come back later
 
 xylem
