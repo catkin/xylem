@@ -1,0 +1,11 @@
+- unicode issues:
+
+  - reading files, see https://github.com/ros-infrastructure/rospkg/pull/54
+    but I think for files we should use
+    always utf-8. for console I/O I'm not sure
+
+- In docstrings, decide how to refer to str/unicode. Possibly it is best
+  to stick with how things are in py3 for docstrings (i.e. use `str`)
+
+- In docstrings, use ``foo`` for values / expressions, and :class:`foo`,
+  :exc:`foo`, :meth:`foo.bar` etc more consistently

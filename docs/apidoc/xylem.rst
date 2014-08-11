@@ -119,6 +119,14 @@ xylem.util module
     :undoc-members:
     :show-inheritance:
 
+xylem.yaml_utils module
+-----------------------
+
+.. automodule:: xylem.yaml_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

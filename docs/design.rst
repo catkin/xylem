@@ -579,6 +579,13 @@ A few simplified code examples to illustrate how this all comes together:
 
 **Notes:**
 
+- We need a reliable way to automatically sync/import rosdep style rules
+  files to make sure that we can maintain the rosdistro default source
+  files for rosdep and xylem alongside each other. Maybe doing a one
+  time import (with manual help) and then being able to export rosdep
+  compatible files again would be easier to realize. An alternative,
+  possibly better solution would be to provide a new rosdep-spec plugin
+  that can direclty utilize the rosdep rules files for xylem.
 - Should we consider allowing for the possibility of loading parsed (and
   pickled) rules databases with the ``update`` command (for increased
   speed of ``update``)? Here the original rules files would always be
@@ -724,6 +731,9 @@ far future, some should be implemented right away.
 Sources and cache location
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+**Caveat**: This is somewhat outdated compared to latest discussions and
+code.
+
 The ``xylem`` model of a lookup database cache that is updated with and
 ``update`` command is somewhat analogous to ``apt-get``. By default a
 system-wide cache is maintained that needs to be updated with ``sudo``.
@@ -812,6 +822,16 @@ However, what we suggest addresses some of the remaining issues:
 
 **Notes:**
 
+- Consider the situation inside virtualenv. I.e. consider
+  ``sys.real_prefix`` (virutalenv), ``sys.base_prefix`` (pyvenv), and
+  ``sys.prefix``.
+- Use case for user-modifyable sources list: https://github.com/ros-
+  infrastructure/rosdep/issues/337
+- think about layout of repo with default sources (what is in rosdistro
+  now). Should we have a system like ``brew tap`` in place? How does
+  this play together with the ``sources.d`` directory? Where would the
+  information about "tapped" rules repositories get stored? How would
+  tap repos be layed out?
 - Should it be ``sources.list.d`` or ``sources.d``? Note that we
   probably change the source files from ``.list`` to ``.yaml``, so does
   ``sources.list.d`` still make sense?
@@ -854,6 +874,9 @@ However, what we suggest addresses some of the remaining issues:
 
 Settings and command line arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Caveat**: This is somewhat outdated compared to latest discussions and
+code.
 
 There should be a canonical way to supply arguments to ``xylem``. We
 propose a system-wide config file, a user config file and command line
@@ -1338,6 +1361,36 @@ Something similar should be done for Taps for Homebrew. While it is
 possible to reference the Tap with the formula name for installation
 (``brew install osrf/ros/foopkg``), which should be supported for
 specific packages.
+
+
+**Notes**:
+
+- Launchpad PPA with ``apt-add-repository`` supported on debian wheezy;
+  solution for earlier version is manually adding it:
+  http://www.binarytides.com/add-ubuntu-ppa-repository-to-
+  debian-7-wheezy/
+- apt-add-repository is python; can we use these modules in the apt
+  installer plugin? http://bazaar.launchpad.net/~ubuntu-
+  branches/ubuntu/utopic/software-properties/utopic/view/head:/add-apt-
+  repository
+- ubuntu help page on apt sources; includes info on nameing of
+  ``sourceline`` components and how to add keys, etc:
+  https://help.ubuntu.com/community/Repositories/Ubuntu; also:
+  https://help.ubuntu.com/community/Repositories/CommandLine; and:
+  http://ubuntuguide.org/wiki/Ubuntu_Saucy_Packages_and_Repositories
+- check installed repositories: http://askubuntu.com/questions/148932
+  /how-can-i-get-a-list-of-all-repositories-and-ppas-from-the-command-
+  line
+- check installed keys: ``apt-key list`` / ``apt-key finger``
+- some custom bash version of ``apt-add-repository``. Maybe interesting
+  for some ideas: http://blog.anantshri.info/content/uploads/2010/09
+  /add-apt-repository.sh.txt
+- current ROS install instructions: ``sudo sh -c 'echo "deb
+  http://packages.ros.org/ros/ubuntu raring main" >
+  /etc/apt/sources.list.d/ros-latest.list'``
+- and ``wget
+  https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O - |
+  sudo apt-key add -``
 
 
 Improved package manager abstraction
