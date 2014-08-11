@@ -18,11 +18,20 @@ import argparse
 import sys
 import pkg_resources
 
-from xylem.log_utils import error
-from xylem.log_utils import info
+from ..log_utils import error
+from ..log_utils import info
+from ..log_utils import ansi
 
-from xylem.util import add_global_arguments
-from xylem.util import handle_global_arguments
+from ..arguments import add_global_arguments
+from ..arguments import handle_global_arguments
+
+from ..config import get_config_description
+from ..config import add_config_arguments
+from ..config import handle_config_arguments
+from ..config_utils import ConfigHelpFormatter
+
+from ..text_utils import type_name
+
 
 XYLEM_CMDS_GROUP = 'xylem.commands'
 
@@ -34,45 +43,65 @@ def list_commands():
     return commands
 
 
-def load_command_description(command_name):
+def load_command_definition(command_name):
     for entry_point in pkg_resources.iter_entry_points(group=XYLEM_CMDS_GROUP):
         if entry_point.name == command_name:
-            desc = entry_point.load()
-            if not isinstance(desc, dict):
+            defi = entry_point.load()
+            if not isinstance(defi, dict):
                 error("Invalid entry point: '{0}', expected dict got '{1}'"
-                      .format(entry_point, type(desc)))
+                      .format(entry_point, type_name(defi)))
                 return None
-            return desc
+            return defi
+
+
+def create_command_parser(command_defi, constructor, parser_title=False):
+    args = [str(command_defi['title'])] if parser_title else []
+    parser = constructor(*args,
+                         description=command_defi['description'],
+                         add_help=False,
+                         formatter_class=ConfigHelpFormatter)
+    parser = command_defi['prepare_arguments'](parser) or parser
+    parser.set_defaults(func=command_defi['main'])
+    command_defi['prepare_config'](get_config_description())
+    add_config_arguments(parser)
+    add_global_arguments(parser)
+
+
+def command_handle_args(args, definition):
+    """Helper for commands."""
+    if args is None:
+        parser = create_command_parser(definition, argparse.ArgumentParser)
+        args = parser.parse_args()
+        handle_global_arguments(args)
+        handle_config_arguments(args)
+    return args
 
 
 def create_subparsers(parser, cmds):
-    descs = []
+    defis = []
     for cmd in list(cmds):
-        desc = load_command_description(cmd)
-        if desc is None:
+        defi = load_command_definition(cmd)
+        if defi is None:
             info("Skipping invalid command '{0}'".format(cmd))
             del cmds[cmds.index(cmd)]
             continue
-        descs.append(desc)
-    if not descs or not cmds:
-        add_global_arguments(parser)
+        defis.append(defi)
+    if not defis or not cmds:
         return
-    metavar = '[' + ' | '.join(cmds) + ']'
+    public_cmds = [c for c in cmds if not c.startswith("_")]
+    metavar = '[' + ' | '.join(public_cmds) + ']'
     subparser = parser.add_subparsers(
         title='commands',
         metavar=metavar,
-        description='Call `xylem <command> -h` for help on a specific '
-                    'command.',
+        description="""Call `xylem <command> -h` for help on a specific
+        command.""",
         dest='cmd'
     )
-    for desc in descs:
-        cmd_parser = subparser.add_parser(desc['title'],
-                                          description=desc['description'])
-        cmd_parser = desc['prepare_arguments'](cmd_parser) or cmd_parser
-        cmd_parser.set_defaults(func=desc['main'])
-        add_global_arguments(cmd_parser)
+    for defi in defis:
+        create_command_parser(defi, subparser.add_parser, parser_title=True)
 
 
+# FIXME: Merge with help message somehow and decide when to print
 def print_usage():
     info("xylem is a package manager abstraction tool.")
     info("")
@@ -90,23 +119,28 @@ def print_usage():
 def main(sysargs=None):
     parser = argparse.ArgumentParser(
         description="xylem is a package manager abstraction tool.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        add_help=False,
+        formatter_class=ConfigHelpFormatter
     )
+    add_config_arguments(parser)
     add_global_arguments(parser)
 
     cmds = list_commands()
-
     create_subparsers(parser, cmds)
 
     args = parser.parse_args(sysargs)
     handle_global_arguments(args)
+    handle_config_arguments(args)
 
+    # FIXME: the following logic and error handling
     try:
         args.func
-    except AttributeError:
-        print_usage()
-        return
+        result = args.func(args)
+#    except AttributeError:
+#        print_usage()
+#        return
     except (KeyboardInterrupt, EOFError):
         info('')
         sys.exit(1)
-    sys.exit(args.func(args) or 0)
+    sys.stdout.write(ansi('reset'))
+    sys.exit(result or 0)

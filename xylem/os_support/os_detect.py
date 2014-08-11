@@ -29,6 +29,9 @@ import platform
 import locale
 import codecs
 
+from ..exception import XylemError
+
+
 def _read_stdout(cmd):
     try:
         pop = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -55,7 +58,7 @@ def read_issue(filename="/etc/issue"):
             return f.read().split()
     return None
 
-class OsNotDetected(Exception):
+class OsNotDetected(XylemError):
     """
     Exception to indicate failure to detect operating system.
     """
@@ -411,7 +414,7 @@ class OsDetect(object):
     def detect_os(self, env=None):
         """
         Detect operating system.  Return value can be overridden by
-        the :env:`ROS_OS_OVERRIDE` environment variable.
+        the ``ROS_OS_OVERRIDE`` environment variable.
 
         :param env: override ``os.environ``
         :returns: (os_name, os_version, os_codename), ``(str, str, str)``

@@ -21,7 +21,7 @@ from copy import deepcopy
 
 from xylem.specs.plugins.rules import expand_rules
 from xylem.specs.plugins.rules import compact_rules
-from xylem.util import load_yaml
+from xylem.yaml_utils import load_yaml
 
 
 _default_installers = dict(

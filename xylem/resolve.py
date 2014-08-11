@@ -19,27 +19,23 @@ from .sources import RulesDatabase
 from .installers import InstallerContext
 
 from .log_utils import debug
+from .config import get_config
 
 
-def resolve(xylem_keys, prefix=None, os_override=None, all_keys=False):
+def resolve(xylem_keys, all_keys=False, config=None, sources_context=None,
+            installer_context=None):
+    if config is None:
+        config = get_config()
+    sources_context = sources_context or SourcesContext(config)
+    ic = installer_context or InstallerContext(config)
 
     # xylem_keys can be one key or list of keys, return value accordingly
-
-    sources_context = SourcesContext(prefix=prefix)
-
     database = RulesDatabase(sources_context)
     database.load_from_cache()
 
-    if isinstance(os_override, InstallerContext):
-        ic = os_override
-    else:
-        ic = InstallerContext(os_override=os_override)
-
     list_argument = isinstance(xylem_keys, list)
-
     if not list_argument:
         xylem_keys = [xylem_keys]
-
     requested_keys = list(xylem_keys)
 
     if all_keys:
@@ -48,15 +44,11 @@ def resolve(xylem_keys, prefix=None, os_override=None, all_keys=False):
         xylem_keys = set(xylem_keys)
 
     result = []
-
     for key in xylem_keys:
-
         installer_dict = database.lookup(key, ic)
-
         if not installer_dict:
             raise LookupError("Could not find rule for xylem key '{0}' on "
                               "'{1}'.".format(key, ic.get_os_string()))
-
         rules = []
         for installer_name, rule in installer_dict.items():
             priority = ic.get_installer_priority(installer_name)
@@ -73,7 +65,6 @@ def resolve(xylem_keys, prefix=None, os_override=None, all_keys=False):
 
             # TODO: use installer instead of installer_name here?
             rules.append((priority, installer_name, resolutions))
-
         if not rules:
             # This means we have rules, but non for registered
             # installers, ignore this key unless it is in the requested
@@ -96,12 +87,10 @@ def resolve(xylem_keys, prefix=None, os_override=None, all_keys=False):
         else:
             rules.sort(reverse=True)
             result.append((key, rules))
-
     if not list_argument:
         assert(len(result) == 1)
         key, resolution = result[0]
         result = resolution
     else:
         result = sorted(result)
-
     return result

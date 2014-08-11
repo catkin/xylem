@@ -16,17 +16,22 @@ from __future__ import unicode_literals
 
 import pkg_resources
 
-from xylem.os_support import OSSupport
-from xylem.exception import InvalidPluginError
-from xylem.log_utils import info, warning, is_verbose
-from xylem.text_utils import text_type
 from six.moves import map
+
+from ..os_support import OSSupport
+from ..exception import InvalidPluginError
+from ..log_utils import info, warning, is_verbose
+from ..text_utils import text_type
+from ..config import get_config
 
 
 INSTALLER_GROUP = "xylem.installers"
 
 
 # TODO: split out verify installer plugin function
+
+
+# TODO: fix docstrings
 
 
 def load_installer_plugin(entry_point):
@@ -88,20 +93,18 @@ class InstallerContext(object):
     priorities.
     """
 
-    # TODO: Make parameters for passing os/version pair more uniform
+    def __init__(self, config=None, setup_installers=True):
 
-    def __init__(self, setup_installers=True, os_override=None):
+        if config is None:
+            config = get_config()
 
-        if isinstance(os_override, OSSupport):
-            self.os_support = os_override
+        self.os_support = OSSupport()
+        if config.os_override:
+            self.set_os_override(config.os_override)
         else:
-            self.os_support = OSSupport()
-            if os_override:
-                self.set_os_override(os_override)
-            else:
-                self.os_support.detect_os()
-                if is_verbose():
-                    info("detected OS [%s:%s]" % self.get_os_tuple())
+            self.os_support.detect_os()
+            if is_verbose():
+                info("detected OS [%s]" % self.get_os_string())
 
         self.installer_plugins = get_installer_plugin_list()
 
@@ -122,6 +125,8 @@ class InstallerContext(object):
         if is_verbose():
             info("overriding OS to [%s:%s]" % os_tuple)
         self.os_support.override_os(os_tuple)
+        if is_verbose() and os_tuple[1] is None:
+            info("detected OS version [%s]" % self.get_os_string())
 
     def get_os_tuple(self):
         """Get the OS (name,version) tuple.

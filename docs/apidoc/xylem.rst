@@ -15,6 +15,30 @@ Subpackages
 Submodules
 ----------
 
+xylem.arguments module
+----------------------
+
+.. automodule:: xylem.arguments
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+xylem.config module
+-------------------
+
+.. automodule:: xylem.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+xylem.config_utils module
+-------------------------
+
+.. automodule:: xylem.config_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 xylem.exception module
 ----------------------
 

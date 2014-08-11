@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 # http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
 
 # see: http://reinout.vanrees.org/weblog/2009/12/17/managing-dependencies.html
-tests_require = ['nose', 'flake8', 'mock', 'coverage']
+tests_require = ['nose', 'flake8', 'mock', 'coverage', 'testfixtures']
 
 setup(
     name='xylem',

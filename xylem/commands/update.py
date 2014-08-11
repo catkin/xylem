@@ -14,42 +14,36 @@
 
 from __future__ import unicode_literals
 
-import argparse
 import sys
 
-from xylem.log_utils import info
+from ..update import update
+from ..log_utils import info
+from .main import command_handle_args
 
-from xylem.update import update
-
-from xylem.util import add_global_arguments
-from xylem.util import handle_global_arguments
 
 DESCRIPTION = """\
 Updates the xylem cache according to the source config files.
 
-If no source config files are found under the current XYLEM_PREFIX, at
-<prefix>/etc/xylem/sources.list.d, then the default, internal source
-configs are used. The cache is always stored under the XYLEM_PREFIX in
-the <prefix>/var/caches/xylem directory.
+Location for sources files and cache are determined from the
+configuration.
 """
 
 
 def prepare_arguments(parser):
+    # TODO: do we need this `--dry-run` argument? What about consistency
+    # with `install --simulate`
     parser.add_argument('-n', '--dry-run', action='store_true', default=False,
-                        help="Shows affect of an update only")
+                        help="shows affect of an update only")
+
+
+def prepare_config(description):
+    pass
 
 
 def main(args=None):
-    if args is None:
-        parser = argparse.ArgumentParser(
-            description=DESCRIPTION
-        )
-        prepare_arguments(parser)
-        add_global_arguments(parser)
-        args = parser.parse_args()
-        handle_global_arguments(args)
+    args = command_handle_args(args, definition)
     try:
-        update(prefix=args.prefix, dry_run=args.dry_run)
+        update(dry_run=args.dry_run)
     except (KeyboardInterrupt, EOFError):
         info('')
         sys.exit(1)
@@ -60,5 +54,6 @@ definition = dict(
     title='update',
     description=DESCRIPTION,
     main=main,
-    prepare_arguments=prepare_arguments
+    prepare_arguments=prepare_arguments,
+    prepare_config=prepare_config
 )

@@ -26,6 +26,7 @@ from ..log_utils import error
 from ..log_utils import warning
 from ..log_utils import info
 from ..log_utils import is_verbose
+from ..log_utils import debug
 from .impl import get_default_source_descriptions
 from .impl import get_source_descriptions
 from ..text_utils import to_str
@@ -191,6 +192,9 @@ class RulesDatabase(object):
         self.raise_on_error = True
 
     def init_from_sources(self):
+        debug("initializing database with sources dir `{}` and cache dir `{}`".
+              format(self.sources_context.sources_dir,
+                     self.sources_context.cache_dir))
         self.sources = []
         sources_dir = self.sources_context.sources_dir
         sources_gen = get_source_descriptions(sources_dir)

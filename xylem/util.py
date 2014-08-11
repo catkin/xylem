@@ -17,21 +17,16 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import argparse
 import os
 import shutil
 import sys
 import tempfile
 import six
-import yaml
 import subprocess
 
 from six import StringIO
 
-from . import DEFAULT_PREFIX
 from .text_utils import to_str
-from .log_utils import enable_debug, enable_verbose
-from .terminal_color import disable_ANSI_colors
 
 
 class change_directory(object):
@@ -100,47 +95,22 @@ def raise_from(exc_type, exc_args, from_exc):
         raise exc
 
 
-def add_global_arguments(parser):
-    from xylem import __version__
-    group = parser.add_argument_group('global', description="""\
-The XYLEM_PREFIX environment variable sets the path under which xylem
-operates on source configurations and caches, which can be overwritten
-by the --prefix argument. If set, the XYLEM_DEBUG environment variable
-enables debug messages.""")
-    add = group.add_argument
-    add('-d', '--debug', help='enable debug messages',
-        action='store_true', default=False)
-    add('--pdb', help=argparse.SUPPRESS,
-        action='store_true', default=False)
-    add('--version', action='version', version=__version__,
-        help="prints the xylem version")
-    add('-v', '--verbose', action='store_true', default=False,
-        help="verbose console output")
-    add('--no-color', action='store_true', default=False,
-        dest='no_color', help=argparse.SUPPRESS)
-    add('-p', '--prefix', metavar='XYLEM_PREFIX',
-        default=os.environ.get('XYLEM_PREFIX', DEFAULT_PREFIX),
-        help="Sets the prefix for finding configs and caches. "
-             "The default is either '/' or, if set, the XYLEM_PREFIX "
-             "environment variable.")
-    return parser
+# TODO: document this soft dependency on pygments, and also add unit
+# test for printing exceptions with and without pygments
+
 
 _pdb = False
 
 
-def handle_global_arguments(args):
+def enable_pdb(pdb=True):
     global _pdb
-    enable_debug(args.debug or 'XYLEM_DEBUG' in os.environ)
-    _pdb = args.pdb
-    args.prefix = os.path.expanduser(args.prefix)
-    if args.verbose:
-        enable_verbose()
-    if args.no_color:
-        disable_ANSI_colors()
+    _pdb = pdb
 
 
-# TODO: document this soft dependency on pygments, and also add unit
-# test for printing exceptions with and without pygments
+def pdb_enabled():
+    global _pdb
+    return _pdb
+
 
 def print_exc(formated_exc):
     exc_str = ''.join(formated_exc)
@@ -157,11 +127,10 @@ def print_exc(formated_exc):
 
 
 def custom_exception_handler(type, value, tb):
-    global _pdb
     # Print traceback
     import traceback
     print_exc(traceback.format_exception(type, value, tb))
-    if not _pdb or hasattr(sys, 'ps1') or not sys.stderr.isatty():
+    if not pdb_enabled() or hasattr(sys, 'ps1') or not sys.stderr.isatty():
         pass
     else:
         # ...then start the debugger in post-mortem mode.
@@ -173,8 +142,7 @@ sys.excepthook = custom_exception_handler
 
 
 def pdb_hook():
-    global _pdb
-    if _pdb:
+    if pdb_enabled():
         import pdb
         pdb.set_trace()
 
@@ -183,58 +151,6 @@ def create_temporary_directory(prefix_dir=None):
     """Create a temporary directory and return its location."""
     from tempfile import mkdtemp
     return mkdtemp(prefix='xylem_', dir=prefix_dir)
-
-
-# use this utility function throughout to make sure the custom
-# constructors for unicode handling are loaded
-def load_yaml(data):
-    """Parse a unicode string containing yaml.
-
-    This calls ``yaml.load(data)`` but makes sure unicode is handled correctly.
-
-    See :func:`yaml.load`.
-
-    :raises yaml.YAMLError: if parsing fails"""
-
-    class MyLoader(yaml.SafeLoader):
-        def construct_yaml_str(self, node):
-            # Override the default string handling function
-            # to always return unicode objects
-            return self.construct_scalar(node)
-
-    MyLoader.add_constructor(
-        'tag:yaml.org,2002:str', MyLoader.construct_yaml_str)
-
-    return yaml.load(data, Loader=MyLoader)
-
-
-def dump_yaml(data, inline=False):
-    """Dump data to unicode string."""
-
-    class MyDumper(yaml.SafeDumper):
-        def ignore_aliases(self, _data):
-            return True
-
-        def represent_sequence(self, tag, data, flow_style=False):
-            # represent lists inline
-            return yaml.SafeDumper.represent_sequence(
-                self, tag, data, flow_style=True)
-
-        def represent_none(self, data):
-            return self.represent_scalar('tag:yaml.org,2002:null', '')
-
-    MyDumper.add_representer(type(None), MyDumper.represent_none)
-
-    result = yaml.dump(data,
-                       Dumper=MyDumper,
-                       # TODO: use this for inline==True ??
-                       # default_style=None,
-                       default_flow_style=False,
-                       allow_unicode=True,
-                       indent=2,
-                       width=10000000)
-
-    return result
 
 
 def read_stdout(cmd):

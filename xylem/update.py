@@ -14,17 +14,14 @@
 
 # TODO: update docstrings
 
-"""Implements the update functionality.
-
-This includes the functions to collect and process source files. Part of
-this process is to load and run the spec parser, which are given by name
-in the source files.
-"""
+"""Implements the update functionality."""
 
 from __future__ import unicode_literals
 
 from .sources import SourcesContext
 from .sources import RulesDatabase
+
+from .config import get_config
 
 
 # TODO: remove handle_spec_urls (move some logic into the accoring
@@ -61,21 +58,26 @@ from .sources import RulesDatabase
 #     return rules_dict_list
 
 
-def update(prefix=None, dry_run=False):
+def update(dry_run=False, config=None, sources_context=None):
     """Update the xylem cache.
 
     If the prefix is set then the source lists are searched for in the
     prefix. If the prefix is not set (None) or the source lists are not
     found in the prefix, then the default, builtin source list is used.
 
-    :param prefix: The config and cache prefix, usually '/' or someother
-        prefix
-    :type prefix: :py:obj:`str` or :py:obj:`None`
-    :param dry_run: If True, then no actual action is taken, only
+    :param bool dry_run: if `True`, then no actual action is taken, only
         pretend to
-    :type dry_run: bool
+    :param config: config dict to create source context with; if `None`
+        is passed, use global configuration
+    :type config: `dict` or `None`
+    :param sources_context: the sources context to be used to
+        instantiate the rules database; if `None` is passed, a sources
+        context from ``config`` is created
+    :type sources_context: `SourcesContext` or `None`
     """
-    sources_context = SourcesContext(prefix=prefix)
+    if config is None:
+        config = get_config()
+    sources_context = sources_context or SourcesContext(config)
     sources_context.ensure_cache_dir()
     database = RulesDatabase(sources_context)
     database.print_info = True
