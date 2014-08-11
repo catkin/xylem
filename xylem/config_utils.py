@@ -64,7 +64,7 @@ Example usage:
     # add argument groups and some global config-related arguments that
     # are independent from the description
     group = parser.add_argument_group('global arguments')
-    add_global_config_arguments(group, "footool")
+    add_global_config_arguments(group, TOOL_NAME)
 
     # parse command line arguments
     args = parser.parse_args()
@@ -96,6 +96,7 @@ import os
 import argparse
 import textwrap
 import re
+import sys
 
 from copy import deepcopy
 from yaml import YAMLError
@@ -302,7 +303,7 @@ class ConfigHelpFormatter(argparse.HelpFormatter):
         for para in self._paragraph_break_matcher.split(text):
             if self._raw_marker_matcher.match(para):
                 para = self._raw_marker_matcher.sub(
-                    lambda m: ' '*(m.end()-m.start()), para)
+                    lambda m: ' ' * (m.end() - m.start()), para)
                 para = textwrap.dedent(para).splitlines()
                 result.extend([indent + l for l in para])
             else:
@@ -1022,7 +1023,7 @@ def handle_global_config_arguments_post(args, config, tool_name):
     """
     if args.print_config:
         info(dump_yaml(config))
-        exit(0)
+        sys.exit(0)
 
 
 def copy_conifg_dict(description, config):

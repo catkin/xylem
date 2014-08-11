@@ -38,9 +38,23 @@ priorities.
 """
 
 
+# TODO: Abstract a way to add all arguments related to passing a list of
+#       xylem keys to verbs. This is then also how the planned "frontend
+#       plugins" hook into (for example the ros-package parsing
+#       frontend, e.g. crawling a workspace folder with packages)
+
+
 def prepare_arguments(parser):
     add = parser.add_argument
-    add('xylem_key', nargs="*")
+    # For now we make xylem_key required. The `--all` option is just
+    # experimental and for debugging. I'm don't think there is a good
+    # reason to not remove `--all` eventually. A unified concept for all
+    # verbs taking "xylem_keys" as arguments is still TODO, but
+    # something to add instead of `--all` might be allowing wildcards in
+    # keys. I.e. what is now `--all` would then be `*`, but more
+    # sophisticated uses are possible, e.g. `xylem resolve python-*`. We
+    # have to check how this interferes with bash-globbing.
+    add('xylem_key', nargs="+")
     add('--all', action="store_true",
         help="Resolve all keys with resolution for this OS.")
     add('--show-trumped', action="store_true",
@@ -50,7 +64,6 @@ def prepare_arguments(parser):
         help="Show installer even if it is the default installer.")
     # TODO: add 'show-depends' option
 
-# TODO: abstract a way to
 
 
 def prepare_config(description):
