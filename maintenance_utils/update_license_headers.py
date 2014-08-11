@@ -3,6 +3,8 @@
 # Run in root of xylem directory to add / update the license header in
 # all python files
 
+# TODO: support updating the header but retaining the year, possibly based on file edit date-time
+
 import argparse
 import os
 import re
@@ -33,12 +35,14 @@ def process_args(args):
 
 
 def replace_headers(args):
-
+    count = 0
     for path in args.path:
-        replace_headers_recursive(path, args)
+        count += replace_headers_recursive(path, args)
+    return count
 
 
 def replace_headers_recursive(path, args):
+    count = 0
     if os.path.islink(path):
         if args.verbose:
             print("%s -- ignoring symbolic link" % path)
@@ -46,7 +50,7 @@ def replace_headers_recursive(path, args):
         filename = os.path.basename(path)
         if args.matching.match(filename):
             if not args.except_matching.match(filename):
-                replace_headers_file(path, args)
+                count += replace_headers_file(path, args)
             else:
                 if args.verbose:
                     print("%s -- ignoring excluded filename" % path)
@@ -61,13 +65,15 @@ def replace_headers_recursive(path, args):
             if args.verbose:
                 print("%s -- descending into directory" % path)
             for p in os.listdir(path):
-                replace_headers_recursive(os.path.join(path, p), args)
+                count += replace_headers_recursive(os.path.join(path, p), args)
     else:
         if args.verbose:
             print("%s -- ignoring unknown directory entry" % path)
+    return count
 
 
 def replace_headers_file(path, args):
+    count = 0
     content = read_file(path)
     if args.except_content.search(content):
         if args.verbose:
@@ -80,7 +86,8 @@ def replace_headers_file(path, args):
             else:
                 print("%s -- replacing old header" % path)
                 content = content[:match.start()] + args.license_header + content[match.end():]
-                if not args.simulate:
+                count += 1
+                if args.write:
                     write_file(path, content)
         else:
             lines = content.splitlines(True)
@@ -93,8 +100,10 @@ def replace_headers_file(path, args):
             else:
                 print("%s -- inserting new header at the beginning of file" % path)
                 insert_header(lines, 0, args.license_header)
-            if not args.simulate:
+            count += 1
+            if args.write:
                 write_file(path, "".join(lines))
+    return count
 
 
 def insert_header(lines, index, header):
@@ -136,8 +145,8 @@ over '--matching'. May be passed multiple times.")
     add("--except-content", action="append",
         help="Multiline regular expression matching file content. If it \
 matches, file is ignored. May be passed multiple times.")
-    add("--simulate", "-s", action="store_true",
-        help="If passed, no files are written.")
+    add("--write", "-w", action="store_true",
+        help="If not passed, no files are actually modified.")
     add("--verbose", "-v", action="store_true",
         help="If passed, verbose output on ignored files and folders.")
 
@@ -152,7 +161,16 @@ matches, file is ignored. May be passed multiple times.")
 
     process_args(args)
 
-    replace_headers(args)
+    count = replace_headers(args)
+
+    if count == 0:
+        print("Did not need to update any files.")
+    else:
+        if args.write:
+            print("Updated %s files." % count)
+        else:
+            print("Would have updated %s files. Run again with `-w` to "
+                  "actually update the files." % count)
 
 
 if __name__ == "__main__":
