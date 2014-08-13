@@ -107,6 +107,9 @@ def build_config_description():
         command_line=True,
         help="""if `True`, use additional installers as defined by
                 installer plugins on top of the core installers""")
+    # TODO: maybe use something like MergingDict(List(String,
+    # allow_single=True)) to allow `install-from "pip: foo"` instead of
+    # `install-from "pip: [foo]" as needed currently
     add("install_from", type=MergingDict(List(String)),
         command_line_metavar='"inst1:[key1,key2,...] ..."',
         help="""mapping installer names to list of xylem keys;
@@ -128,13 +131,13 @@ def build_config_description():
         help="""override the sources directory""")
     add("disabled_plugins/os", type=List(String), default=[],
         command_line_argument="disable-os-plugins",
-        help="""of disabled plugin names""")
+        help="""disabled os plugin names""")
     add("disabled_plugins/installer", type=List(String), default=[],
         command_line_argument="disable-installer-plugins",
-        help="""disabled plugin names""")
+        help="""disabled installer plugin names""")
     add("disabled_plugins/spec", type=List(String), default=[],
         command_line_argument="disable-spec-plugins",
-        help="""disabled plugin names""")
+        help="""disabled spec plugin names""")
     return description
 
 
