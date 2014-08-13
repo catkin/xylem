@@ -14,12 +14,30 @@
 
 from __future__ import unicode_literals
 
-from xylem.sources import SourcesContext
-from xylem.sources import RulesDatabase
-from xylem.installers import InstallerContext
+import six
 
-from xylem.log_utils import debug
-from xylem.config import get_config
+from xylem.config import ensure_config
+
+from xylem.installers import ensure_installer_context
+from xylem.installers import InstallerError
+
+from xylem.sources import RulesDatabase
+from xylem.sources import ensure_sources_context
+
+from xylem.text_utils import to_str
+
+from xylem.log_utils import error
+from xylem.log_utils import info_v
+
+from xylem.exception import chain_exception
+from xylem.exception import XylemError
+
+from xylem.util import remove_duplicates
+
+
+class ResolutionError(XylemError):
+
+    """Exception for failed resolution of keys."""
 
 
 def resolve(xylem_keys,
@@ -28,66 +46,123 @@ def resolve(xylem_keys,
             database=None,
             sources_context=None,
             installer_context=None):
+    """TODO"""
+
     #  1. Prepare config and contexts and load database
-    if config is None:
-        config = get_config()
-    ic = installer_context or InstallerContext(config=config)
+    config = ensure_config(config)
+    ic = ensure_installer_context(installer_context, config)
     del installer_context  # don't use further down, use `ic` only
     if not database:
-        sources_context = sources_context or SourcesContext(config=config)
+        sources_context = ensure_sources_context(sources_context, config)
         database = RulesDatabase(sources_context)
         database.load_from_cache()
     del sources_context  # don't use further down, use `database` only
 
     #  2. Prepare set of keys to look up
     if all_keys:
-        lookup_keys = set(xylem_keys + database.keys(ic))
+        lookup_keys = remove_duplicates(xylem_keys + sorted(database.keys(ic)))
     else:
-        lookup_keys = set(xylem_keys)  # copy
+        lookup_keys = remove_duplicates(xylem_keys)
 
     result = []
-    for key in lookup_keys:
-        installer_dict = database.lookup(key, ic)
-        if not installer_dict:
-            raise LookupError("Could not find rule for xylem key '{0}' on "
-                              "'{1}'.".format(key, ic.get_os_string()))
-        rules = []
-        for installer in ic.get_installers():
-            if installer.name in installer_dict:
-                resolutions = installer.resolve(installer_dict[installer.name])
-                rules.append((installer.name, resolutions))
+    errors = []
 
-        # TODO: check installers in installer dict that are not configured
-        # debug("Ignoring installer '{0}' for resolution of '{1}' "
-        #      "because it is not registered for '{2}'".
-        #       format(installer_name, key, ic.get_os_string()))
-
-            # TODO: use installer instead of installer_name here?
-        if not rules:
-            # This means we have rules, but non for registered
-            # installers, ignore this key unless it is in the requested
-            # list of keys
-            msg = "Could not find rule for xylem key '{0}' on '{1}' for " \
-                  "installers '{2}'. Found rules for unconfigured " \
-                  "installers '{3}'.". \
-                  format(key, ic.get_os_string(),
-                         ", ".join(ic.get_installer_names()),
-                         ", ".join(installer_dict.keys()))
-            # TODO: what happens when dependency fails to resolve?
-            if key in xylem_keys:
-                raise LookupError(msg)
+    # 3. Create an inverse install-from mapping
+    # TODO: maybe allow pattern matching here like
+    #       `install-from "pip: python-*"`
+    install_from_map = dict()
+    for inst, keys in six.iteritems(config.install_from):
+        for k in keys:
+            if k in install_from_map:
+                error("ignoring 'install from {}' for key '{}'; "
+                      "already configured to install from '{}'".
+                      format(inst, k, install_from_map[k]))
             else:
-                debug(msg + " Ignoring from 'all' keys.")
+                install_from_map[k] = inst
+
+    # 4. Resolve each key
+    for key in lookup_keys:
+
+        # 4.1.  Lookup key in the database
+        try:
+            installer_dict = database.lookup(key, ic)
+            if not installer_dict:
+                errors.append((key, ResolutionError(
+                    "could not find rule for xylem key '{}' on '{}'.".
+                    format(key, ic.get_os_string()))))
+                continue
+        except LookupError as e:
+            errors.append((key, chain_exception(
+                ResolutionError, "lookup for key '{}' failed".format(key), e)))
+            continue
+
+        # 4.2.  Decide which installer to use
+        if key in install_from_map:
+            inst_name = install_from_map[key]
+            if not ic.lookup_installer(inst_name):
+                errors.append((key, ResolutionError(
+                    "explicitly requested to install '{}' from '{}', but that "
+                    "installer is not loaded".format(key, inst_name))))
+                continue
+            if inst_name not in installer_dict:
+                errors.append((key, ResolutionError(
+                    "explicitly requested to install '{}' from '{}', but no "
+                    "rule for that installer was found; found rules for "
+                    "installers: `{}`".
+                    format(key, inst_name, to_str(installer_dict.keys())))))
+                continue
+            info_v("found rule for key '{}' for explicitly requested "
+                   "installer '{}'".format(key, inst_name))
+            rule = installer_dict[inst_name]
+            installer = ic.lookup_installer(inst_name)
         else:
-            result.append((key, rules))
-    result = sorted(result)
-    return result
+            installer = None
+            for inst in ic.core_installers:
+                if inst.name in installer_dict:
+                    info_v("found rule for key '{}' for core installer '{}'".
+                           format(key, inst.name))
+                    rule = installer_dict[inst.name]
+                    installer = inst
+                    break
+            if installer is None:
+                for inst in ic.additional_installers:
+                    if inst.name in installer_dict:
+                        info_v("found rule for key '{}' for additional "
+                               "installer '{}'".format(key, inst.name))
+                        rule = installer_dict[inst.name]
+                        installer = inst
+            if installer is None:
+                errors.append((key, ResolutionError(
+                    "did not find rule for key '{}' for neither core "
+                    "installers '{}' nor additional installers '{}'; rules "
+                    "found for installers: '{}'".
+                    format(key,
+                           to_str(ic.core_installer_names),
+                           to_str(ic.additional_installer_names),
+                           to_str(installer_dict.keys())))))
+                continue
+
+        # 4.3.  Resolve with determined installer
+        try:
+            resolutions = installer.resolve(rule)
+        except InstallerError as e:
+            errors.append((key, chain_exception(
+                ResolutionError,
+                "failed to resolve with installer '{}'".format(installer.name),
+                e)))
+        else:
+            result.append((key, (installer.name, resolutions)))
+
+    return result, errors
 
 
 # TODO: do dependency resolution here
-# TODO: use that to determine flattened tree
-# TODO: return and display dependencies
-# TODO: don't raise LookupError, but collect and return
 
+# TODO: use that to determine flattened tree
+
+# TODO: return and display dependencies in output of `resolve` command
+
+# TODO: deal with resolution objects of the same package, but different
+#       options (version, apt-repositories, formula options, etc)
 
 # def resolve_one(xylem_key, installers, )
