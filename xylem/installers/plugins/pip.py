@@ -57,18 +57,18 @@ class PipInstaller(PackageManagerInstaller):
         return True
 
     def get_install_commands_no_root(self,
-                                     resolved,
+                                     resolutions,
                                      interactive,
                                      reinstall):
         # TODO: reinstall
         if reinstall:
             warning("reinstall not implemented for installer 'pip'")
-        return [["pip", "install", "-U", item.package] for item in resolved]
+        return [["pip", "install", "-U", item.package] for item in resolutions]
 
-    def filter_uninstalled(self, resolved):
+    def filter_uninstalled(self, resolutions):
         installed = read_stdout(['pip', 'freeze']).split('\n')
         installed = set(row.split("==")[0] for row in installed)
-        return [r for r in resolved if r.package not in installed]
+        return [r for r in resolutions if r.package not in installed]
 
     def install_package_manager(self, os_tuple):
         # TODO: use get_pip or maybe apt on ubuntu to install pip

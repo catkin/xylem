@@ -52,18 +52,18 @@ class GemInstaller(PackageManagerInstaller):
         return True
 
     def get_install_commands_no_root(self,
-                                     resolved,
+                                     resolutions,
                                      interactive,
                                      reinstall):
         # TODO: reinstall
         if reinstall:
             warning("reinstall not implemented for installer 'gem'")
-        return [["gem", "install", item.package] for item in resolved]
+        return [["gem", "install", item.package] for item in resolutions]
 
-    def filter_uninstalled(self, resolved):
+    def filter_uninstalled(self, resolutions):
         installed = read_stdout(['gem', 'list']).split('\n')
         installed = set(row.split(" ")[0] for row in installed)
-        return [r for r in resolved if r.package not in installed]
+        return [r for r in resolutions if r.package not in installed]
 
     def install_package_manager(self, os_tuple):
         # TODO: install gem if not present or notify user that something

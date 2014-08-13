@@ -47,15 +47,15 @@ class HomebrewInstaller(PackageManagerInstaller):
         return HOMEBREW_INSTALLER
 
     def get_install_commands_no_root(self,
-                                     resolved,
+                                     resolutions,
                                      interactive,
                                      reinstall):
         # FIXME
-        return [["brew", "install", item.package] for item in resolved]
+        return [["brew", "install", item.package] for item in resolutions]
 
-    def filter_uninstalled(self, resolved):
+    def filter_uninstalled(self, resolutions):
         # FIXME
-        return resolved
+        return resolutions
 
     def install_package_manager(self, os_tuple):
         # TODO: install brew with ruby

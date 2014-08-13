@@ -78,14 +78,14 @@ class FakeInstaller(PackageManagerInstaller):
         return self.options.fake_name or FAKE_INSTALLER_DEFAULT_NAME
 
     def get_install_commands_no_root(self,
-                                     resolved,
+                                     resolutions,
                                      interactive,
                                      reinstall):
         return [["touch", self.get_installer_filename(item.package)] for
-                item in resolved]
+                item in resolutions]
 
-    def filter_uninstalled(self, resolved):
-        return [r for r in resolved
+    def filter_uninstalled(self, resolutions):
+        return [r for r in resolutions
                 if not os.path.exists(self.get_installer_filename(r.package))]
 
     def is_package_manager_installed(self):
