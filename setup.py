@@ -66,6 +66,7 @@ setup(
             'update = xylem.commands.update:definition',
             'resolve = xylem.commands.resolve:definition',
             'lookup = xylem.commands.lookup:definition',
+            'install = xylem.commands.install:definition',
             '_compact_rules_file = xylem.commands._compact_rules_file:definition',
         ],
         'xylem.specs': [
