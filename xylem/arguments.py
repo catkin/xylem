@@ -34,6 +34,11 @@ from xylem.log_utils import enable_debug
 from xylem.terminal_color import disable_ANSI_colors
 
 
+# TODO: update the help output such that the usage line does not include
+#       global and config arguments for improved readability. Maybe just
+#       add them as `usage: xylem ... [CONFIG_OPTIONS] [GLOBAL_OPTIONS]`
+
+
 class PagerHelpAction(argparse._HelpAction):
 
     """Custom help action that uses pydoc.pager.
