@@ -23,6 +23,7 @@ from __future__ import unicode_literals
 import six
 import traceback
 
+from six.moves import map
 
 text_type = six.text_type
 
@@ -40,6 +41,10 @@ def to_str(obj, encoding='utf-8', errors='replace'):
         if string and string[-1] == '\n':
             string = string[:-1]
         return string
+    elif type(obj) is list and all(map(lambda x: isinstance(x, text_type),
+                                       obj)):
+        # avoid `[u"foo"]` in python2
+        return "[" + (", ".join(obj)) + "]"
     else:
         value = None
         if six.PY2:
