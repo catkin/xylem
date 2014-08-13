@@ -179,3 +179,12 @@ def is_program_installed(executable_name):
         return True
     except OSError:
         return False
+
+
+def remove_duplicates(seq):
+    """Remove duplicates for a list while preserving the order.
+
+    The first occurrence for each item is used.
+    """
+    items = set()
+    return [x for x in seq if not (x in items or items.add(x))]
