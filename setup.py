@@ -84,6 +84,7 @@ setup(
             'homebrew = xylem.installers.plugins.homebrew:definition',
             'macports = xylem.installers.plugins.macports:definition',
             'pip = xylem.installers.plugins.pip:definition',
+            'gem = xylem.installers.plugins.gem:definition',
         ],
     }
 )

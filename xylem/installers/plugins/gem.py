@@ -12,12 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Installer plugin for pip.
+"""Installer plugin for ruby gem.
 
 %s
-
-:var definition: definition of the installer plugin to be referenced
-    by the according entry point
 """
 
 from __future__ import unicode_literals
@@ -30,27 +27,25 @@ from xylem.log_utils import warning
 
 
 DESCRIPTION = """\
-This is a installer plugin for the pip python package manager.
-
-See https://pypi.python.org/pypi/pip
+This is a installer plugin for the gem ruby package manager.
 """
 
 __doc__ %= format(DESCRIPTION)
 
-PIP_INSTALLER = 'pip'
+GEM_INSTALLER = 'gem'
 
 
-class PipInstaller(PackageManagerInstaller):
+class GemInstaller(PackageManagerInstaller):
     """
-    Installer support for pip.
+    Installer support for ruby gem.
     """
 
     def __init__(self):
-        super(PipInstaller, self).__init__("pip")
+        super(GemInstaller, self).__init__("gem")
 
     @property
     def name(self):
-        return PIP_INSTALLER
+        return GEM_INSTALLER
 
     def use_as_additional_installer(self, os_tuple):
         # use everywhere
@@ -62,22 +57,23 @@ class PipInstaller(PackageManagerInstaller):
                                      reinstall):
         # TODO: reinstall
         if reinstall:
-            warning("reinstall not implemented for installer 'pip'")
-        return [["pip", "install", "-U", item.package] for item in resolved]
+            warning("reinstall not implemented for installer 'gem'")
+        return [["gem", "install", item.package] for item in resolved]
 
     def filter_uninstalled(self, resolved):
-        installed = read_stdout(['pip', 'freeze']).split('\n')
-        installed = set(row.split("==")[0] for row in installed)
+        installed = read_stdout(['gem', 'list']).split('\n')
+        installed = set(row.split(" ")[0] for row in installed)
         return [r for r in resolved if r.package not in installed]
 
     def install_package_manager(self, os_tuple):
-        # TODO: use get_pip or maybe apt on ubuntu to install pip
+        # TODO: install gem if not present or notify user that something
+        #       is wrong
         raise NotImplementedError()
 
 
 # This definition the installer to the plugin loader
 definition = dict(
-    plugin_name=PIP_INSTALLER,
+    plugin_name=GEM_INSTALLER,
     description=DESCRIPTION,
-    installer=PipInstaller
+    installer=GemInstaller
 )
