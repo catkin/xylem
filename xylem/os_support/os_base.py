@@ -23,6 +23,8 @@ from xylem.exception import raise_from
 
 from xylem.log_utils import warning
 
+from xylem.text_utils import to_str
+
 from xylem.config_utils import ConfigDescription
 from xylem.config_utils import ConfigValueError
 from xylem.config_utils import String
@@ -93,10 +95,10 @@ class OSBase(OS):
                        "'{}'".format(value, self.name), e)
         unused_keys = set(value.keys()) - set(self._options.keys())
         if unused_keys:
-            warning("Ignoring the following unknown options for os plugin "
-                    "'{}': {}. Known options are: {}.".
-                    format(self.name, ", ".join(unused_keys),
-                           ", ".join(self._options.keys())))
+            warning("ignoring the following unknown options for os plugin "
+                    "'{}': {} -- known options are: {}".
+                    format(self.name, to_str(list(unused_keys)),
+                           to_str(self._options.keys())))
 
     @property
     def name(self):

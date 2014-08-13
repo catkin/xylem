@@ -60,7 +60,7 @@ def read_issue(filename="/etc/issue"):
             return f.read().split()
     return None
 
-class OsNotDetected(object):
+class OsNotDetected(Exception):
     """
     Exception to indicate failure to detect operating system.
     """

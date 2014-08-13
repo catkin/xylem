@@ -90,12 +90,12 @@ class OS(PluginBase):
 
     @abc.abstractproperty
     def options(self):
-        """OS options such as active *features*."""
+        """Get OS options as `xylem.config_utils.ConfigDict`."""
         raise NotImplementedError()
 
     @options.setter
     def options(self, options):
-        """Set OS options such as active *features*."""
+        """Set OS options as `dict`."""
         raise NotImplementedError()
 
     @abc.abstractproperty
