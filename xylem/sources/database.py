@@ -34,6 +34,9 @@ from xylem.sources.rules_dict import verify_installer_dict
 from xylem.sources.rules_dict import merge_installer_dict
 
 
+# TODO: Docstrings for RulesSource and RulesDatabase
+
+
 def _id_string(unique_id):
     return hashlib.sha1(unique_id).hexdigest()
 
@@ -200,8 +203,8 @@ class RulesDatabase(object):
         sources_gen = get_source_descriptions(sources_dir)
         if sources_gen is None:
             if not self.sources_context.is_default_dirs():
-                warning("No configs found in configured source dir '{0}', "
-                        "using default sources.".format(sources_dir))
+                warning("no source files found in source dir '{0}'; "
+                        "using default sources".format(sources_dir))
             if is_verbose():
                 info("Loading default source urls")
             sources_gen = get_default_source_descriptions()
@@ -308,6 +311,7 @@ class RulesDatabase(object):
         """Return rules for xylem key in current os."""
         installer_dict = {}
         # TODO: merge the other way round
+        # TODO: catch errors down the line and wrap in meaningful LookupError
         for source in reversed(self.sources):
             new_rules = source.lookup(xylem_key, installer_context)
             merge_installer_dict(new_rules, installer_dict, None)
