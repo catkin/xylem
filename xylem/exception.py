@@ -111,7 +111,7 @@ def exc_to_str(exc, tb=False, limit=None, chain=True):
         link = "\n{}\n\n".format(cause_text)
     else:
         link = " --- {}\n".format(cause_text)
-    return link.join(result)
+    return link.join(result).rstrip("\n")
 
 
 def chain_exception(exc_type, exc_args, from_exc):
