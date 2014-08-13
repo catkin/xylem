@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+"""Installer plugin for homebrew.
+
 %s
 
 :var definition: definition of the installer plugin to be referenced
@@ -32,10 +33,14 @@ __doc__ %= format(DESCRIPTION)
 HOMEBREW_INSTALLER = 'homebrew'
 
 
+# TODO: implement 'tap' prerequisite
+
+
 class HomebrewInstaller(PackageManagerInstaller):
 
     def __init__(self):
         super(HomebrewInstaller, self).__init__("brew")
+        self.options_description.items["as_root"].default = False
 
     @property
     def name(self):

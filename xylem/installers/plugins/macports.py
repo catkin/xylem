@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+"""Installer plugin for macports.
+
 %s
 
 :var definition: definition of the installer plugin to be referenced

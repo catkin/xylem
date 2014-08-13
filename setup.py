@@ -79,6 +79,7 @@ setup(
         ],
         'xylem.installers': [
             'fake = xylem.installers.plugins.fake:definition',
+            'apt = xylem.installers.plugins.apt:definition',
             'homebrew = xylem.installers.plugins.homebrew:definition',
             'macports = xylem.installers.plugins.macports:definition',
             'pip = xylem.installers.plugins.pip:definition',
