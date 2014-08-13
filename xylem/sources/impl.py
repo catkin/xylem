@@ -28,6 +28,7 @@ from xylem.log_utils import info
 from xylem.yaml_utils import load_yaml
 from xylem.exception import raise_from
 from xylem.text_utils import to_str
+from xylem.text_utils import type_name
 from xylem.specs import verify_spec_name
 from xylem.specs import load_spec_plugins
 from xylem.exception import XylemError
@@ -238,3 +239,22 @@ class SourcesContext(object):
             if spec.name == spec_name:
                 return spec
         raise UnknownSpecError("Spec '{0}' unknown".format(spec_name))
+
+
+def ensure_sources_context(sources_context, config):
+    """Helper for processing ``sources_context`` arguments in public API.
+
+    Return sources context. If ``sources_context`` is none, create new
+    one using ``config``.
+
+    :param sources_context: `SourcesContext` or `None`
+    :param ConfigDict config: config dict to create sources context with
+    :rtype: `SourcesContext`
+    :raises ValueError: if ``config`` is invalid type
+    """
+    if sources_context is None:
+        return SourcesContext(config=config)
+    if isinstance(sources_context, SourcesContext):
+        return sources_context
+    raise ValueError("invalid sources context of type '{}'".
+                     format(type_name(config)))

@@ -31,6 +31,7 @@ from six.moves import map
 
 from xylem.config_utils import DEFAULT_PREFIX
 from xylem.config_utils import ConfigDescription
+from xylem.config_utils import ConfigDict
 from xylem.config_utils import String
 from xylem.config_utils import List
 from xylem.config_utils import Boolean
@@ -40,6 +41,7 @@ from xylem.config_utils import Any
 from xylem.config_utils import Path
 from xylem.config_utils import load_config
 from xylem.config_utils import config_from_defaults
+from xylem.config_utils import config_from_parsed_yaml
 from xylem.config_utils import system_config_dir
 from xylem.config_utils import system_cache_dir
 from xylem.config_utils import user_cache_dir
@@ -51,7 +53,8 @@ from xylem.config_utils import handle_global_config_arguments as \
 from xylem.config_utils import handle_global_config_arguments_post as \
     _handle_global_config_arguments_post
 
-from .text_utils import text_type
+from xylem.text_utils import text_type
+from xylem.text_utils import type_name
 
 
 def sources_dir(parent):
@@ -291,3 +294,25 @@ def process_config(config, args):
         config.os_override = (name, version)
         if features is not None:
             config.os_options.features = features
+
+
+def ensure_config(config):
+    """Helper for processing ``config`` arguments in public API.
+
+    If ``config`` is ``None``, return :func:`get_config`, if it is of
+    type `ConfigDict`, return as-is, if it is a regular `dict`, parse
+    combine with defaults from :func:`get_config_description` to return
+    a `ConfigDict`, and otherwise raise a `ValueError`.
+
+    :type config: `None` or `ConfigDict` or `dict`
+    :rtype: `ConfigDict`
+    :raises ValueError: if ``config`` is invalid type
+    """
+    if config is None:
+        return get_config()
+    if isinstance(config, ConfigDict):
+        return config
+    if isinstance(config, dict):
+        return config_from_parsed_yaml(
+            config, get_config_description(), use_defaults=True)
+    raise ValueError("invalid config of type '{}'".format(type_name(config)))

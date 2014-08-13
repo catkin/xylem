@@ -23,6 +23,7 @@ from xylem.config import get_config
 from xylem.plugin_utils import PluginBase
 from xylem.plugin_utils import load_plugins
 from xylem.exception import XylemError
+from xylem.text_utils import type_name
 
 # TODO: fix docstrings
 
@@ -397,3 +398,22 @@ class InstallerContext(object):
                     self.additional_installers.append(inst)
         info_v("Using additional installers: '{}'".format(
                ", ".join([i.name for i in self.additional_installers])))
+
+
+def ensure_installer_context(installer_context, config):
+    """Helper for processing ``installer_context`` arguments in public API.
+
+    Return installer context. If ``installer_context`` is none, create
+    new one using ``config``.
+
+    :param installer_context: `InstallerContext` or `None`
+    :param ConfigDict config: config dict to create installer context with
+    :rtype: `InstallerContext`
+    :raises ValueError: if ``config`` is invalid type
+    """
+    if installer_context is None:
+        return InstallerContext(config=config)
+    if isinstance(installer_context, InstallerContext):
+        return installer_context
+    raise ValueError("invalid installer context of type '{}'".
+                     format(type_name(config)))
