@@ -21,6 +21,7 @@ import pkg_resources
 from xylem.log_utils import error
 from xylem.log_utils import info
 from xylem.log_utils import ansi
+from xylem.log_utils import is_debug
 
 from xylem.arguments import add_global_arguments
 from xylem.arguments import handle_global_arguments
@@ -28,10 +29,16 @@ from xylem.arguments import handle_global_arguments
 from xylem.config import get_config_description
 from xylem.config import add_config_arguments
 from xylem.config import handle_config_arguments
+
 from xylem.config_utils import ConfigHelpFormatter
 
 from xylem.text_utils import type_name
 
+from xylem.exception import exc_to_str
+from xylem.exception import XylemError
+from xylem.exception import XylemInternalError
+
+from xylem.util import print_exc
 
 XYLEM_CMDS_GROUP = 'xylem.commands'
 
@@ -82,7 +89,7 @@ def create_subparsers(parser, cmds):
     for cmd in list(cmds):
         defi = load_command_definition(cmd)
         if defi is None:
-            info("Skipping invalid command '{0}'".format(cmd))
+            error("skipping invalid command '{0}'".format(cmd))
             del cmds[cmds.index(cmd)]
             continue
         defis.append(defi)
@@ -136,9 +143,12 @@ def main(sysargs=None):
     try:
         args.func
         result = args.func(args)
-#    except AttributeError:
-#        print_usage()
-#        return
+    except XylemError as e:
+        if is_debug() or isinstance(e, XylemInternalError):
+            print_exc(exc_to_str(e, tb=True, chain=True))
+        else:
+            error(exc_to_str(e, tb=False, chain=True))
+        sys.exit(1)
     except (KeyboardInterrupt, EOFError):
         info('')
         sys.exit(1)
