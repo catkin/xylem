@@ -42,6 +42,13 @@ class XylemError(Exception):
     """Common base class for all custom xylem exceptions."""
 
 
+class XylemInternalError(XylemError):
+
+    """Internal error which may be caused by a programming error."""
+
+    # TODO: custom error message indicating that a bug report should be filed
+
+
 def type_error_msg(expected_type_name, value, what_for=None):
     """Helper for exception error messages about wrong type."""
     if what_for:
@@ -107,6 +114,24 @@ def exc_to_str(exc, tb=False, limit=None, chain=True):
     return link.join(result)
 
 
+def chain_exception(exc_type, exc_args, from_exc):
+    """Helper for creating chained exceptions.
+
+    Like :func:`raise_from`, but returning the exception object instead
+    of raising it.
+    """
+    if six.PY2:
+        # emulate the way python3 stores tracebacks in exception objects
+        _, curr_exc, curr_tb = sys.exc_info()
+        if curr_exc is from_exc:
+            from_exc.__traceback__ = curr_tb
+    # the following is a py2-syntax-correct equivalent of
+    # `raise exc_type(exc_args) from from_exc`
+    exc = exc_type(exc_args)
+    exc.__cause__ = from_exc
+    return exc
+
+
 def raise_from(exc_type, exc_args, from_exc):
     """Raise new exception directly caused by ``from_exc``.
 
@@ -119,13 +144,4 @@ def raise_from(exc_type, exc_args, from_exc):
     See :func:`exc_to_str`, which can format chained exceptions raised
     with this helper.
     """
-    if six.PY2:
-        # emulate the way python3 stores tracebacks in exception objects
-        _, curr_exc, curr_tb = sys.exc_info()
-        if curr_exc is from_exc:
-            from_exc.__traceback__ = curr_tb
-    # the following is a py2-syntax-correct equivalent of
-    # `raise exc_type(exc_args) from from_exc`
-    exc = exc_type(exc_args)
-    exc.__cause__ = from_exc
-    raise exc
+    raise chain_exception(exc_type, exc_args, from_exc)
