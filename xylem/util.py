@@ -190,6 +190,7 @@ def remove_duplicates(seq):
     return [x for x in seq if not (x in items or items.add(x))]
 
 
-def indent(text, width, character=' '):
+def indent(text, width, character=' ', exclude_first=False):
     indentation = width * character
-    return indentation + ('\n' + indentation).join(text.split('\n'))
+    prefix = '' if exclude_first else indentation
+    return prefix + ('\n' + indentation).join(text.split('\n'))

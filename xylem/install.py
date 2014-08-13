@@ -25,6 +25,7 @@ from xylem.installers import InstallerError
 from xylem.resolve import resolve
 
 from xylem.exception import raise_from
+from xylem.exception import exc_to_str
 from xylem.exception import chain_exception
 from xylem.exception import XylemError
 from xylem.exception import XylemInternalError
@@ -70,6 +71,8 @@ def install(xylem_keys,
                                       database=database,
                                       sources_context=sources_context,
                                       installer_context=installer_context)
+    if resolve_errors and not continue_on_error:
+        return resolve_errors, []
 
     resolved = _squash_resolutions(res_tuple for _, res_tuple in results)
 

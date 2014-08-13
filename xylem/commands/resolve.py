@@ -93,9 +93,8 @@ def main(args=None):
         results, errors = resolve(args.xylem_key, all_keys=args.all,
                                   config=config, installer_context=ic)
         if errors:
-            error("The following errors occurred during resolution:")
-            error("\n\n".join(
-                indent(exc_to_str(e), 2) for _, e in errors))
+            error("\n".join(indent(exc_to_str(e), 2, exclude_first=True)
+                            for _, e in errors))
         for key, (installer_name, resolutions) in results:
             if installer_name != default_installer_name or \
                     args.show_default_installer:

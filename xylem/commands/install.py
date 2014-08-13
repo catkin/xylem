@@ -63,13 +63,13 @@ def main(args=None):
             continue_on_error=args.continue_on_error,
             fix_prerequisites=args.fix_prerequisites)
         if resolve_errors:
-            error("The following errors occurred during resolution:")
-            error("\n\n".join(
-                indent(exc_to_str(e), 2) for _, e in resolve_errors))
+            # error("The following errors occurred during resolution:")
+            error("\n".join(indent(exc_to_str(e), 2, exclude_first=True)
+                            for _, e in resolve_errors))
         if install_errors:
-            error("The following errors occurred during installation:")
-            error("\n\n".join(
-                indent(exc_to_str(e), 2) for e in install_errors))
+            # error("The following errors occurred during installation:")
+            error("\n".join(indent(exc_to_str(e), 2, exclude_first=True)
+                            for e in install_errors))
         if resolve_errors or install_errors:
             sys.exit(1)
     except (KeyboardInterrupt, EOFError):
