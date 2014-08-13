@@ -188,3 +188,8 @@ def remove_duplicates(seq):
     """
     items = set()
     return [x for x in seq if not (x in items or items.add(x))]
+
+
+def indent(text, width, character=' '):
+    indentation = width * character
+    return indentation + ('\n' + indentation).join(text.split('\n'))
