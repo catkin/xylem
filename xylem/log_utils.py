@@ -68,7 +68,7 @@ def debug(msg, file=None, *args, **kwargs):
     printing. Can be enabled or disabled with
     :func:`enable_debug`.
     """
-    file = file if file is not None else sys.stdout
+    file = file if file is not None else sys.stderr
     global _debug
     msg = to_str(msg)
     msg = ansi('greenf') + msg + ansi('reset')
@@ -99,7 +99,7 @@ def warning(msg, file=None, *args, **kwargs):
     printing. Can be enabled or disabled with
     :func:`enable_debug`.
     """
-    file = file if file is not None else sys.stdout
+    file = file if file is not None else sys.stderr
     msg = to_str(msg)
     msg = ansi('yellowf') + msg + ansi('reset')
     print(to_bytes(msg), file=file, *args, **kwargs)
@@ -113,7 +113,7 @@ def error(msg, file=None, exit=False, *args, **kwargs):
     tries to handle unicode correctly by encoding to ``utf-8`` before
     printing.
     """
-    file = file if file is not None else sys.stdout
+    file = file if file is not None else sys.stderr
     msg = to_str(msg)
     msg = ansi('redf') + ansi('boldon') + msg + ansi('reset')
     if exit:
@@ -122,7 +122,12 @@ def error(msg, file=None, exit=False, *args, **kwargs):
     return msg
 
 
-def info_v(*args, **kwargs):
-    """Like :func:`info`, but only if :func:`is_verbose` is `True`."""
+def info_v(msg, file=None, *args, **kwargs):
+    """Like :func:`info`, but only if :func:`is_verbose` is `True`.
+
+    Prints to stderr by default.
+    """
     if is_verbose():
-        info(*args, **kwargs)
+        return info(msg, file=(file or sys.stderr), *args, **kwargs)
+    else:
+        return None
