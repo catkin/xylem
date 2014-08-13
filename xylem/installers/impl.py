@@ -39,12 +39,17 @@ def load_installer_plugins(disabled=[]):
     return load_plugins("installer", Installer, INSTALLER_GROUP, disabled)
 
 
-class InvalidRuleError(XylemError):
+class InstallerError(XylemError):
+
+    """Base class for all installer related exceptions."""
+
+
+class InvalidRuleError(InstallerError):
 
     """Invalid rule input to installer plugin."""
 
 
-class InstallerPrerequisiteError(XylemError):
+class InstallerPrerequisiteError(InstallerError):
 
     """Exception for unfulfilled installer prerequisites."""
 
@@ -54,11 +59,13 @@ class Installer(PluginBase):
     """Installer class that custom installer plugins derive from.
 
     The :class:`Installer` API is designed around ordered lists of
-    opaque ``resolution`` parameters with argument name ``resolved``.
+    opaque ``resolution`` parameters with argument name ``resolutions``.
     These parameters can be any type of object, but they must be
     printable to the user.  A ``resolution`` typically corresponds to a
-    single package, or small set of related packages, possibly with
-    additional meta data for how they can be installed.
+    single package, possibly with additional options or meta data for
+    how they can/should be installed.
+
+    One xylem key may resolve to multiple resolutions.
     """
 
     @abc.abstractproperty
@@ -82,6 +89,7 @@ class Installer(PluginBase):
     @options.setter
     def options(self, value):
         """Set installer options as `dict`."""
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def use_as_additional_installer(self, os_tuple):
@@ -115,7 +123,7 @@ class Installer(PluginBase):
 
         :param dict installer_rule: installer rule from the rules
             dictionary for this installer
-        :returns: ``[resolution]`` -- list of opaque resolved items
+        :returns: ``resolutions`` -- list of resolution items
         :raises InvalidRuleError: if installer_rule cannot does not have
             a valid structure according to this installer
         """
@@ -127,41 +135,37 @@ class Installer(PluginBase):
     # homebrew not linked or wrong options)
 
     @abc.abstractmethod
-    def is_installed(self, resolved):
-        """Check if ``resolved`` is installed.
+    def is_installed(self, resolutions):
+        """Check if ``resolutions`` are installed.
 
-        :param resolved: ``[resolution]`` or ``resolved_item`` -- list
-            of opaque resolved items or single item
-        :returns bool: True if all items are installed
+        :param resolutions: list of resolution items or single item
+        :returns bool: ``True`` if all items are installed
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def filter_uninstalled(self, resolved):
+    def filter_uninstalled(self, resolutions):
         """Return list of only uninstalled items given list of resolutions.
 
-        :param resolved: ``[resolution]`` -- list of opaque resolved
-            items
-        :returns: ``[resolution]`` -- list of opaque resolved items
-            which are not currently installed, in the same order as in
-            the input list
+        :param resolutions: list of resolution items
+        :returns: list of resolutions which are not currently installed,
+            in the same order as in the input list
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
     def get_install_commands(self,
-                             resolved,
+                             resolutions,
                              interactive=True,
                              reinstall=False):
         """Get command line invocations to install list of resolutions.
 
-        :param resolved: ``[resolution]`` -- list of opaque resolved
-            items
+        :param resolutions: list of resolution items
         :param interactive: if `False`, disable interactive prompts,
             e.g. pass through ``-y`` or equivalent to package manager
-        :param reinstall: if ``True``, install everything even if
-            already installed
-        :return: List of commands, each command being a list of strings.
+        :param reinstall: if ``True``, issue commands to reinstall or
+            uninstall/install the given resolution items
+        :return: list of commands, each command being a list of strings
         :rtype: ``[[str]]``
         """
         raise NotImplementedError()
@@ -200,7 +204,7 @@ class Installer(PluginBase):
 
     @abc.abstractmethod
     def check_install_prerequisites(self,
-                                    resolved,
+                                    resolutions,
                                     os_tuple,
                                     fix_unsatisfied=False,
                                     interactive=True):
@@ -212,8 +216,7 @@ class Installer(PluginBase):
         On top if raising errors as `InstallerPrerequisiteError`
         exceptions, this may also print warnings.
 
-        :param resolved: ``[resolution]`` -- list of opaque resolved
-            items
+        :param resolutions: list of resolution items
         :param bool fix_unsatisfied: if ``True``, attempt to fix
             unsatisfied prerequisites instead of just informing the user
         :param bool interactive: if ``True``, any attempts to fix
@@ -320,7 +323,8 @@ class InstallerContext(object):
         """
         return self.os_support.current_os.default_installer
 
-    def get_installers(self):
+    @property
+    def installers(self):
         """Get list of core and additional installers.
 
         :meth:`setup_installers` needs to be called beforehand.
@@ -329,14 +333,35 @@ class InstallerContext(object):
         """
         return self.core_installers + self.additional_installers
 
-    def get_installer_names(self):
-        """Get all configured installers for current os.
+    @property
+    def installer_names(self):
+        """Get list of names for core and additional installers.
 
         :meth:`setup_installers` needs to be called beforehand.
 
         :rtype: `list` of `str`
         """
-        return [i.name for i in self.get_installers()]
+        return [i.name for i in self.installers]
+
+    @property
+    def core_installer_names(self):
+        """Get list of names for core installers.
+
+        :meth:`setup_installers` needs to be called beforehand.
+
+        :rtype: `list` of `str`
+        """
+        return [i.name for i in self.core_installers]
+
+    @property
+    def additional_installer_names(self):
+        """Get list of names for additional installers.
+
+        :meth:`setup_installers` needs to be called beforehand.
+
+        :rtype: `list` of `str`
+        """
+        return [i.name for i in self.additional_installers]
 
     @property
     def installer_plugin_names(self):
@@ -371,17 +396,22 @@ class InstallerContext(object):
         self.core_installers = []
         self.additional_installers = []
 
-        #  1. setup core installers from config or OS plugin
-        if self.config.core_installers is not None:
-            installer_names = self.config.core_installers
-            info_v("setting up core installers from config: '{}'".
-                   format(", ".join(installer_names)))
-        else:
-            installer_names = os.get_core_installers(os_version, os.options)
-            info_v("setting up core installers from os plugin: '{}'".
-                   format(", ".join(installer_names)))
+        #  1. Go through all installers and set options from config
+        for inst in self.installer_plugins:
+            inst.options = self.config.installer_options.get(inst.name, {})
 
-        for name in installer_names:
+        #  2. setup core installers from config or OS plugin
+        if self.config.core_installers is not None:
+            core_installer_names = self.config.core_installers
+            info_v("setting up core installers from config: '{}'".
+                   format(", ".join(core_installer_names)))
+        else:
+            core_installer_names = os.get_core_installers(os_version,
+                                                          os.options)
+            info_v("setting up core installers from os plugin: '{}'".
+                   format(", ".join(core_installer_names)))
+
+        for name in core_installer_names:
             inst = self.lookup_installer(name)
             if inst is None:
                 error("ignoring core installer '{}'; according plugin was not "
@@ -389,7 +419,7 @@ class InstallerContext(object):
             else:
                 self.core_installers.append(inst)
 
-        #  2. Go through all installers and check if they should be used
+        #  3. Go through all installers and check if they should be used
         #     as additional installers for the current OS.
         if self.config.use_additional_installers:
             for inst in self.installer_plugins:

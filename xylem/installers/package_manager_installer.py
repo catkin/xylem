@@ -38,10 +38,15 @@ class PackageManagerInstaller(InstallerBase):
                                     interactive=True):
         info_v("Checking general prerequisites of installer '{}'...".
                format(self.name))
-        self.check_package_manager_installer(
+        self.check_package_manager_installed(
             os_tuple, fix_unsatisfied, interactive)
         self.check_package_manager_updated(
             os_tuple, fix_unsatisfied, interactive)
+        # TODO: instead of this, manage a list of prerequisites,
+        # possibly tagged somehow by what kind they are (general, for
+        # resolve, for is_installed, for install). Name these
+        # prerequisites, to allow referring to them in config (enable
+        # check, try-fix etc)
 
     def check_install_prerequisites(self,
                                     resolved,
@@ -52,7 +57,7 @@ class PackageManagerInstaller(InstallerBase):
                "No checks implemented.".format(self.name))
 
     def is_package_manager_installed(self):
-        return is_program_installed(self._executable_name)
+        return is_program_installed(self.executable_name)
 
     def install_package_manager(self, os_tuple, interactive=True):
         raise NotImplementedError()

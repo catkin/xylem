@@ -21,6 +21,8 @@ import six
 from .impl import Installer
 from .impl import InvalidRuleError
 
+from xylem.text_utils import to_str
+
 from xylem.exception import raise_from
 
 from xylem.log_utils import warning
@@ -129,10 +131,10 @@ class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
                        "'{}'".format(value, self.name), e)
         unused_keys = set(value.keys()) - set(self._options.keys())
         if unused_keys:
-            warning("Ignoring the following unknown options for installer "
-                    "'{}': {}. Known options are: {}.".
-                    format(self.name, ", ".join(unused_keys),
-                           ", ".join(self._options.keys())))
+            warning("ignoring the following unknown options for installer "
+                    "'{}': {} -- known options are: {}".
+                    format(self.name, to_str(list(unused_keys)),
+                           to_str(self._options.keys())))
 
     def use_as_additional_installer(self, os_tuple):
         return False
@@ -148,10 +150,11 @@ class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
                        "installer '{}'".format(installer_rule, self.name), e)
         unused_keys = set(installer_rule.keys()) - set(parsed_rule.keys())
         if unused_keys:
-            warning("ignoring the following unknown keys '{}' while parsing "
-                    "installer rule with packages '{}' for installer '{}'".
-                    format(parsed_rule.packages, self.name,
-                           ", ".join(unused_keys)))
+            warning("ignoring the following unknown installer rule keys for "
+                    "installer '{}' while parsing installer rule with "
+                    "packages {}: {}".format(self.name,
+                                             to_str(parsed_rule.packages),
+                                             to_str(list(unused_keys))))
         return parsed_rule
 
     def get_depends(self, installer_rule):
@@ -169,7 +172,7 @@ class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
             # copy all other entries, e.g. options, to each resolution object
             resolution = Resolution(parsed_rule)
             resolution["package"] = p
-            result.append(p)
+            result.append(resolution)
         return result
 
     def is_installed(self, resolved):
@@ -181,8 +184,8 @@ class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
                              resolved,
                              interactive=True,
                              reinstall=False):
-        commands = self.get_install_commands_no_root(self, resolved,
-                                                     interactive, reinstall)
+        commands = self.get_install_commands_no_root(resolved, interactive,
+                                                     reinstall)
         if self.options.as_root and not is_root():
             return [elevate_privileges(cmd) for cmd in commands]
         else:
