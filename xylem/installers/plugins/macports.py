@@ -44,8 +44,8 @@ class MacportsInstaller(PackageManagerInstaller):
 
     def get_install_commands_no_root(self,
                                      resolved,
-                                     interactive=True,
-                                     reinstall=False):
+                                     interactive,
+                                     reinstall):
         # FIXME
         return [["port", "install", item.package] for item in resolved]
 

@@ -194,8 +194,8 @@ class InstallerBase(six.with_metaclass(abc.ABCMeta, Installer)):
     @abc.abstractmethod
     def get_install_commands_no_root(self,
                                      resolved,
-                                     interactive=True,
-                                     reinstall=False):
+                                     interactive,
+                                     reinstall):
         """Return list of commands without root privileges.
 
         This is like :meth:`Installer.get_install_commands`, but

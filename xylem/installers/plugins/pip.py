@@ -53,9 +53,9 @@ class PipInstaller(PackageManagerInstaller):
 
     def get_install_commands_no_root(self,
                                      resolved,
-                                     interactive=True,
-                                     reinstall=False):
-        # todo: reinstall
+                                     interactive,
+                                     reinstall):
+        # TODO: reinstall
         return [["pip", "install", "-U", item.package] for item in resolved]
 
     def filter_uninstalled(self, resolved):

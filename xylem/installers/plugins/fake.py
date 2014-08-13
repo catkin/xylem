@@ -79,8 +79,8 @@ class FakeInstaller(PackageManagerInstaller):
 
     def get_install_commands_no_root(self,
                                      resolved,
-                                     interactive=True,
-                                     reinstall=False):
+                                     interactive,
+                                     reinstall):
         return [["touch", self.get_installer_filename(item.package)] for
                 item in resolved]
 
