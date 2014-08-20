@@ -64,7 +64,7 @@ Example usage:
     # add argument groups and some global config-related arguments that
     # are independent from the description
     group = parser.add_argument_group('global arguments')
-    add_global_config_arguments(group, "footool")
+    add_global_config_arguments(group, TOOL_NAME)
 
     # parse command line arguments
     args = parser.parse_args()
@@ -96,19 +96,21 @@ import os
 import argparse
 import textwrap
 import re
+import sys
 
 from copy import deepcopy
 from yaml import YAMLError
 
-from .text_utils import type_name
-from .text_utils import text_type
-from .text_utils import to_str
-from .util import raise_from
-from .yaml_utils import load_yaml
-from .yaml_utils import dump_yaml
-from .log_utils import info
-from .log_utils import debug
-from .exception import XylemError
+from xylem.text_utils import type_name
+from xylem.text_utils import text_type
+from xylem.text_utils import to_str
+from xylem.yaml_utils import load_yaml
+from xylem.yaml_utils import dump_yaml
+from xylem.log_utils import info
+from xylem.log_utils import debug
+from xylem.exception import XylemError
+from xylem.exception import raise_from
+from xylem.exception import type_error_msg
 
 
 UNSET_YAML = None
@@ -203,16 +205,6 @@ def expand_input_path(value):
     return os.path.abspath(os.path.expanduser(value))
 
 
-def type_error_msg(expected_type_name, value, what_for=None):
-    """Helper for exception error messages about wrong type."""
-    if what_for:
-        what_for = ' for {}'.format(what_for)
-    else:
-        what_for = ''
-    return "Expected type '{}'{}, but got '{}' of type '{}'.".format(
-        expected_type_name, what_for, value, type_name(value))
-
-
 def process_config_file_yaml(config):
     """Utility for parsing yaml config files.
 
@@ -232,7 +224,7 @@ def process_config_file_yaml(config):
     for key in config:
         if not isinstance(key, text_type):
             raise ConfigValueError(
-                type_error_msg('text', key, what_for="config keys"))
+                type_error_msg('text', key, what_for="config key"))
     return config
 
 
@@ -311,7 +303,7 @@ class ConfigHelpFormatter(argparse.HelpFormatter):
         for para in self._paragraph_break_matcher.split(text):
             if self._raw_marker_matcher.match(para):
                 para = self._raw_marker_matcher.sub(
-                    lambda m: ' '*(m.end()-m.start()), para)
+                    lambda m: ' ' * (m.end() - m.start()), para)
                 para = textwrap.dedent(para).splitlines()
                 result.extend([indent + l for l in para])
             else:
@@ -345,23 +337,24 @@ class ConfigDict(dict):
         self.__dict__ = self
 
 
-def ceorce_config_dict(config):
+def ceorce_config_dict(config, copy=False):
     """Helper to convert a regular dictionary to a config dict.
 
-    Calls ``ceorce_config_dict`` recursively on dict type values. Does
-    not copy or modify if ``config`` is already of type ``ConfigDict``.
+    Calls ``ceorce_config_dict`` recursively on dict type values.
 
     The resulting config dict may share structure with the input.
 
     :type config: `dict` or `ConfigDict`
+    :param bool copy: if ``True``, copies to new dict even if
+        ``config`` is already of type ``ConfigDict``
     """
-    if isinstance(config, ConfigDict):
-        return config
     if not isinstance(config, dict):
+        return config
+    if not copy and isinstance(config, ConfigDict):
         return config
     result = ConfigDict()
     for k, v in six.iteritems(config):
-        result[k] = ceorce_config_dict(v)
+        result[k] = ceorce_config_dict(v, copy=copy)
 
 
 def copy_to_dict(config):
@@ -750,22 +743,22 @@ class ConfigItem(object):
 
     """Holds meta information about one entry in a config file.
 
-    :cvar str name: name of the config item; may contain (up to one) '/'
+    :ivar str name: name of the config item; may contain (up to one) '/'
         to specify grouping into a sub-dictionary, which is interpreted
         as 'group/subname'
-    :cvar str help: description of the config item for the argument
+    :ivar str help: description of the config item for the argument
         parser help
-    :cvar ConfigType type: type of config item describing how it is
+    :ivar ConfigType type: type of config item describing how it is
         parsed and merged
-    :cvar default: default value to be used if unset
-    :cvar bool command_line: if true, this config is exposed on the
+    :ivar default: default value to be used if unset
+    :ivar bool command_line: if true, this config is exposed on the
         command line; ``False`` by default, but specifying any other
         ``command_line_...`` arguments implies ``True`` for
         ``command_line``, unless explicitly set to ``False``.
-    :cvar command_line_argument: command line argument name (without
+    :ivar command_line_argument: command line argument name (without
         leading dashdash); if not explicitly supplied, this is derived
         from name by replacing all '_' and '/' with '-'
-    :cvar command_line_metavar: command line argument metavar; if not
+    :ivar command_line_metavar: command line argument metavar; if not
         explicitly supplied, the default for the type is used
     """
 
@@ -847,14 +840,14 @@ class ConfigDescription(object):
     constitute the keys of the group dicts.  When config dicts are
     merged, Group dicts are merged automatically key but key.
 
-    :cvar str namespace: path of the config file relative to the root
+    :ivar str namespace: path of the config file relative to the root
         config directory
-    :cvar list itemlist: list of all items in order (including items in
+    :ivar list itemlist: list of all items in order (including items in
         groups)
-    :cvar dict items: mapping names to items (including full
+    :ivar dict items: mapping names to items (including full
         names for items in groups)
-    :cvar dict groups: mapping group names to dict of subnames to items
-    :cvar dict command_line_arguments: mapping command line argument
+    :ivar dict groups: mapping group names to dict of subnames to items
+    :ivar dict command_line_arguments: mapping command line argument
         names to items
     """
 
@@ -1030,7 +1023,7 @@ def handle_global_config_arguments_post(args, config, tool_name):
     """
     if args.print_config:
         info(dump_yaml(config))
-        exit(0)
+        sys.exit(0)
 
 
 def copy_conifg_dict(description, config):
@@ -1075,6 +1068,19 @@ def merge_configs(description, top, *more_configs):
                 result[name] = item.type.merge(result[name],
                                                bottom_config[name])
     return result
+
+
+def merge_with_defaults(description, config):
+    """Fill in unset entries in ``config`` with default values.
+
+    :param description: description of the config dicts; the type
+        information of each entry is used for merging
+    :type description: `ConfigDescription`
+    :param dict top: config dict with structure defined by
+        ``description``
+    """
+    default_config = config_from_defaults(description)
+    return merge_configs(description, config, default_config)
 
 
 def load_config(args, description, tool_name):
@@ -1183,14 +1189,17 @@ def config_from_file(filename, description):
     return config_from_parsed_yaml(contents, description)
 
 
-def config_from_parsed_yaml(data, description):
+def config_from_parsed_yaml(data, description, use_defaults=False):
     """Utility for creating config dict from parsed YAML file.
 
     :param dict data: dictionary (nested yaml structure) as read from
         file (see :func:`load_config_file_yaml`)
     :param description: config dict is created according to this
         description; any missing keys are created with 'unset' values
-        and unknown entries are ignored
+        (unless ``use_defaults`` is ``True``) and unknown entries are
+        ignored
+    :param use_defaults: if ``True``, replace unset entries with default
+        values form ``description``
     :type description: `ConfigDescription`
     :returns: config dict with structure as defined by ``description``
     :raises ConfigValueError: if parsing of files fails
@@ -1210,4 +1219,7 @@ def config_from_parsed_yaml(data, description):
         # only handle non-group items
         if "/" not in name:
             process_item(config, data, name, item)
-    return config
+    if use_defaults:
+        return merge_with_defaults(description, config)
+    else:
+        return config

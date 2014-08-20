@@ -12,65 +12,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Installer plugin for pip.
+"""Installer plugin for APT.
 
 %s
-
-:var definition: definition of the installer plugin to be referenced
-    by the according entry point
 """
 
 from __future__ import unicode_literals
 
 from xylem.installers.package_manager_installer import PackageManagerInstaller
-from xylem.util import read_stdout
 
 DESCRIPTION = """\
-This is a installer plugin for the pip python package manager.
-
-See https://pypi.python.org/pypi/pip
+TODO: Describe and implement this
 """
 
 __doc__ %= format(DESCRIPTION)
 
-PIP_INSTALLER = 'pip'
+APT_INSTALLER = 'apt'
 
 
-class PipInstaller(PackageManagerInstaller):
-    """
-    Installer support for pip.
-    """
+# TODO: implement 'apt-repositories' prerequisite
+
+
+class AptInstaller(PackageManagerInstaller):
 
     def __init__(self):
-        super(PipInstaller, self).__init__("pip")
+        super(AptInstaller, self).__init__("apt-get")
 
     @property
     def name(self):
-        return PIP_INSTALLER
-
-    def use_as_additional_installer(self, os_tuple):
-        return True
+        return APT_INSTALLER
 
     def get_install_commands_no_root(self,
                                      resolved,
                                      interactive=True,
                                      reinstall=False):
-        # todo: reinstall
-        return [["pip", "install", "-U", item.package] for item in resolved]
+        # FIXME
+        return [["apt-get", "install", item.package] for item in resolved]
 
     def filter_uninstalled(self, resolved):
-        installed = read_stdout(['pip', 'freeze']).split('\n')
-        installed = [row.split("==")[0] for row in installed]
-        return [r for r in resolved if r.package not in installed]
+        # FIXME
+        return resolved
 
     def install_package_manager(self, os_tuple):
-        # TODO: use get_pip or maybe apt on ubuntu to install pip
+        # TODO: raise UserInterventionRequiredError with instructions,
+        # handle this error specially and print instructions
         raise NotImplementedError()
 
 
 # This definition the installer to the plugin loader
 definition = dict(
-    plugin_name=PIP_INSTALLER,
+    plugin_name=APT_INSTALLER,
     description=DESCRIPTION,
-    installer=PipInstaller
+    installer=AptInstaller
 )

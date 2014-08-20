@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+"""Installer plugin for homebrew.
+
 %s
 
 :var definition: definition of the installer plugin to be referenced
@@ -21,7 +22,7 @@
 
 from __future__ import unicode_literals
 
-from ..package_manager_installer import PackageManagerInstaller
+from xylem.installers.package_manager_installer import PackageManagerInstaller
 
 DESCRIPTION = """\
 TODO: Describe and implement this
@@ -32,23 +33,33 @@ __doc__ %= format(DESCRIPTION)
 HOMEBREW_INSTALLER = 'homebrew'
 
 
-def fixme_detect(pkgs, exec_fn=None):
-    return pkgs
+# TODO: implement 'tap' prerequisite
 
 
 class HomebrewInstaller(PackageManagerInstaller):
 
-    @staticmethod
-    def get_name():
+    def __init__(self):
+        super(HomebrewInstaller, self).__init__("brew")
+        self.options_description.items["as_root"].default = False
+
+    @property
+    def name(self):
         return HOMEBREW_INSTALLER
 
-    def __init__(self):
-        super(HomebrewInstaller, self).__init__(
-            fixme_detect, supports_depends=True)
+    def get_install_commands_no_root(self,
+                                     resolved,
+                                     interactive=True,
+                                     reinstall=False):
+        # FIXME
+        return [["brew", "install", item.package] for item in resolved]
 
-    def get_install_command(self, resolved, interactive=True, reinstall=False):
-        packages = self.get_packages_to_install(resolved, reinstall=reinstall)
-        return [['fixme', 'brew', 'install', p] for p in packages]
+    def filter_uninstalled(self, resolved):
+        # FIXME
+        return resolved
+
+    def install_package_manager(self, os_tuple):
+        # TODO: install brew with ruby
+        raise NotImplementedError()
 
 
 # This definition the installer to the plugin loader

@@ -16,8 +16,8 @@ from __future__ import unicode_literals
 
 import sys
 
-from ..update import update
-from ..log_utils import info
+from xylem.update import update
+from xylem.log_utils import info
 from .main import command_handle_args
 
 

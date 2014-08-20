@@ -18,10 +18,10 @@
 
 from __future__ import unicode_literals
 
-from .sources import SourcesContext
-from .sources import RulesDatabase
+from xylem.sources import SourcesContext
+from xylem.sources import RulesDatabase
 
-from .config import get_config
+from xylem.config import get_config
 
 
 # TODO: remove handle_spec_urls (move some logic into the accoring

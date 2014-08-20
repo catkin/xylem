@@ -29,29 +29,32 @@ import os
 
 from six.moves import map
 
-from .config_utils import DEFAULT_PREFIX
-from .config_utils import ConfigDescription
-from .config_utils import String
-from .config_utils import List
-from .config_utils import Boolean
-from .config_utils import Dict
-from .config_utils import MergingDict
-from .config_utils import Any
-from .config_utils import Path
-from .config_utils import load_config
-from .config_utils import config_from_defaults
-from .config_utils import system_config_dir
-from .config_utils import system_cache_dir
-from .config_utils import user_cache_dir
-from .config_utils import user_config_dir
-from .config_utils import add_global_config_arguments as \
+from xylem.config_utils import DEFAULT_PREFIX
+from xylem.config_utils import ConfigDescription
+from xylem.config_utils import ConfigDict
+from xylem.config_utils import String
+from xylem.config_utils import List
+from xylem.config_utils import Boolean
+from xylem.config_utils import Dict
+from xylem.config_utils import MergingDict
+from xylem.config_utils import Any
+from xylem.config_utils import Path
+from xylem.config_utils import load_config
+from xylem.config_utils import config_from_defaults
+from xylem.config_utils import config_from_parsed_yaml
+from xylem.config_utils import system_config_dir
+from xylem.config_utils import system_cache_dir
+from xylem.config_utils import user_cache_dir
+from xylem.config_utils import user_config_dir
+from xylem.config_utils import add_global_config_arguments as \
     _add_global_config_arguments
-from .config_utils import handle_global_config_arguments as \
+from xylem.config_utils import handle_global_config_arguments as \
     _handle_global_config_arguments
-from .config_utils import handle_global_config_arguments_post as \
+from xylem.config_utils import handle_global_config_arguments_post as \
     _handle_global_config_arguments_post
 
-from .text_utils import text_type
+from xylem.text_utils import text_type
+from xylem.text_utils import type_name
 
 
 def sources_dir(parent):
@@ -85,15 +88,18 @@ def build_config_description():
         command_line_metavar="name:version",
         help="""override os detection; if no ':' is present, the entire
                 string is interpreted as the os name and the version is
-                detected""")
+                detected; may also be of the form
+                `name:version&feature1,feature2` to concisely override
+                the list of os features (takes precedence over
+                `--os-features`).""")
     add("os_options/features", type=List(String),
         command_line_argument="os-features",
         command_line_metavar='"feature1,feature2,..."',
         help="""OS features to be used. The list of possible values and
                 the default choice is defined by the os plugin for the
                 selected OS.""")
-    add("os_options/installers", type=List(String),
-        command_line_argument="core-installers",
+    add("core_installers", type=List(String),
+        command_line=True,
         command_line_metavar='"inst1,inst2,..."',
         help="""core installers to be used. The default list is defined
                 by the OS plugin for the selected OS. Additional
@@ -104,6 +110,9 @@ def build_config_description():
         command_line=True,
         help="""if `True`, use additional installers as defined by
                 installer plugins on top of the core installers""")
+    # TODO: maybe use something like MergingDict(List(String,
+    # allow_single=True)) to allow `install-from "pip: foo"` instead of
+    # `install-from "pip: [foo]" as needed currently
     add("install_from", type=MergingDict(List(String)),
         command_line_metavar='"inst1:[key1,key2,...] ..."',
         help="""mapping installer names to list of xylem keys;
@@ -123,6 +132,15 @@ def build_config_description():
     add("sources_dir", type=Path,
         command_line=True,
         help="""override the sources directory""")
+    add("disabled_plugins/os", type=List(String), default=[],
+        command_line_argument="disable-os-plugins",
+        help="""disabled os plugin names""")
+    add("disabled_plugins/installer", type=List(String), default=[],
+        command_line_argument="disable-installer-plugins",
+        help="""disabled installer plugin names""")
+    add("disabled_plugins/spec", type=List(String), default=[],
+        command_line_argument="disable-spec-plugins",
+        help="""disabled spec plugin names""")
     return description
 
 
@@ -137,6 +155,11 @@ def get_config_description():
     """
     global _config_description
     return _config_description
+
+
+def get_default_config():
+    """Create a fresh default config object."""
+    return config_from_defaults(get_config_description())
 
 
 def get_config():
@@ -271,3 +294,25 @@ def process_config(config, args):
         config.os_override = (name, version)
         if features is not None:
             config.os_options.features = features
+
+
+def ensure_config(config):
+    """Helper for processing ``config`` arguments in public API.
+
+    If ``config`` is ``None``, return :func:`get_config`, if it is of
+    type `ConfigDict`, return as-is, if it is a regular `dict`, parse
+    combine with defaults from :func:`get_config_description` to return
+    a `ConfigDict`, and otherwise raise a `ValueError`.
+
+    :type config: `None` or `ConfigDict` or `dict`
+    :rtype: `ConfigDict`
+    :raises ValueError: if ``config`` is invalid type
+    """
+    if config is None:
+        return get_config()
+    if isinstance(config, ConfigDict):
+        return config
+    if isinstance(config, dict):
+        return config_from_parsed_yaml(
+            config, get_config_description(), use_defaults=True)
+    raise ValueError("invalid config of type '{}'".format(type_name(config)))

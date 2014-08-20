@@ -15,6 +15,10 @@
 from __future__ import unicode_literals
 
 from .impl import SourcesContext
+from .impl import ensure_sources_context
+from .impl import UnknownSpecError
 from .database import RulesDatabase
+from .database import RulesSource
 
-__all__ = ['SourcesContext', 'RulesDatabase']
+__all__ = ['SourcesContext', 'ensure_sources_context', 'UnknownSpecError',
+           'RulesDatabase', 'RulesSource']

@@ -23,12 +23,12 @@
 from __future__ import unicode_literals
 
 import re
-import numbers
 import six
 
-from ..util import raise_from
+from xylem.exception import raise_from
+from xylem.exception import type_error_msg
 
-from ..text_utils import text_type
+from xylem.text_utils import text_type
 
 
 def lookup_rules(rules_dict,
@@ -223,12 +223,6 @@ def verify_installer_rule(installer_rule):
             except ValueError as e:
                 raise_from(ValueError, "Expected 'depends' entry of installer "
                            "rule to be list of xylem keys.", e)
-        if key == "priority":
-            try:
-                verify_installer_priority(value)
-            except ValueError as e:
-                raise_from(ValueError, "Expected 'priority' entry of "
-                           "installer rule to be installer priority.", e)
 
 
 def verify_xylem_key(xylem_key):
@@ -236,7 +230,7 @@ def verify_xylem_key(xylem_key):
 
     :raises ValueError: if ``xylem_key`` is not valid
     """
-    _verify_rules_dict_identifier(xylem_key, "xylem key")
+    verify_rules_dict_identifier(xylem_key, "xylem key")
 
 
 def verify_os_name(os_name):
@@ -244,7 +238,7 @@ def verify_os_name(os_name):
 
     :raises ValueError: if ``os_name`` is not valid
     """
-    _verify_rules_dict_identifier(os_name, "os name", ["any_os"])
+    verify_rules_dict_identifier(os_name, "os name", ["any_os"])
 
 
 def verify_os_version(os_version):
@@ -252,7 +246,7 @@ def verify_os_version(os_version):
 
     :raises ValueError: if ``os_version`` is not valid
     """
-    _verify_rules_dict_identifier(os_version, "os version", ["any_version"])
+    verify_rules_dict_identifier(os_version, "os version", ["any_version"])
 
 
 def verify_installer_name(installer_name):
@@ -260,11 +254,11 @@ def verify_installer_name(installer_name):
 
     :raises ValueError: if ``installer_name`` is not valid
     """
-    _verify_rules_dict_identifier(
+    verify_rules_dict_identifier(
         installer_name, "installer name", ["default_installer"])
 
 
-def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
+def verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
     """Helper function to verify validity of identifiers used in rules dicts.
 
     :param str identifier: the identifier to be validated
@@ -274,14 +268,13 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
     :raises ValueError: if ``identifier`` is not valid
     """
     rules_dict_keywords = {'any_os', 'any_version', 'default_installer',
-                           'unset_installers'}
+                           'unset_installers', 'any_key'}
     # FIXME: implement this whitelist differently (specific to where it
     #        might occur)
     rules_dict_whitelist = {'mountain lion'}
     # NOTE: 'unset_installers' is reserved for future use, not yet implemented.
     if not isinstance(identifier, text_type):
-        raise ValueError("Expected {0} to be text type, but got '{1}'".
-                         format(kind, type(identifier)))
+        raise ValueError(type_error_msg("str", identifier, what_for=kind))
     if identifier in rules_dict_keywords - set(allow_keywords):
         raise ValueError("{0} is disallowed keyword '{1}'.".
                          format(kind, identifier))
@@ -291,16 +284,6 @@ def _verify_rules_dict_identifier(identifier, kind, allow_keywords=[]):
         raise ValueError(
             "{0} '{1}' has disallowed characters. Allowed are: alphanumeric, "
             "dash, dot, underscore.".format(kind, identifier))
-
-
-def verify_installer_priority(priority):
-    """Verify validity of an installer priority.
-
-    :raises ValueError: if ``priority`` is not a real number
-    """
-    if not isinstance(priority, numbers.Real):
-        raise ValueError("Expected installer priority to be a real number, "
-                         "but got '{0}'.".format(priority))
 
 
 # TODO: change order of merge to start with highest priority. Change

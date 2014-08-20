@@ -14,91 +14,113 @@
 
 from __future__ import unicode_literals
 
-from . import Installer
-from xylem.exception import InvalidDataError
+from .installer_base import InstallerBase
+from .impl import InstallerPrerequisiteError
+
+from xylem.util import is_program_installed
+
+from xylem.log_utils import info_v
+from xylem.log_utils import warning
+from xylem.log_utils import error
 
 
-class PackageManagerInstaller(Installer):
+class PackageManagerInstaller(InstallerBase):
 
-    # FIXME: 'supports_depends' is misnomer, since it can get confused
-    # with the assertion that the package manger supports dependency
-    # resolution, which is somewhat antithetical to the rules definition
-    # supporting dependencies. Do we need this flag at all? Can't we
-    # just interpret the 'depends' key for all installers?
+    """Base class from a variety of package manager installers."""
 
-    """Base class from a variety of package manager installers.
+    def __init__(self, executable_name):
+        super(PackageManagerInstaller, self).__init__()
+        self.executable_name = executable_name
 
-    General form of a package manager :class:`Installer` implementation
-    that assumes:
+    def check_general_prerequisites(self,
+                                    os_tuple,
+                                    fix_unsatisfied=False,
+                                    interactive=True):
+        info_v("Checking general prerequisites of installer '{}'...".
+               format(self.name))
+        self.check_package_manager_installed(
+            os_tuple, fix_unsatisfied, interactive)
+        self.check_package_manager_updated(
+            os_tuple, fix_unsatisfied, interactive)
+        # TODO: instead of this, manage a list of prerequisites,
+        # possibly tagged somehow by what kind they are (general, for
+        # resolve, for is_installed, for install). Name these
+        # prerequisites, to allow referring to them in config (enable
+        # check, try-fix etc)
 
-     - installer rule-args spec is a list of package names stored with
-       the key "packages"
-     - a detect function exists that given a list of packages, returns a
-       list of the installed packages
+    def check_install_prerequisites(self,
+                                    resolved,
+                                    os_tuple,
+                                    fix_unsatisfied=False,
+                                    interactive=True):
+        info_v("Checking install prerequisites of installer '{}'... "
+               "No checks implemented.".format(self.name))
 
-    Also, if *supports_depends* is set to ``True``:
+    def is_package_manager_installed(self):
+        return is_program_installed(self.executable_name)
 
-     - installer rule-args spec can also include dependency
-       specification with the key "depends"
+    def install_package_manager(self, os_tuple, interactive=True):
+        raise NotImplementedError()
 
-    Subclasses need to provide implementation of
-    ``get_install_command``.
+    def check_package_manager_installed(self,
+                                        os_tuple,
+                                        fix_unsatisfied=False,
+                                        interactive=True):
+        info_v("Checking if package manager '{}' is installed.".
+               format(self.name))
+        if self.is_package_manager_installed():
+            info_v("Package manager '{}' is installed.".format(self.name))
+            return
+        info_v("Package manager '{}' not installed ('{}' not found).".
+               format(self.name, self.executable_name))
+        if fix_unsatisfied:
+            info_v("Trying to install '{}'.".format(self.name))
+            try:
+                self.install_package_manager(os_tuple, interactive)
+                if self.is_package_manager_installed():
+                    return
+            except NotImplementedError:
+                error("Installer plugin '{}' does not support installing "
+                      "itself.".format(self.name))
+            else:
+                error("Installer plugin '{}' failed to install itself.".
+                      format(self.name))
+        raise InstallerPrerequisiteError("Package manager '{}' not installed".
+                                         format(self.name))
 
-    In addition, if subclass provide their own ``resolve`` method, the
-    resolved items need not be package names (i.e. strings). Methods
-    other than ``get_isntall_command``, ``resolve`` and the
-    ``detect_fn`` treat the resolved items as opaque objects.
-    """
+    def is_package_manager_updated(self):
+        raise NotImplementedError()
 
-    def __init__(self, detect_fn, supports_depends=False):
-        """
-        :param detect_fn: function that takes list of opaque resolved
-            installation items and returns list of the subset of
-            installed items.
-        :param bool supports_depends: package manager supports
-            dependency key
-        """
-        self.detect_fn = detect_fn
-        self.supports_depends = supports_depends
+    def update_package_manager(self, interactive=True):
+        raise NotImplementedError()
 
-    def is_installed(self, resolved_item):
-        return not self.get_packages_to_install([resolved_item])
-
-    def get_depends(self, rule_args):
-        """Get list list of dependencies on other xylem keys.
-
-        :param dict rule_args: argument dictionary to the xylem rule for
-            this package manager
-        :return: List of dependencies on other xylem keys read from the
-            'depends' key in `rule_args` if `self.supports_depends` is
-            `True`.
-        """
-        if self.supports_depends and isinstance(rule_args, dict):
-            return rule_args.get('depends', [])
-        else:
-            return []
-
-    def resolve(self, rules_args):
-        """
-        See :meth:`Installer.resolve()`.
-        """
-        packages = None
-        if isinstance(rules_args, dict):
-            packages = rules_args.get("packages", [])
-            if isinstance(packages, str):
-                packages = packages.split()
-        elif isinstance(rules_args, str):
-            packages = rules_args.split()
-        elif isinstance(rules_args, list):
-            packages = rules_args
-        else:
-            raise InvalidDataError("Invalid rule args: %s" % (rules_args))
-        return packages
-
-    def get_packages_to_install(self, resolved, reinstall=False):
-        if reinstall:
-            return resolved
-        if not resolved:
-            return []
-        else:
-            return list(set(resolved) - set(self.detect_fn(resolved)))
+    def check_package_manager_updated(self,
+                                      os_tuple,
+                                      fix_unsatisfied=False,
+                                      interactive=True):
+        info_v("Checking if package manager '{}' is updated.".
+               format(self.name))
+        try:
+            updated = self.is_package_manager_updated()
+        except NotImplementedError:
+            info_v("Check if package manager '{}' is updated not implemented; "
+                   "skipping check.".format(self.name))
+            return
+        if updated:
+            info_v("Package manager '{}' is updated.".format(self.name))
+            return
+        info_v("Package manager '{}' not updated.".format(self.name))
+        if fix_unsatisfied:
+            info_v("Trying to update '{}'.".format(self.name))
+            try:
+                self.update_package_manager(interactive)
+                if self.is_package_manager_updated():
+                    return
+            except NotImplementedError:
+                error("Installer plugin '{}' does not support updating "
+                      "itself.".format(self.name))
+            else:
+                error("Installer plugin '{}' failed to update itself.".
+                      format(self.name))
+        warning("Package manager '{}' seems to be out-of-date. Please "
+                "consider updating for best results.")

@@ -53,7 +53,7 @@ def dump_yaml(data, inline=False):
     #       single line
 
     # delay import to prevent circular import
-    from .config_utils import ConfigDict
+    from xylem.config_utils import ConfigDict
 
     class MyDumper(yaml.SafeDumper):
         def ignore_aliases(self, _data):

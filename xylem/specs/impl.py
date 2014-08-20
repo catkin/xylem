@@ -16,18 +16,28 @@
 from __future__ import unicode_literals
 
 import abc
-import six
 
-from ..text_utils import to_str
-from ..text_utils import text_type
-from ..plugin_utils import PluginBase
-from ..plugin_utils import get_plugin_list
+from xylem.text_utils import to_str
+from xylem.text_utils import text_type
+from xylem.plugin_utils import PluginBase
+from xylem.plugin_utils import load_plugins
+
+
+# TODO: docstrings for Spec class methods and module
 
 
 SPEC_GROUP = 'xylem.specs'
 
 
-class Spec(six.with_metaclass(abc.ABCMeta, PluginBase)):
+def load_spec_plugins(disabled=[]):
+    """Return list of spec plugin objects unique by name.
+
+    See :func:`load_plugins`
+    """
+    return load_plugins("spec", Spec, SPEC_GROUP, disabled)
+
+
+class Spec(PluginBase):
 
     """Spec plugin abstract base class.
 
@@ -35,8 +45,8 @@ class Spec(six.with_metaclass(abc.ABCMeta, PluginBase)):
     their needed parameters passed on every invocation.
 
     The `data` and `arguments` (e.g. url for the 'rules' spec plugin)
-    are managed by the `..sources.database.RulesSource` class in the
-    `..sources.database.RulesDatabase`.
+    are managed by the `xylem.sources.database.RulesSource` class in the
+    `xylem.sources.database.RulesDatabase`.
     """
 
     @abc.abstractproperty
@@ -112,14 +122,6 @@ class Spec(six.with_metaclass(abc.ABCMeta, PluginBase)):
     @abc.abstractmethod
     def keys(self, data, installer_context):
         """Return list of keys defined for current os/version."""
-
-
-def get_spec_plugin_list():
-    """Return list of spec plugin objects unique by name.
-
-    See :func:`get_plugin_list`
-    """
-    return get_plugin_list("spec", Spec, SPEC_GROUP)
 
 
 def verify_spec_name(spec_name):

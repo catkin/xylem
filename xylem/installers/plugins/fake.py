@@ -12,19 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+"""A fake installer plugin for testing.
+
 %s
 
-:var INSTALL_LOCATION: the installation folder
+:var DEFAULT_INSTALL_DIR: the default installation folder
 :var definition: definition of the installer plugin to be referenced
     by the according entry point
 """
 
+# TODO: rename to `fake apt`
+
 from __future__ import unicode_literals
+
 import os.path
 
-from ..package_manager_installer import PackageManagerInstaller
-from six.moves import filter
+from xylem.installers.package_manager_installer import PackageManagerInstaller
+
+from xylem.config_utils import String
+from xylem.config_utils import Path
+
 
 DESCRIPTION = """\
 This is a fake installer plugin for testing.
@@ -39,48 +46,60 @@ __doc__ %= format(DESCRIPTION)
 FAKE_INSTALLER_PLUGIN = 'fake'
 """Name of the fake installer plugin."""
 
-FAKE_INSTALLER = 'apt'
-"""Name of the fake installer. Pretend it is called 'apt' so we get the
-resolutions from the existing rosdep rules when overriding os with
-Ubuntu for testing."""
+FAKE_INSTALLER_DEFAULT_NAME = 'fake'
+"""Name of the fake installer if not set configured."""
 
-INSTALL_LOCATION = 'fake-installer'
+DEFAULT_INSTALL_DIR = os.path.abspath(os.path.expanduser('~/.fake-installer'))
 """Install folder where the installed packages are 'installed' by touching
 files. Can be relative (to the cwd of xylem invocation) or absolute."""
-
-
-def get_installer_filename(resolved_item):
-    """Return the location of the file indicating installation of item."""
-    return os.path.abspath(os.path.join(INSTALL_LOCATION, resolved_item))
-
-
-def detect_fn(resolved):
-    """Return list of subset of  installed packages."""
-    return filter(lambda pkg: os.path.exists(get_installer_filename(pkg)),
-                  resolved)
 
 
 class FakeInstaller(PackageManagerInstaller):
 
     """FakeInstaller class for testing.
 
-    The opaque installer items are simply strings (package names).
-
     Packages are installed by touching files in `INSTALL_LOCATION`. The
     folder must exist, else installation fails and all packages are
     assumed uninstalled.
     """
 
-    @staticmethod
-    def get_name():
-        return FAKE_INSTALLER
-
     def __init__(self):
-        super(FakeInstaller, self).__init__(detect_fn, supports_depends=True)
+        super(FakeInstaller, self).__init__("touch")
+        self.options_description.items["as_root"].default = False
+        self.options_description.add(
+            "fake_name", type=String,
+            default=FAKE_INSTALLER_DEFAULT_NAME)
+        self.options_description.add(
+            "install_dir", type=Path,
+            default=DEFAULT_INSTALL_DIR)
 
-    def get_install_command(self, resolved, interactive=True, reinstall=False):
-        return [["touch", self.get_installer_filename(item)] for
+    @property
+    def name(self):
+        return self.options.fake_name or FAKE_INSTALLER_DEFAULT_NAME
+
+    def get_install_commands_no_root(self,
+                                     resolved,
+                                     interactive=True,
+                                     reinstall=False):
+        return [["touch", self.get_installer_filename(item.package)] for
                 item in resolved]
+
+    def filter_uninstalled(self, resolved):
+        return [r for r in resolved
+                if not os.path.exists(self.get_installer_filename(r.package))]
+
+    def is_package_manager_installed(self):
+        """Fake installer is installed if that folder is an existing dir."""
+        return os.path.isdir(self.options.install_dir)
+
+    def install_package_manager(self, os_tuple, interactive=True):
+        """Installing fake installer means creating that folder."""
+        if not os.path.exists(self.options.install_dir):
+            os.makedirs(self.options.install_dir)
+
+    def get_installer_filename(self, package):
+        """Return the location of the file indicating installation of item."""
+        return os.path.join(self.options.install_dir, package)
 
 
 # This definition the installer to the plugin loader

@@ -17,19 +17,19 @@ from __future__ import unicode_literals
 import sys
 import os
 
-from ..specs.rules_dict import verify_rules_dict
+from xylem.sources.rules_dict import verify_rules_dict
 
-from ..specs.plugins.rules import expand_rules
-from ..specs.plugins.rules import compact_rules
+from xylem.specs.plugins.rules import expand_rules
+from xylem.specs.plugins.rules import compact_rules
 
-from ..os_support import OSSupport
-from ..log_utils import info
+from xylem.os_support import OSSupport
+from xylem.log_utils import info
 
-from ..text_utils import to_str
-from ..text_utils import to_bytes
+from xylem.text_utils import to_str
+from xylem.text_utils import to_bytes
 
-from ..yaml_utils import load_yaml
-from ..yaml_utils import dump_yaml
+from xylem.yaml_utils import load_yaml
+from xylem.yaml_utils import dump_yaml
 
 from .main import command_handle_args
 

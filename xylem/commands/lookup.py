@@ -16,12 +16,12 @@ from __future__ import unicode_literals
 
 import sys
 
-from ..log_utils import info
-from ..config import get_config
-from ..lookup import lookup
-from ..installers import InstallerContext
-from ..yaml_utils import dump_yaml
-from ..terminal_color import ansi
+from xylem.log_utils import info
+from xylem.config import get_config
+from xylem.lookup import lookup
+from xylem.installers import InstallerContext
+from xylem.yaml_utils import dump_yaml
+from xylem.terminal_color import ansi
 
 from .main import command_handle_args
 
@@ -44,7 +44,7 @@ def main(args=None):
     config = get_config()
     try:
         # TODO: handle multiple keys in one go
-        ic = InstallerContext(config)
+        ic = InstallerContext(config=config)
         for key in args.xylem_key:
             result = lookup(key, compact=True, config=config,
                             installer_context=ic)

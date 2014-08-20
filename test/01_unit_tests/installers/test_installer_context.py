@@ -15,6 +15,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 from xylem.installers import InstallerContext
+from xylem.config import get_default_config
 import unittest
 from six.moves import map
 
@@ -24,11 +25,9 @@ from six.moves import map
 class InstallerContextTestCase(unittest.TestCase):
 
     def test_setup_installers(self):
-        ic = InstallerContext()
-        ic.set_os_override(("ubuntu", "precise"))
-        print(ic.get_os_tuple())
-        print(map(lambda i: i.get_name(), ic.installer_plugins))
-        ic.setup_installers()
+        config = get_default_config()
+        config.os_override = ("ubuntu", "precise")
+        ic = InstallerContext(config=config)
         assert(ic.get_default_installer_name() == 'apt')
-        assert(ic.get_installer(ic.get_default_installer_name()).get_name() == 'apt')
-        assert(ic.get_installer_priority('apt') == 90)
+        assert(ic.lookup_installer(ic.get_default_installer_name()).name == 'apt')
+        assert(ic.core_installers == [ic.lookup_installer("apt")])
